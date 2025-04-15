@@ -6,7 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // Connect Kafka microservice
-  app.connectMicroservice(kafkaConfig);
+  // app.connectMicroservice(kafkaConfig);
   
   await app.startAllMicroservices();
   await app.listen(process.env.PORT || 3000);
