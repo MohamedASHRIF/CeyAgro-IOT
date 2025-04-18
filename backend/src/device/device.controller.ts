@@ -1,0 +1,35 @@
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { DeviceService } from './device.service';
+import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
+import { KafkaContext } from '@nestjs/microservices';
+
+@Controller('devices')
+export class DeviceController {
+  constructor(private readonly deviceService: DeviceService) {}
+
+  @MessagePattern('iot.device.data')
+  handleIoTData(@Payload() data: any, @Ctx() context: KafkaContext) {
+    return this.deviceService.processIoTData(data, context);
+  }
+
+  @MessagePattern('iot.device.status')
+  getDeviceStatus(@Payload() deviceId: string) {
+    return this.deviceService.getLatestDeviceData(deviceId);
+  }
+
+  @Post('data')
+  async simulateIoTData(@Body() data: any) {
+    const fakeKafkaContext = { getTopic: () => 'iot.device.data' } as KafkaContext;
+    return this.deviceService.processIoTData(data, fakeKafkaContext);
+  }
+
+  @Get(':deviceId/status')
+  async getDeviceStatusHttp(@Param('deviceId') deviceId: string) {
+    return this.deviceService.getLatestDeviceData(deviceId);
+  }
+
+  @Get(':deviceId/history')
+  async getDeviceHistory(@Param('deviceId') deviceId: string) {
+    return this.deviceService.getDeviceData(deviceId);
+  }
+}
