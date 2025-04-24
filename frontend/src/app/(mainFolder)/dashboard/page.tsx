@@ -4,7 +4,8 @@ import { useState } from "react";
 import { DashboardHeader } from "./(components)/dashboardHeader";
 import { AddButton } from "../(components)/Button";
 import { PlusIcon } from "lucide-react";
-import { SectionCards} from "./(components)/SectionCarrds";
+import { SectionCards } from "./(components)/SectionCarrds"; 
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<string | null>(null);
 
@@ -18,12 +19,12 @@ export default function DashboardPage() {
         return <div>All Devices will display here</div>;
       default:
         return (
-          <div className="space-y-4">
+          <div className="space-y-10">
             <SectionCards />
             <div className="flex justify-center">
               <AddButton
                 label="Add New Device"
-                href="/devices/AddNewDevice"
+                href="/devices/#add-new-device-tab"
                 icon={<PlusIcon />}
               />
             </div>
