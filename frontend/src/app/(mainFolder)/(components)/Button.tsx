@@ -15,7 +15,7 @@ export function AddButton({
   label,
   href,
   icon,
-  className = "p-6 max-w-xs w-auto text-1xl font-semibold rounded-xl shadow-md hover:shadow-[0_4px_20px_rgba(0,0,0,0.6)] transition",
+  className = "p-5 max-w-xs w-auto text-md font-semibold rounded-xl shadow-md hover: transition hover:shadow-lg",
   variant = "secondary",
 }: AddButtonProps) {
   return (
