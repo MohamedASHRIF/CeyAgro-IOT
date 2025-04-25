@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { usePathname } from "next/navigation"
+import { usePathname } from "next/navigation";
 import {
   ChartAreaIcon,
   LayoutDashboard,
@@ -11,11 +11,11 @@ import {
   Key,
   Trash,
   MapPinCheckIcon,
-  LetterText
-} from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useState } from "react"
+  LetterText,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 import {
   Sidebar,
@@ -27,7 +27,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -36,18 +36,24 @@ const items = [
   { title: "Vizualization", url: "#", icon: ChartAreaIcon },
   { title: "Reports", url: "#", icon: LetterText },
   {
-    title: "Settings", icon: Settings, children: [
-      { title: "Profile Management", url: "/Settings/profileManagement", icon: User },
-      { title: "Change Password", url: "/change-password", icon: Key },
-      { title: "Delete Account", url: "/delete-account", icon: Trash },
-    ]
+    title: "Settings",
+    icon: Settings,
+    children: [
+      {
+        title: "Profile Management",
+        url: "/Settings/profileManagement",
+        icon: User,
+      },
+      { title: "Change Password", url: "/changePassword", icon: Key },
+      { title: "Delete Account", url: "/deleteAccount", icon: Trash },
+    ],
   },
   // No logout in this array
-]
+];
 
 export function DashboardSidebar() {
-  const pathname = usePathname()
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const pathname = usePathname();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <Sidebar>
@@ -62,7 +68,7 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = pathname === item.url
+                const isActive = pathname === item.url;
 
                 if (item.children) {
                   return (
@@ -84,7 +90,7 @@ export function DashboardSidebar() {
                       {settingsOpen && (
                         <div className="pl-10 mt-1 space-y-1">
                           {item.children.map((child) => {
-                            const isChildActive = pathname === child.url
+                            const isChildActive = pathname === child.url;
                             return (
                               <Link
                                 key={child.title}
@@ -98,12 +104,12 @@ export function DashboardSidebar() {
                                 <child.icon className="h-4 w-4" />
                                 <span className="text-sm">{child.title}</span>
                               </Link>
-                            )
+                            );
                           })}
                         </div>
                       )}
                     </SidebarMenuItem>
-                  )
+                  );
                 }
 
                 return (
@@ -114,7 +120,7 @@ export function DashboardSidebar() {
                         className={`flex items-center space-x-2 px-4 py-2 cursor-pointer ${
                           isActive
                             ? "font-bold text-black hover:text-inherit hover:bg-transparent"
-                            : "text-gray-800"
+                            : "text-black"
                         }`}
                       >
                         <item.icon />
@@ -122,7 +128,7 @@ export function DashboardSidebar() {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )
+                );
               })}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -144,5 +150,5 @@ export function DashboardSidebar() {
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
