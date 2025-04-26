@@ -13,8 +13,8 @@ export class DeviceController {
   }
 
   @MessagePattern('iot.device.status')
-  getDeviceStatus(@Payload() deviceId: string) {
-    return this.deviceService.getLatestDeviceData(deviceId);
+  getDeviceStatus(@Payload() name: string) {
+    return this.deviceService.getLatestDeviceData(name);
   }
 
   @Post('data')
@@ -23,13 +23,13 @@ export class DeviceController {
     return this.deviceService.processIoTData(data, fakeKafkaContext);
   }
 
-  @Get(':deviceId/status')
-  async getDeviceStatusHttp(@Param('deviceId') deviceId: string) {
-    return this.deviceService.getLatestDeviceData(deviceId);
+  @Get(':name/status')
+  async getDeviceStatusHttp(@Param('name') name: string) {
+    return this.deviceService.getLatestDeviceData(name);
   }
 
-  @Get(':deviceId/history')
-  async getDeviceHistory(@Param('deviceId') deviceId: string) {
-    return this.deviceService.getDeviceData(deviceId);
+  @Get(':name/history')
+  async getDeviceHistory(@Param('name') name: string) {
+    return this.deviceService.getDeviceData(name);
   }
 }

@@ -1,16 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export type DeviceDataDocument = DeviceData & Document;
+
 @Schema({ timestamps: true })
-export class DeviceData extends Document {
+export class DeviceData {
   @Prop({ required: true })
-  deviceId: string;
+  name: string;
+
+  @Prop({ type: Number })
+  temperatureValue: number;
+
+  @Prop({ type: Number })
+  humidityValue: number;
 
   @Prop()
-  status: string;
+  location: string;
 
-  @Prop({ type: Object })
-  data: any;
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop()
+  date: Date;
 
   @Prop()
   topic: string;
