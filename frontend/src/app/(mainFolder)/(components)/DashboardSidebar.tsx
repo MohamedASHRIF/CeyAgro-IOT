@@ -139,7 +139,7 @@ export function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link
-                href="/user/login"
+                href="/api/auth/login"
                 className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
               >
                 <LogOutIcon />
