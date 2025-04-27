@@ -2,6 +2,10 @@
 
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+import React from "react";
+>>>>>>> Stashed changes
 =======
 import React from "react";
 >>>>>>> Stashed changes
