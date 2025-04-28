@@ -34,7 +34,7 @@ const items = [
   { title: "Device Management", url: "/devices", icon: Monitor },
   { title: "Location Management", url: "#", icon: MapPinCheckIcon },
   { title: "Vizualization", url: "#", icon: ChartAreaIcon },
-  { title: "Reports", url: "#", icon: LetterText },
+  { title: "Reports", url: "/report", icon: LetterText },
   {
     title: "Settings", icon: Settings, children: [
       { title: "Profile Management", url: "/Settings/profileManagement", icon: User },
