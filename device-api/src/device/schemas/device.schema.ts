@@ -24,6 +24,9 @@ export class DeviceData {
   date: Date;
 
   @Prop()
+  userId: string;
+
+  @Prop()
   topic: string;
 }
 
