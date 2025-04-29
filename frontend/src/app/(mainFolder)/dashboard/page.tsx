@@ -4,7 +4,8 @@ import { useState } from "react";
 import { DashboardHeader } from "./(components)/dashboardHeader";
 import { AddButton } from "../(components)/Button";
 import { PlusIcon } from "lucide-react";
-import { SectionCards } from "./(components)/SectionCarrds"; 
+import { SectionCards } from "./(components)/SectionCarrds";
+import SnsSubscriptionPopup from "../(components)/SnsSubscriptionPopup";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export default function DashboardPage() {
     <>
       <DashboardHeader activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mt-4">{renderTabComponent()}</div>
+      <SnsSubscriptionPopup />
     </>
   );
 }
