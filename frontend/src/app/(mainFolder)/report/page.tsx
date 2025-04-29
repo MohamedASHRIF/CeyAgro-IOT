@@ -1,0 +1,103 @@
+"use client";
+import type React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ReportForm } from "./(components)/ReportForm";
+import { DeviceDataTable } from "./(components)/DeviceDataTable";
+import { DownloadHistoryTable } from "./(components)/DownloadHistoryTable";
+import { useDeviceReports } from "./(components)/useDeviceReports";
+import { Loader2 } from "lucide-react";
+
+
+export default function DeviceReports() {
+  const {
+    deviceName,
+    setDeviceName,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    deviceData,
+    deviceNames,
+    loading,
+    downloadUrl,
+    error,
+    downloadHistory,
+    generatingReport,
+    handleGenerateReport,
+    handleDownload,
+    handleDeleteHistory,
+    handleClearForm,
+    isMounted,
+  } = useDeviceReports();
+
+  if (!isMounted) {
+    return null;
+  }
+
+  return (
+    <div className="p-5 container py-8 mx-auto">
+      <h1 className="mb-6 text-3xl font-bold text-center">Device Report</h1>
+
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          {/* Form for selecting device and date range */}
+          <ReportForm
+            deviceName={deviceName}
+            setDeviceName={setDeviceName}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            deviceNames={deviceNames}
+            onClear={handleClearForm}
+          />
+
+          {/* Table displaying device data  */}
+          <DeviceDataTable data={deviceData} loading={loading} error={error} />
+
+          {/* Button to generate or download the report */}
+          <div className="mt-4">
+            {downloadUrl ? (
+              <Button asChild onClick={handleDownload}>
+                <a href={downloadUrl} download>
+                  Download Report
+                </a>
+              </Button>
+            ) : (
+              <Button
+                onClick={handleGenerateReport}
+                disabled={
+                  generatingReport || !deviceName || !startDate || !endDate
+                }
+              >
+                {generatingReport ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  "Generate Report"
+                )}
+              
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Download history section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Download History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DownloadHistoryTable
+            history={downloadHistory}
+            onDelete={handleDeleteHistory}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
