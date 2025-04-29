@@ -8,14 +8,12 @@ import {
   Monitor,
   Settings,
   User,
-  Key,
-  Trash,
   MapPinCheckIcon,
   LetterText,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Sidebar,
@@ -44,16 +42,25 @@ const items = [
         url: "/Settings/profileManagement",
         icon: User,
       },
-      { title: "Change Password", url: "/changePassword", icon: Key },
-      { title: "Delete Account", url: "/deleteAccount", icon: Trash },
     ],
   },
-  // No logout in this array
 ];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Determine if any settings children match the current route
+  const isAnySettingsChildActive = items
+    .find((item) => item.title === "Settings")
+    ?.children?.some((child) => pathname === child.url);
+
+  const [settingsOpen, setSettingsOpen] = useState(isAnySettingsChildActive ?? false);
+
+  useEffect(() => {
+    if (isAnySettingsChildActive) {
+      setSettingsOpen(true);
+    }
+  }, [pathname, isAnySettingsChildActive]);
 
   return (
     <Sidebar>
@@ -69,6 +76,10 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const isActive = pathname === item.url;
+                const isSettingsActive =
+                  item.title === "Settings" &&
+                  (pathname === item.url ||
+                    item.children?.some((child) => pathname === child.url));
 
                 if (item.children) {
                   return (
@@ -77,7 +88,7 @@ export function DashboardSidebar() {
                         <button
                           onClick={() => setSettingsOpen((prev) => !prev)}
                           className={`flex w-full items-center space-x-2 px-4 py-2 cursor-pointer ${
-                            settingsOpen
+                            isSettingsActive
                               ? "font-bold text-black"
                               : "text-gray-800"
                           }`}
@@ -95,14 +106,15 @@ export function DashboardSidebar() {
                               <Link
                                 key={child.title}
                                 href={child.url}
-                                className={`flex items-center space-x-2 px-2 py-1 rounded hover:bg-gray-100 ${
+                                className={`flex items-center space-x-2 px-2 py-1 rounded hover:text-[hsl(172.5,_66%,_50.4%)] ${
                                   isChildActive
-                                    ? "font-semibold text-gray-800 bg-white"
+                                    ? "font-semibold text-gray-700"
                                     : "text-gray-700"
                                 }`}
+                                onClick={() => setSettingsOpen(true)}
                               >
                                 <child.icon className="h-4 w-4" />
-                                <span className="text-sm">{child.title}</span>
+                                <span className="text-base">{child.title}</span>
                               </Link>
                             );
                           })}
@@ -120,8 +132,9 @@ export function DashboardSidebar() {
                         className={`flex items-center space-x-2 px-4 py-2 cursor-pointer ${
                           isActive
                             ? "font-bold text-black hover:text-inherit hover:bg-transparent"
-                            : "text-black"
+                            : "text-gray-800"
                         }`}
+                        onClick={() => setSettingsOpen(false)}
                       >
                         <item.icon />
                         <span className="text-base">{item.title}</span>
@@ -134,13 +147,13 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Move the Logout item to the bottom */}
         <SidebarFooter className="mt-auto">
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link
                 href="/api/auth/login"
                 className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
+                onClick={() => setSettingsOpen(false)}
               >
                 <LogOutIcon />
                 <span className="text-base">Logout</span>

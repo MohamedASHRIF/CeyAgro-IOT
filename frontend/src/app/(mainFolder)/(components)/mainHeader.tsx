@@ -114,16 +114,28 @@ export const DashboardHeader = () => {
         </button>
 
         <div className="h-6 w-px bg-gray-300" />
-        <Link href="Settings/profileManagement" passHref>
-          <Avatar className="h-8 w-8 ml-2 cursor-pointer">
+
+        <Link href="/Settings/profileManagement" passHref>
+          <Avatar
+            className="h-8 w-8 ml-2 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              if (window.location.pathname === "/Settings/profileManagement") {
+                window.location.reload();
+              } else {
+                router.push("/Settings/profileManagement");
+              }
+            }}
+          >
             {profileData?.picture && (
               <AvatarImage
-              src={
-                profileData.picture && profileData.picture.startsWith("/uploads")
-                  ? `http://localhost:3002${profileData.picture}`
-                  : "/default.png"
-              }
-             className="border border-muted-foreground rounded-full"
+                src={
+                  profileData.picture &&
+                  profileData.picture.startsWith("/uploads")
+                    ? `http://localhost:3002${profileData.picture}`
+                    : "/default.png"
+                }
+                className="border border-muted-foreground rounded-full"
                 alt="img"
               />
             )}
