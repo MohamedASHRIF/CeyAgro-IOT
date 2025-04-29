@@ -52,9 +52,7 @@ export class DeviceService implements OnModuleInit {
     private notificationsService: NotificationsService,
   ) {}
 
-
-  
-
+<<<<<<<<< Temporary merge branch 1
   async onModuleInit() {
     const changeStream = this.deviceDataModel.watch();
     changeStream.on('change', async (change) => {
@@ -77,7 +75,9 @@ export class DeviceService implements OnModuleInit {
     });
   }
 
- //Process and store data from kafka
+=========
+  //Process and store data from kafka
+>>>>>>>>> Temporary merge branch 2
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
     console.log(`Received message from topic ${topic}:`, data);

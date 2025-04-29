@@ -8,8 +8,7 @@ async function bootstrap() {
   
   //  Connect Kafka microservice
   app.connectMicroservice(kafkaConfig);
-  
- 
+
 
   app.enableCors();
    // Start all MicroServices
