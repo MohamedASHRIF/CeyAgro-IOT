@@ -387,7 +387,7 @@ export default function ProfilePage() {
             <AlertDialogDescription>{alertMessage}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-black text-white">
+            <AlertDialogCancel className="bg-black text-white text-md">
               Close
             </AlertDialogCancel>
           </AlertDialogFooter>
