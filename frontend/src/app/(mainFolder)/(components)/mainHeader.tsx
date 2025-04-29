@@ -1,13 +1,18 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SunIcon, MoonIcon, BellRing } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export const DashboardHeader = () => {
   const [time, setTime] = useState(new Date());
+
+  const router = useRouter();
+  const handleBellClick = () => {
+    router.push("/notification");
+  };
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -52,7 +57,7 @@ export const DashboardHeader = () => {
 
       {/* Right: Notification + Avatar */}
       <div className="flex items-center gap-6 z-10 pr-4">
-        <button className="relative p-1 rounded-md">
+        <button className="relative p-1 rounded-md" onClick={handleBellClick}>
           <BellRing className="w-5 h-5 text-gray-500 hover:text-teal-600 transition-colors duration-200 cursor-pointer" />
         </button>
 
