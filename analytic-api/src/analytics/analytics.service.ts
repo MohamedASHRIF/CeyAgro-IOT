@@ -192,4 +192,20 @@ async getLatestDeviceData(name: string) {
     const schemaFields = ['date', 'createdAt', 'updatedAt'];
     return schemaFields.includes(fieldName);
   }
+
+
+
+   
+   // Deletes an Excel report from the S3 bucket
+  
+    async deleteReport(s3Key: string): Promise<void> {
+      try {
+        // Call S3Service to delete the file from S3
+        await this.s3Service.deleteFile(s3Key);
+      } catch (error) {
+        console.error('Failed to delete report from S3:', error);
+        throw new InternalServerErrorException('Failed to delete report from S3');
+      }
+    }
+  
 }

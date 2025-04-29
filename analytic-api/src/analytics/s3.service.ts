@@ -48,4 +48,33 @@ export class S3Service {
       Expires: expiresIn,
     });
   }
+
+
+   //Deletes a file from the AWS S3 bucket
+
+  async deleteFile(key: string): Promise<void> {
+
+    // Retrieve the S3 bucket name from environment variables
+    const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    
+    // Check if bucket name is defined; throw error if not
+    if (!bucketName) {
+      throw new InternalServerErrorException('AWS S3 bucket name is not defined');
+    }
+    
+    // Define S3 delete parameters
+    const params = {
+      Bucket: bucketName,
+      Key: key,
+    };
+
+    try {
+      // Delete the file from S3
+      await this.s3.deleteObject(params).promise();
+      console.log(`Deleted file from S3: ${key}`);
+    } catch (error) {
+      console.error('Failed to delete file from S3:', error);
+      throw new InternalServerErrorException('Failed to delete file from S3');
+    }
+  }
 }

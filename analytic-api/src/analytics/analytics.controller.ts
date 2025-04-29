@@ -1,4 +1,4 @@
-import { Controller, NotFoundException, Post, Query, UsePipes, ValidationPipe, Get, Body } from '@nestjs/common';
+import { Controller, NotFoundException, Post, Query, UsePipes, ValidationPipe, Get, Body ,InternalServerErrorException,Delete} from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
@@ -91,4 +91,30 @@ export class AnalyticsController {
     }
   }
 
+  //HTTP Delete endpoint to delete file permentanly
+  @Delete('report')
+  async deleteReport(@Body() body: { s3Key: string }) {
+    try {
+      // Validate the s3Key parameter
+      if (!body.s3Key) {
+        throw new InternalServerErrorException('S3 key is required');
+      }
+      // Delegate to AnalyticsService to delete the report
+      await this.analyticsService.deleteReport(body.s3Key);
+      return {
+        success: true,
+        message: `Report ${body.s3Key} deleted successfully`,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof InternalServerErrorException) {
+        return {
+          success: false,
+          message: error.message,
+          data: null,
+        };
+      }
+      throw error;
+    }
+
+}
 }
