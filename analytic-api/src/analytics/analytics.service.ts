@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeviceData, DeviceDataDocument } from './schemas/analytics.schema';
@@ -7,11 +11,11 @@ import { ExcelService } from './excel.service';
 import { S3Service } from './s3.service';
 import { KafkaContext } from '@nestjs/microservices';
 
-
 @Injectable()
 export class AnalyticsService {
   constructor(
-    @InjectModel(DeviceData.name) private deviceModel: Model<DeviceDataDocument>,
+    @InjectModel(DeviceData.name)
+    private deviceModel: Model<DeviceDataDocument>,
     private excelService: ExcelService,
     private s3Service: S3Service,
   ) {}
@@ -38,26 +42,17 @@ export class AnalyticsService {
     return { status: 'processed', data: deviceData };
   }
 
+  //Retrieves all data records for a specific device by name, sorted by creation date (newest first)
+  async getDeviceData(name: string) {
+    return this.deviceModel.find({ name }).sort({ createdAt: -1 }).exec();
+  }
 
-//Retrieves all data records for a specific device by name, sorted by creation date (newest first)
-async getDeviceData(name: string) {
-  return this.deviceModel
-    .find({ name })
-    .sort({ createdAt: -1 })
-    .exec();
-}
+  //Retrieves the most recent data record for a specific device by name
+  async getLatestDeviceData(name: string) {
+    return this.deviceModel.findOne({ name }).sort({ createdAt: -1 }).exec();
+  }
 
-
-//Retrieves the most recent data record for a specific device by name
-async getLatestDeviceData(name: string) {
-  return this.deviceModel
-    .findOne({ name })
-    .sort({ createdAt: -1 })
-    .exec();
-}
-
-
-//Retrieves a sorted list of unique device names from the database
+  //Retrieves a sorted list of unique device names from the database
   async getDeviceNames(): Promise<string[]> {
     try {
       const deviceNames = await this.deviceModel.distinct('name').exec();
@@ -69,26 +64,35 @@ async getLatestDeviceData(name: string) {
       throw new InternalServerErrorException('Failed to fetch device names');
     }
   }
-            
+
   //Generates an Excel report from filtered data and uploads it to S3
-  async generateAndUploadReport(queryDto: AnalyticsQueryDto): Promise<{ downloadUrl: string; expiresIn: number; recordCount: number }> {
-   // Fetch filtered data based on query parameters
+  async generateAndUploadReport(
+    queryDto: AnalyticsQueryDto,
+  ): Promise<{ downloadUrl: string; expiresIn: number; recordCount: number }> {
+    // Fetch filtered data based on query parameters
     const data = await this.getFilteredData(queryDto);
     if (data.length === 0) {
       throw new NotFoundException('No data found for the given criteria');
     }
     if (data[0].date) {
-      data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      data.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      );
     }
     let fieldsToInclude = queryDto.fields;
     if (!fieldsToInclude || fieldsToInclude.length === 0) {
       fieldsToInclude = ['name', 'value', 'date', 'location', 'status'];
     }
     // Generate an Excel file from the data
-    const excelBuffer = await this.excelService.generateExcel(data, fieldsToInclude);
+    const excelBuffer = await this.excelService.generateExcel(
+      data,
+      fieldsToInclude,
+    );
     // Create a unique filename with timestamp and device info
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const deviceInfo = queryDto.name ? `-${queryDto.name.replace(/\s+/g, '-')}` : '';
+    const deviceInfo = queryDto.name
+      ? `-${queryDto.name.replace(/\s+/g, '-')}`
+      : '';
     const dateInfo = queryDto.date ? `-${queryDto.date}` : '';
     const filename = `device-report${deviceInfo}${dateInfo}-${timestamp}.xlsx`;
     const s3Key = `analytics/${filename}`;
@@ -101,7 +105,9 @@ async getLatestDeviceData(name: string) {
       );
     } catch (error) {
       console.error('Failed to upload to S3:', error);
-      throw new InternalServerErrorException('Failed to upload report to storage');
+      throw new InternalServerErrorException(
+        'Failed to upload report to storage',
+      );
     }
 
     // Set the expiration time for the signed URL (30 minutes)
@@ -114,8 +120,10 @@ async getLatestDeviceData(name: string) {
       recordCount: data.length,
     };
   }
-//Retrieves filtered device data based on query parameters
-  async getReadingsByDeviceAndDate(queryDto: AnalyticsQueryDto): Promise<any[]> {
+  //Retrieves filtered device data based on query parameters
+  async getReadingsByDeviceAndDate(
+    queryDto: AnalyticsQueryDto,
+  ): Promise<any[]> {
     const data = await this.getFilteredData(queryDto);
     if (data.length === 0) {
       throw new NotFoundException('No readings found for the given criteria');
@@ -138,7 +146,7 @@ async getLatestDeviceData(name: string) {
     if (queryDto.location) {
       query.location = queryDto.location;
     }
-     // Add single-day date filter if provided
+    // Add single-day date filter if provided
     if (queryDto.date) {
       const startDate = new Date(queryDto.date);
       startDate.setHours(0, 0, 0, 0);
@@ -155,13 +163,12 @@ async getLatestDeviceData(name: string) {
           $lte: endDate,
         };
       }
-
-    } 
+    }
     // Add date range filter if startDate or endDate is provided
     else if (queryDto.startDate || queryDto.endDate) {
       const dateField = this.hasDateField('date') ? 'date' : 'createdAt';
       query[dateField] = {};
-     
+
       if (queryDto.startDate) {
         const startDate = new Date(queryDto.startDate);
         startDate.setHours(0, 0, 0, 0);
@@ -187,25 +194,36 @@ async getLatestDeviceData(name: string) {
       return { ...cleanDevice, id };
     });
   }
-//Checks if a field is a valid date field in the schema
+
+  
+  //Checks if a field is a valid date field in the schema
   private hasDateField(fieldName: string): boolean {
     const schemaFields = ['date', 'createdAt', 'updatedAt'];
     return schemaFields.includes(fieldName);
   }
 
-
-
-   
-   // Deletes an Excel report from the S3 bucket
-  
-    async deleteReport(s3Key: string): Promise<void> {
-      try {
-        // Call S3Service to delete the file from S3
-        await this.s3Service.deleteFile(s3Key);
-      } catch (error) {
-        console.error('Failed to delete report from S3:', error);
-        throw new InternalServerErrorException('Failed to delete report from S3');
+  // Deletes an Excel report from the S3 bucket
+  async deleteReportFile(
+    s3Key: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      s3Key = decodeURIComponent(s3Key).trim();
+      await this.s3Service.deleteFile(s3Key);
+      return {
+        success: true,
+        message: `File "${s3Key}" deleted successfully`,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return {
+          success: false,
+          message: error.message,
+        };
       }
+      console.error('Error deleting file:', error);
+      throw new InternalServerErrorException(
+        `Failed to delete file from storage: ${error.message}`,
+      );
     }
-  
+  }
 }
