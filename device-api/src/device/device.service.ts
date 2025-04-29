@@ -10,6 +10,7 @@ export class DeviceService {
     @InjectModel(DeviceData.name) private deviceDataModel: Model<DeviceDataDocument>,
   ) {}
 
+  //Process and store data from kafka
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
     console.log(`Received message from topic ${topic}:`, data);
@@ -28,6 +29,7 @@ export class DeviceService {
     return { status: 'processed', data: deviceData };
   }
 
+  //Retrieve data 
   async getDeviceData(name: string) {
     return this.deviceDataModel
       .find({ name })
@@ -35,6 +37,7 @@ export class DeviceService {
       .exec();
   }
 
+  //Get most recent data for a device
   async getLatestDeviceData(name: string) {
     return this.deviceDataModel
       .findOne({ name })

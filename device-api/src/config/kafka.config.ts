@@ -9,6 +9,10 @@ export const kafkaConfig: KafkaOptions = {
     },
     consumer: {
       groupId: 'device-consumer-group',
+      allowAutoTopicCreation: true,
+    },
+    subscribe: {
+      fromBeginning: true,
     },
   },
 };

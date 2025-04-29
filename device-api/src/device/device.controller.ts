@@ -7,11 +7,13 @@ import { KafkaContext } from '@nestjs/microservices';
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
+  // Handle IoT data from Kafka
   @MessagePattern('iot.device.data')
   handleIoTData(@Payload() data: any, @Ctx() context: KafkaContext) {
     return this.deviceService.processIoTData(data, context);
   }
-
+  
+  // Handle device status requests from Kafka
   @MessagePattern('iot.device.status')
   getDeviceStatus(@Payload() name: string) {
     return this.deviceService.getLatestDeviceData(name);
