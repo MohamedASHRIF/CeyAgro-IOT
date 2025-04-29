@@ -54,7 +54,9 @@ export function DashboardSidebar() {
     .find((item) => item.title === "Settings")
     ?.children?.some((child) => pathname === child.url);
 
-  const [settingsOpen, setSettingsOpen] = useState(isAnySettingsChildActive ?? false);
+  const [settingsOpen, setSettingsOpen] = useState(
+    isAnySettingsChildActive ?? false
+  );
 
   useEffect(() => {
     if (isAnySettingsChildActive) {
@@ -84,18 +86,16 @@ export function DashboardSidebar() {
                 if (item.children) {
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <button
-                          onClick={() => setSettingsOpen((prev) => !prev)}
-                          className={`flex w-full items-center space-x-2 px-4 py-2 cursor-pointer ${
-                            isSettingsActive
-                              ? "font-bold text-black"
-                              : "text-gray-800"
-                          }`}
-                        >
-                          <item.icon />
-                          <span className="text-base">{item.title}</span>
-                        </button>
+                      <SidebarMenuButton
+                        onClick={() => setSettingsOpen((prev) => !prev)}
+                        className={`flex w-full items-center space-x-2 px-4 py-2 cursor-pointer ${
+                          isSettingsActive
+                            ? "font-bold text-black"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        <item.icon />
+                        <span className="text-base">{item.title}</span>
                       </SidebarMenuButton>
 
                       {settingsOpen && (
@@ -106,7 +106,7 @@ export function DashboardSidebar() {
                               <Link
                                 key={child.title}
                                 href={child.url}
-                                className={`flex items-center space-x-2 px-2 py-1 rounded hover:text-[hsl(172.5,_66%,_50.4%)] ${
+                                className={`flex items-center space-x-2 px-2 py-1 rounded hover:text-teal-400 ${
                                   isChildActive
                                     ? "font-semibold text-gray-700"
                                     : "text-gray-700"

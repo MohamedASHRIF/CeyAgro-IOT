@@ -1,5 +1,3 @@
-"use client";
-
 import { FC } from "react";
 import {
   DropdownMenu,
@@ -21,7 +19,7 @@ interface MenuItem {
   isActive?: boolean;
   isDropdown?: boolean;
   dropdownItems?: DropdownItem[];
-  route?: string;
+  route?: string; 
 }
 
 interface GreenHeaderProps {
@@ -39,19 +37,19 @@ const GreenHeader: FC<GreenHeaderProps> = ({ title, menuItems }) => {
 
       {/* Desktop Menu */}
       <nav className="hidden md:flex items-center space-x-4 mx-auto">
-        {menuItems.map((item, index) => {
+        {menuItems.map((item) => {
           if (item.isDropdown && item.dropdownItems) {
             return (
-              <DropdownMenu key={index}>
+              <DropdownMenu key={item.name}>
                 <DropdownMenuTrigger asChild>
-                  <Button className="rounded-none text-black font-medium">
+                  <Button className="rounded-none text-black text-md">
                     {item.name}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="rounded-none">
-                  {item.dropdownItems.map((subItem, subIndex) => (
+                  {item.dropdownItems.map((subItem) => (
                     <DropdownMenuItem
-                      key={subIndex}
+                      key={subItem.name}
                       onClick={subItem.onClick}
                       className="cursor-pointer"
                     >
@@ -65,13 +63,13 @@ const GreenHeader: FC<GreenHeaderProps> = ({ title, menuItems }) => {
 
           return (
             <Button
-              key={index}
+              key={item.name}
               variant="ghost"
               onClick={item.onClick}
               className={`rounded-none text-black text-md font-medium ${
                 item.isActive
-                  ? "bg-[hsl(172.5,_66%,_50.4%)] hover:bg-[hsl(172.5,_66%,_50.4%)]"
-                  : "hover:bg-gray-300"
+                  ? "bg-teal-400 hover:bg-teal-400"
+                  : "hover:bg-gray-200"
               }`}
             >
               {item.name}
@@ -84,16 +82,21 @@ const GreenHeader: FC<GreenHeaderProps> = ({ title, menuItems }) => {
       <div className="md:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-none">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-none"
+              aria-label="Menu"
+            >
               <Menu className="w-5 h-5 text-black" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white text-black rounded-none">
-            {menuItems.flatMap((item, index) =>
+            {menuItems.map((item) =>
               item.isDropdown && item.dropdownItems
-                ? item.dropdownItems.map((subItem, subIndex) => (
+                ? item.dropdownItems.map((subItem) => (
                     <DropdownMenuItem
-                      key={`${index}-${subIndex}`}
+                      key={subItem.name}
                       onClick={subItem.onClick}
                     >
                       {subItem.name}
@@ -101,7 +104,7 @@ const GreenHeader: FC<GreenHeaderProps> = ({ title, menuItems }) => {
                   ))
                 : [
                     <DropdownMenuItem
-                      key={index}
+                      key={item.name}
                       onClick={item.onClick}
                       className={item.isActive ? "bg-gray-100" : ""}
                     >
