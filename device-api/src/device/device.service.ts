@@ -52,6 +52,8 @@ export class DeviceService implements OnModuleInit {
     private notificationsService: NotificationsService,
   ) {}
 
+  
+
   async onModuleInit() {
     const changeStream = this.deviceDataModel.watch();
     changeStream.on('change', async (change) => {
@@ -71,9 +73,7 @@ export class DeviceService implements OnModuleInit {
     });
     changeStream.on('error', (error) => {
       console.error('ChangeStream error:', error);
-    });
-  }
-
+ //Process and store data from kafka
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
     console.log(`Received message from topic ${topic}:`, data);
@@ -92,10 +92,12 @@ export class DeviceService implements OnModuleInit {
     return { status: 'processed', data: deviceData };
   }
 
+  //Retrieve data 
   async getDeviceData(name: string) {
     return this.deviceDataModel.find({ name }).sort({ createdAt: -1 }).exec();
   }
 
+  //Get most recent data for a device
   async getLatestDeviceData(name: string) {
     return this.deviceDataModel
       .findOne({ name })
