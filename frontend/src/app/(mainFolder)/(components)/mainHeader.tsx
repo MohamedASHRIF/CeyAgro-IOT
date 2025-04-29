@@ -109,8 +109,12 @@ export const DashboardHeader = () => {
 
       {/* Right: Notification + Avatar */}
       <div className="flex items-center gap-6 z-10 pr-4">
-        <button className="relative p-1 rounded-md" onClick={handleBellClick}>
-          <BellRing className="w-5 h-5 text-gray-500 hover:text-teal-600 transition-colors duration-200 cursor-pointer" />
+        <button
+          className="relative p-1 rounded-md"
+          onClick={handleBellClick}
+          aria-label="Notifications"
+        >
+          <BellRing className="w-5 h-5 text-gray-500 hover:text-teal-400 transition-colors duration-200 cursor-pointer" />
         </button>
 
         <div className="h-6 w-px bg-gray-300" />
