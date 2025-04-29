@@ -31,7 +31,7 @@ interface GreenHeaderProps {
 
 const GreenHeader: FC<GreenHeaderProps> = ({ title, menuItems }) => {
   return (
-    <header className="flex items-center justify-between px-4 h-12 shadow-lg bg-background">
+    <header className="flex items-center justify-between px-4 h-9 shadow-xl bg-background">
       {/* Mobile Title */}
       <div className="md:hidden">
         <h1 className="text-xl font-semibold text-black">{title}</h1>
@@ -68,9 +68,9 @@ const GreenHeader: FC<GreenHeaderProps> = ({ title, menuItems }) => {
               key={index}
               variant="ghost"
               onClick={item.onClick}
-              className={`rounded-none text-black font-medium ${
+              className={`rounded-none text-black text-md font-medium ${
                 item.isActive
-                  ? "bg-[hsl(172.5,_66%,_50.4%)]/40 hover:bg-[hsl(172.5,_66%,_50.4%)]/40"
+                  ? "bg-[hsl(172.5,_66%,_50.4%)] hover:bg-[hsl(172.5,_66%,_50.4%)]"
                   : "hover:bg-gray-300"
               }`}
             >
