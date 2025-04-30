@@ -29,6 +29,13 @@ export default function DeviceReports() {
     handleDeleteHistory,
     handleClearForm,
     isMounted,
+    confirmDelete, 
+    isDeleting, 
+    currentIndex, 
+    showConfirmDialog, 
+    setShowConfirmDialog,
+    deleteErrorMessage, 
+    handlePermanentDelete,
   } = useDeviceReports();
 
   if (!isMounted) {
@@ -86,7 +93,7 @@ export default function DeviceReports() {
         </CardContent>
       </Card>
 
-      {/* Download history section */}
+      {/* Download history section and delete selection */}
       <Card>
         <CardHeader>
           <CardTitle>Download History</CardTitle>
@@ -95,9 +102,19 @@ export default function DeviceReports() {
           <DownloadHistoryTable
             history={downloadHistory}
             onDelete={handleDeleteHistory}
+            confirmDelete={confirmDelete} 
+            isDeleting={isDeleting} 
+            currentIndex={currentIndex}
+            showConfirmDialog={showConfirmDialog} 
+            setShowConfirmDialog={setShowConfirmDialog} 
+            deleteErrorMessage={deleteErrorMessage} 
+            handlePermanentDelete={handlePermanentDelete} 
           />
         </CardContent>
       </Card>
     </div>
   );
 }
+
+
+

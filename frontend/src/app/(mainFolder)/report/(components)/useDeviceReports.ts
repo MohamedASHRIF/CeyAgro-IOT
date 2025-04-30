@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 interface DeviceData {
   id: string;
@@ -42,6 +43,10 @@ export function useDeviceReports() {
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([]);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   // Load download history from localStorage on mount
   useEffect(() => {
@@ -184,6 +189,7 @@ export function useDeviceReports() {
     }
   };
 
+  
   // Remove a specific history item from download history
   const handleDeleteHistory = (index: number) => {
     setDownloadHistory((prev) => {
@@ -196,6 +202,80 @@ export function useDeviceReports() {
       return updatedHistory;
     });
   };
+
+
+  // Extract S3 key from download URL
+  const extractS3KeyFromUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/');
+      const analyticsIndex = pathParts.findIndex(part => part === 'analytics');
+      if (analyticsIndex >= 0) {
+        return pathParts.slice(analyticsIndex).join('/');
+      }
+      return `analytics/${pathParts[pathParts.length - 1]}`;
+    } catch (error) {
+      console.error('Error extracting S3 key:', error);
+      const parts = url.split('/');
+      const filename = parts[parts.length - 1].split('?')[0];
+      return `analytics/${filename}`;
+    }
+  };
+
+  // Handle permanent file deletion
+  const handlePermanentDelete = async (index: number) => {
+    setCurrentIndex(index);
+    setIsDeleting(true);
+    setDeleteErrorMessage('');
+    
+    try {
+      const item = downloadHistory[index];
+      const s3Key = extractS3KeyFromUrl(item.downloadUrl);
+      console.log('Attempting to delete file with key:', s3Key);
+      
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/analytics/files`, 
+        { params: { key: s3Key } }
+      );
+      
+      if (response.data.success) {
+        handleDeleteHistory(index);
+        toast.success("File deleted", {
+          description: "The file has been permanently deleted",
+        });
+        setShowConfirmDialog(false); 
+      } else {
+        setDeleteErrorMessage(response.data.message || 'Failed to delete file');
+        toast.error("Error", {
+          description: response.data.message || 'Failed to delete file',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      let errorMessage = 'Failed to delete file';
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      }
+      setDeleteErrorMessage(errorMessage);
+      toast.error("Error", {
+        description: errorMessage,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+
+
+  // Handle opening confirmation dialog
+  const confirmDelete = (index: number) => {
+    setCurrentIndex(index);
+    setShowConfirmDialog(true);
+    setDeleteErrorMessage(''); // Clear error message when opening dialog
+  };
+
+
+
 
   // Reset all form and data states
   const handleClearForm = () => {
@@ -227,5 +307,18 @@ export function useDeviceReports() {
     handleDeleteHistory,
     handleClearForm,
     isMounted,
+    handlePermanentDelete,
+    confirmDelete,
+    isDeleting,
+    currentIndex,
+    showConfirmDialog,
+    setShowConfirmDialog,
+    deleteErrorMessage,
   };
 }
+
+
+
+
+
+
