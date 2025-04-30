@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException ,NotFoundException} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as AWS from 'aws-sdk';
 
@@ -6,14 +6,15 @@ import * as AWS from 'aws-sdk';
 export class S3Service {
   private s3: AWS.S3;
 
-
   // Constructor injects ConfigService to access environment variables
   constructor(private configService: ConfigService) {
     this.s3 = new AWS.S3({
       region: this.configService.get<string>('AWS_REGION'),
     });
   }
-//Uploads a file to an AWS S3 bucket and returns the file's location URL
+
+
+  //Uploads a file to an AWS S3 bucket and returns the file's location URL
   async uploadFile(
     buffer: Buffer,
     filename: string,
@@ -21,8 +22,11 @@ export class S3Service {
   ): Promise<string> {
     const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
     if (!bucketName) {
-      throw new InternalServerErrorException('AWS S3 bucket name is not defined');
+      throw new InternalServerErrorException(
+        'AWS S3 bucket name is not defined',
+      );
     }
+
     // Define S3 upload parameters
     const params = {
       Bucket: bucketName,
@@ -35,11 +39,14 @@ export class S3Service {
     const { Location } = await this.s3.upload(params).promise();
     return Location;
   }
-//Generates a pre-signed URL for accessing a file in the S3 bucket
+
+  //Generates a pre-signed URL for accessing a file in the S3 bucket
   getSignedUrl(key: string, expiresIn = 1800): string {
     const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
     if (!bucketName) {
-      throw new InternalServerErrorException('AWS S3 bucket name is not defined');
+      throw new InternalServerErrorException(
+        'AWS S3 bucket name is not defined',
+      );
     }
     // Generate and return a pre-signed URL for the specified file
     return this.s3.getSignedUrl('getObject', {
@@ -47,5 +54,65 @@ export class S3Service {
       Key: key,
       Expires: expiresIn,
     });
+  }
+
+  //Deletes a file from the AWS S3 bucket
+  async deleteFile(key: string): Promise<boolean> {
+    const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    if (!bucketName) {
+      throw new InternalServerErrorException(
+        'AWS S3 bucket name is not defined',
+      );
+    }
+    // Trim any whitespace from the key
+    key = key.trim();
+    console.log(
+      `Attempting to delete file with key: "${key}" from bucket: "${bucketName}"`,
+    );
+    try {
+      // List objects in the bucket with the prefix to check if file exists and get exact key
+      const listParams = {
+        Bucket: bucketName,
+        Prefix: key,
+      };
+      const listedObjects = await this.s3.listObjectsV2(listParams).promise();
+      console.log(
+        `Found ${listedObjects.Contents?.length || 0} objects with prefix "${key}"`,
+      );
+
+      if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+        throw new NotFoundException(
+          `File with key "${key}" not found in bucket "${bucketName}"`,
+        );
+      }
+      // Find exact match (if any)
+      const exactMatch = listedObjects.Contents.find((obj) => obj.Key === key);
+      if (!exactMatch) {
+        console.log(
+          'Available objects:',
+          listedObjects.Contents.map((obj) => obj.Key),
+        );
+        throw new NotFoundException(
+          `Exact file with key "${key}" not found in bucket "${bucketName}"`,
+        );
+      }
+      // Delete the file from S3
+      await this.s3
+        .deleteObject({
+          Bucket: bucketName,
+          Key: key,
+        })
+        .promise();
+      console.log(`Successfully deleted file with key: "${key}"`);
+      return true;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error(`Failed to delete file from S3: ${error.message}`, error);
+      throw new InternalServerErrorException(
+        `Failed to delete file from storage: ${error.message}`,
+      );
+    }
   }
 }

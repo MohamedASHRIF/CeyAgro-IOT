@@ -1,4 +1,15 @@
-import { Controller, NotFoundException, Post, Query, UsePipes, ValidationPipe, Get, Body } from '@nestjs/common';
+import {
+  Controller,
+  NotFoundException,
+  Post,
+  Query,
+  UsePipes,
+  ValidationPipe,
+  Get,
+  Body,
+  InternalServerErrorException,
+  Delete,
+} from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
@@ -8,9 +19,7 @@ import { KafkaContext } from '@nestjs/microservices';
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-
-
-//Kafka consumer for the 'iot.device.data' topic, processes incoming IoT data
+  //Kafka consumer for the 'iot.device.data' topic, processes incoming IoT data
   @MessagePattern('iot.device.data')
   handleIoTData(@Payload() data: any, @Ctx() context: KafkaContext) {
     return this.analyticsService.processIoTData(data, context);
@@ -26,7 +35,9 @@ export class AnalyticsController {
   //HTTP POST endpoint to simulate IoT data
   @Post('data')
   async simulateIoTData(@Body() data: any) {
-    const fakeKafkaContext = { getTopic: () => 'iot.device.data' } as KafkaContext;
+    const fakeKafkaContext = {
+      getTopic: () => 'iot.device.data',
+    } as KafkaContext;
     return this.analyticsService.processIoTData(data, fakeKafkaContext);
   }
 
@@ -35,7 +46,8 @@ export class AnalyticsController {
   @UsePipes(new ValidationPipe({ transform: true }))
   async exportData(@Query() queryDto: AnalyticsQueryDto) {
     try {
-      const result = await this.analyticsService.generateAndUploadReport(queryDto);
+      const result =
+        await this.analyticsService.generateAndUploadReport(queryDto);
       return {
         success: true,
         message: 'Report generated successfully',
@@ -68,7 +80,8 @@ export class AnalyticsController {
   @UsePipes(new ValidationPipe({ transform: true }))
   async getReadings(@Query() queryDto: AnalyticsQueryDto) {
     try {
-      const readings = await this.analyticsService.getReadingsByDeviceAndDate(queryDto);
+      const readings =
+        await this.analyticsService.getReadingsByDeviceAndDate(queryDto);
       return {
         success: true,
         message: 'Readings fetched successfully',
@@ -91,4 +104,39 @@ export class AnalyticsController {
     }
   }
 
+  //HTTP DELETE endpoint to delete the file
+  @Delete('files')
+  async deleteFileByQuery(@Query('key') key: string) {
+    try {
+      if (!key) {
+        return {
+          success: false,
+          message: 'File key is required',
+        };
+      }
+      // Decode the URL parameter and clean it up
+      key = decodeURIComponent(key).trim();
+
+      // For security, ensure the key starts with 'analytics/' to prevent deletion outside intended folder
+      if (!key.startsWith('analytics/')) {
+        key = `analytics/${key}`;
+      }
+
+      console.log(`Processing delete request for key: "${key}"`);
+      const result = await this.analyticsService.deleteReportFile(key);
+      return result;
+    } catch (error) {
+      console.error('Error in deleteFileByQuery controller:', error);
+      if (error instanceof NotFoundException) {
+        return {
+          success: false,
+          message: error.message,
+        };
+      }
+      return {
+        success: false,
+        message: `Error deleting file: ${error.message}`,
+      };
+    }
+  }
 }
