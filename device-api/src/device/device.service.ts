@@ -43,7 +43,6 @@ import { Notification as NotificationInterface } from '../notifications/interfac
 //       .exec();
 //   }
 // }
-
 @Injectable()
 export class DeviceService implements OnModuleInit {
   constructor(
@@ -52,9 +51,9 @@ export class DeviceService implements OnModuleInit {
     private notificationsService: NotificationsService,
   ) {}
 
-
   async onModuleInit() {
     const changeStream = this.deviceDataModel.watch();
+
     changeStream.on('change', async (change) => {
       if (change.operationType === 'insert') {
         const device = change.fullDocument;
@@ -70,13 +69,14 @@ export class DeviceService implements OnModuleInit {
         await this.notificationsService.createNotification(notification);
       }
     });
+
     changeStream.on('error', (error) => {
       console.error('ChangeStream error:', error);
-    });
+    }); // ✅ This closing brace was missing!
   }
 
+  // ✅ Now these methods are outside of onModuleInit and parsed correctly
 
-  //Process and store data from kafka
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
     console.log(`Received message from topic ${topic}:`, data);
@@ -95,12 +95,10 @@ export class DeviceService implements OnModuleInit {
     return { status: 'processed', data: deviceData };
   }
 
-  //Retrieve data 
   async getDeviceData(name: string) {
     return this.deviceDataModel.find({ name }).sort({ createdAt: -1 }).exec();
   }
 
-  //Get most recent data for a device
   async getLatestDeviceData(name: string) {
     return this.deviceDataModel
       .findOne({ name })

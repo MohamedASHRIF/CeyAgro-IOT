@@ -75,7 +75,7 @@ export const NotificationList: React.FC = () => {
     }
   };
 
-  //monitor token refresh
+  // monitor token refresh
   // const checkTokenRefresh = async () => {
   //   try {
   //     const permission = await Notification.requestPermission();
@@ -120,7 +120,7 @@ export const NotificationList: React.FC = () => {
     });
 
     // Periodically check for token refresh
-    const tokenCheckInterval = setInterval(checkTokenRefresh, 5 * 60 * 1000);
+    const tokenCheckInterval = setInterval(checkTokenRefresh, 1 * 60 * 1000);
 
     // Handle service worker messages for token refresh
     const handleServiceWorkerMessage = (event: MessageEvent) => {
