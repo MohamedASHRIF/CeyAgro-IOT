@@ -21,6 +21,7 @@ export class NotificationsService {
     private usersService: UsersService,
   ) {}
 
+  //create notifications
   async createNotification(
     notification: Partial<NotificationInterface>,
   ): Promise<NotificationInterface> {
@@ -29,6 +30,7 @@ export class NotificationsService {
       ...notification,
       _id: notificationId,
     });
+    // Save the notification to the database
     const saved: NotificationDocument = await newNotification.save();
     const result = {
       id: saved.id.toString(),
@@ -42,7 +44,7 @@ export class NotificationsService {
     // Emit WebSocket notification
     this.notificationsGateway.emitNotification(result);
 
-    // Send push notification
+    // get FCM token and Send push notification using firebase
     const fcmToken = await this.usersService.getFcmToken(result.userId);
     if (fcmToken) {
       try {
@@ -69,6 +71,7 @@ export class NotificationsService {
     return result;
   }
 
+  //Finds all notifications for a specific user, sorted by latest first
   async findAllByUserId(userId: string): Promise<NotificationInterface[]> {
     const notifications = await this.notificationModel
       .find({ userId })
@@ -83,6 +86,7 @@ export class NotificationsService {
     }));
   }
 
+  // Deletes a notification by its ID and notifies the frontend via WebSocket
   async deleteNotification(id: string): Promise<void> {
     await this.notificationModel.findByIdAndDelete(id).exec();
     console.log('Notification deleted, emitting notificationDeleted:', id);
