@@ -47,6 +47,7 @@ export function useDeviceReports() {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
+  const [showExpiredDialog, setShowExpiredDialog] = useState(false);
 
   // Load download history from localStorage on mount
   useEffect(() => {
@@ -171,9 +172,26 @@ export function useDeviceReports() {
       setGeneratingReport(false);
     }
   };
+// Function to check if the signed URL is expired (30 minutes = 1800 seconds)
+const isUrlExpired = (createdAt: string): boolean => {
+  try {
+    const createdDate = new Date(createdAt);
+    if (isNaN(createdDate.getTime())) return true; // Treat invalid dates as expired
+    const now = new Date();
+    const expiresInSeconds = 1800; // Matches backend's expiresIn
+    const timeDiffSeconds = (now.getTime() - createdDate.getTime()) / 1000;
+    return timeDiffSeconds > expiresInSeconds;
+  } catch {
+    return true; // Fallback to expired
+  }
+};
 
-  // Add report to download history and initiate download
-  const handleDownload = () => {
+// Handle download click with expiration check and history update
+const handleDownloadClick = (downloadUrl: string, createdAt: string): void => {
+  if (isUrlExpired(createdAt)) {
+    setShowExpiredDialog(true); // Show expiration alert
+  } else {
+    // Update download history
     if (downloadUrl && recordCount !== null) {
       const newHistoryItem: DownloadHistory = {
         filename: `device-report-${deviceName}-${new Date().toISOString().split('T')[0]}.xlsx`,
@@ -187,7 +205,15 @@ export function useDeviceReports() {
         setRecordCount(null);
       }, 1000);
     }
-  };
+    // Trigger download programmatically
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
 
   
   // Remove a specific history item from download history
@@ -271,7 +297,7 @@ export function useDeviceReports() {
   const confirmDelete = (index: number) => {
     setCurrentIndex(index);
     setShowConfirmDialog(true);
-    setDeleteErrorMessage(''); // Clear error message when opening dialog
+    setDeleteErrorMessage(''); 
   };
 
 
@@ -303,7 +329,7 @@ export function useDeviceReports() {
     downloadHistory,
     generatingReport,
     handleGenerateReport,
-    handleDownload,
+    handleDownloadClick,
     handleDeleteHistory,
     handleClearForm,
     isMounted,
@@ -314,6 +340,8 @@ export function useDeviceReports() {
     showConfirmDialog,
     setShowConfirmDialog,
     deleteErrorMessage,
+    showExpiredDialog,
+    setShowExpiredDialog,
   };
 }
 
