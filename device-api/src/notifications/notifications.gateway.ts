@@ -6,12 +6,17 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Notification as NotificationInterface } from './interfaces/notification.interface';
 
-@WebSocketGateway({ cors: { origin: 'http://localhost:3000' } })
+@WebSocketGateway({
+  cors: {
+    origin: () => process.env.FRONTEND_URL || 'http://localhost:3000',
+  },
+})
 export class NotificationsGateway {
   @WebSocketServer()
   server: Server;
 
   @SubscribeMessage('join')
+  //Clients connect and tell the server which user they are
   handleJoin(client: Socket, userId: string) {
     console.log('Client joined room:', userId);
     client.join(userId);
