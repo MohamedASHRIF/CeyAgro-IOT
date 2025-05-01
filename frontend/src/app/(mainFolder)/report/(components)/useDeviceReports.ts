@@ -176,13 +176,13 @@ export function useDeviceReports() {
 const isUrlExpired = (createdAt: string): boolean => {
   try {
     const createdDate = new Date(createdAt);
-    if (isNaN(createdDate.getTime())) return true; // Treat invalid dates as expired
+    if (isNaN(createdDate.getTime())) return true; 
     const now = new Date();
-    const expiresInSeconds = 1800; // Matches backend's expiresIn
+    const expiresInSeconds = 1800; 
     const timeDiffSeconds = (now.getTime() - createdDate.getTime()) / 1000;
     return timeDiffSeconds > expiresInSeconds;
   } catch {
-    return true; // Fallback to expired
+    return true; 
   }
 };
 
