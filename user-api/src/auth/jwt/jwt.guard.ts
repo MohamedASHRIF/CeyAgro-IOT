@@ -1,4 +1,3 @@
-// src/auth/jwt.guard.ts
 import {
   Injectable,
   CanActivate,
@@ -7,13 +6,14 @@ import {
 } from '@nestjs/common';
 import { auth } from 'express-oauth2-jwt-bearer';
 import { promisify } from 'util';
+import { authConfig } from '../../config/auth.config';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   private authorizeMiddleware = auth({
-    audience: 'https://nestjs.demo.com',
-    issuerBaseURL: 'https://dev-qd6kxifl4h1xzmzw.us.auth0.com/',
-    tokenSigningAlg: 'RS256',
+    audience: authConfig.auth0.audience,
+    issuerBaseURL: authConfig.auth0.issuerBaseURL,
+    tokenSigningAlg: authConfig.auth0.tokenSigningAlg,
   });
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

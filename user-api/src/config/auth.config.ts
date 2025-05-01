@@ -1,4 +1,3 @@
-// src/config/auth.config.ts
 export const authConfig = {
   auth0: {
     audience: process.env.AUTH0_AUDIENCE || 'https://nestjs.demo.com',
