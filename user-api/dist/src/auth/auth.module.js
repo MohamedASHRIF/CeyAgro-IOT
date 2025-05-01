@@ -13,7 +13,7 @@ const auth_controller_1 = require("./auth.controller");
 const user_service_1 = require("../user/user.service");
 const user_schema_1 = require("../user/schema/user.schema");
 const aws_module_1 = require("../../aws/aws.module");
-const jwt_guard_1 = require("./jwt.guard");
+const jwt_guard_1 = require("./jwt/jwt.guard");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;

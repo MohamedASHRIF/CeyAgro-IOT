@@ -10,11 +10,12 @@ exports.JwtGuard = void 0;
 const common_1 = require("@nestjs/common");
 const express_oauth2_jwt_bearer_1 = require("express-oauth2-jwt-bearer");
 const util_1 = require("util");
+const auth_config_1 = require("../../config/auth.config");
 let JwtGuard = class JwtGuard {
     authorizeMiddleware = (0, express_oauth2_jwt_bearer_1.auth)({
-        audience: 'https://nestjs.demo.com',
-        issuerBaseURL: 'https://dev-qd6kxifl4h1xzmzw.us.auth0.com/',
-        tokenSigningAlg: 'RS256',
+        audience: auth_config_1.authConfig.auth0.audience,
+        issuerBaseURL: auth_config_1.authConfig.auth0.issuerBaseURL,
+        tokenSigningAlg: auth_config_1.authConfig.auth0.tokenSigningAlg,
     });
     async canActivate(context) {
         const httpContext = context.switchToHttp();
