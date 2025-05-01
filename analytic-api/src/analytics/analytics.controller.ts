@@ -9,6 +9,7 @@ import {
   Body,
   InternalServerErrorException,
   Delete,
+  Param
 } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
@@ -139,4 +140,75 @@ export class AnalyticsController {
       };
     }
   }
+  // Visualization Endpoints
+// Retrieves real-time stats for a device by name and metric
+@Get('realtime/:name')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getRealtimeStats(
+  @Param('name') name: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+) {
+  try {
+    return await this.analyticsService.getRealtimeStats(name, metric);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch realtime stats',
+      data: null,
+    };
+  }
+}
+
+// Retrieves historical stats for a device within a date range
+@Get('history/:name')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getHistoricalStats(
+  @Param('name') name: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('startDate') startDate: string,
+  @Query('endDate') endDate: string,
+) {
+  try {
+    return await this.analyticsService.getHistoricalStats(name, metric, startDate, endDate);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch historical stats',
+      data: null,
+    };
+  }
+}
+
+// Retrieves aggregated stats (min, max, avg) for a device over a time range
+@Get('stats/:name')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getStats(
+  @Param('name') name: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('timeRange') timeRange: 'lastHour' | 'lastDay',
+) {
+  try {
+    return await this.analyticsService.getStats(name, metric, timeRange);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch stats',
+      data: null,
+    };
+  }
+}
+
+// Retrieves available metrics for a device
+@Get('metrics/:name')
+async getAvailableMetrics(@Param('name') name: string) {
+  try {
+    return await this.analyticsService.getAvailableMetrics(name);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch metrics',
+      data: null,
+    };
+  }
+}
 }

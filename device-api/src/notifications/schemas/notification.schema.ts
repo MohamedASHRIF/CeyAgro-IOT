@@ -14,7 +14,7 @@ export class Notification {
   // @Prop({ required: true })
   // userId: string;
 
-  @Prop()
+  @Prop({ default: 'user123' })
   userId: string;
 
   @Prop({ required: true })
