@@ -10,6 +10,7 @@ export class SnsService {
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
+    //if credentials are not found log an error
     if (!accessKeyId || !secretAccessKey) {
       this.logger.error(
         'AWS credentials are missing. Ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set in .env',
@@ -17,6 +18,7 @@ export class SnsService {
       throw new Error('AWS credentials are missing');
     }
 
+    //initialize the sns client
     this.sns = new SNS({
       region: 'eu-north-1',
       credentials: {
