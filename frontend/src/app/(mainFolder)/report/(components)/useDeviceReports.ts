@@ -297,7 +297,7 @@ const handleDownloadClick = (downloadUrl: string, createdAt: string): void => {
   const confirmDelete = (index: number) => {
     setCurrentIndex(index);
     setShowConfirmDialog(true);
-    setDeleteErrorMessage(''); // Clear error message when opening dialog
+    setDeleteErrorMessage(''); 
   };
 
 
