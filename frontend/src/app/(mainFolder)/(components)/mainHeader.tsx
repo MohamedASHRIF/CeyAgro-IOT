@@ -1,20 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { SunIcon, MoonIcon, BellRing } from "lucide-react";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const API_BASE = "http://localhost:3002/users";
+const API_BASE = "http://localhost:3002/user";
 
 export const DashboardHeader = () => {
   const [time, setTime] = useState(new Date());
   const [profileData, setProfileData] = useState<any>(null);
 
   const router = useRouter();
+
   const handleBellClick = () => {
     router.push("/notification");
   };
@@ -41,40 +42,25 @@ export const DashboardHeader = () => {
 
   const Icon = hour < 18 ? SunIcon : MoonIcon;
 
-  // Fetch short user data from API
+  // Fetch user info
   const { user, isLoading } = useUser();
 
   useEffect(() => {
-    if (!isLoading && user && typeof user.email === "string") {
-      const email = user.email;
-      console.log("Fetching profile for", email);
-
-      // Fetch user name and picture based on email
+    if (!isLoading && user?.email) {
       axios
-        .get(`${API_BASE}/profile-short/${encodeURIComponent(email)}`)
+        .get(`${API_BASE}/profile-short/${encodeURIComponent(user.email)}`)
         .then(({ data }) => {
-          console.log("email and img received:", data);
-          setProfileData(data); // Store the entire data object
+          console.log("Fetched profile data:", data); 
+          setProfileData(data);
         })
-        .catch((err) => {
-          console.error("Error fetching profile:", err);
-        });
+        .catch((err) => console.error("Failed to load profile:", err));
     }
   }, [isLoading, user]);
+  
 
-  // Debug: Check if profileData is being fetched correctly
-  console.log("Profile Data:", profileData);
-
-  // Function to check if the name is an email and return the part before @
   const getDisplayName = (name: string) => {
-    // Regular expression to check if the string looks like an email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-    // If name matches the email format, return the part before '@'
-    if (emailRegex.test(name)) {
-      return name.split("@")[0]; // Part before @
-    }
-    return name; // Otherwise, return the name as is
+    return emailRegex.test(name) ? name.split("@")[0] : name;
   };
 
   return (
@@ -86,25 +72,16 @@ export const DashboardHeader = () => {
 
       {/* Center: Greeting + Timestamp */}
       <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden sm:block">
-        <span className="text-md text-foreground font-semibold flex items-center gap-1">
-          <Icon
-            className={`w-4 h-4 ${
-              hour < 18 ? "text-yellow-400" : "text-blue-800"
-            }`}
-          />
-          {greeting},{" "}
-          {(() => {
-            if (!profileData || !profileData.name) return "User..."; // Fallback if profileData or name is missing
-
-            const name = profileData.name.trim();
-
-            // Debugging the value
-            console.log("Name:", name);
-
-            return getDisplayName(name); // Check if name is an email and return the part before @
-          })()}{" "}
-          | {formattedDate} | {formattedTime}
-        </span>
+        {profileData && profileData.name ? (
+          <span className="text-md text-foreground font-semibold flex items-center gap-1">
+            <Icon
+              className={`w-4 h-4 ${
+                hour < 18 ? "text-yellow-400" : "text-blue-800"
+              }`}
+            />
+            {greeting}, {getDisplayName(profileData.name)} | {formattedDate} | {formattedTime}
+          </span>
+        ) : null}
       </div>
 
       {/* Right: Notification + Avatar */}
@@ -131,18 +108,15 @@ export const DashboardHeader = () => {
               }
             }}
           >
-            {profileData?.picture && (
-              <AvatarImage
-                src={
-                  profileData.picture &&
-                  profileData.picture.startsWith("/uploads")
-                    ? `http://localhost:3002${profileData.picture}`
-                    : "/default.png"
-                }
-                className="border border-muted-foreground rounded-full"
-                alt="img"
-              />
-            )}
+            <AvatarImage
+              src={
+                profileData?.picture?.startsWith("/uploads")
+                  ? `http://localhost:3002${profileData.picture}`
+                  : "/default.png"
+              }
+              className="border border-muted-foreground rounded-full"
+              alt="User Profile"
+            />
           </Avatar>
         </Link>
       </div>
