@@ -85,28 +85,30 @@ export default function ProfilePage() {
       .max(12, "NIC must be at most 12 characters"),
   });
 
-  // Get display name based on business logic
   const getDisplayName = (data: ProfileData): string => {
-    if (data.name) {
+    if (data.name && data.name !== data.email) {
       return data.name;
     }
-    return data.nickname || data.email.split('@')[0];
+    return data.nickname || data.email.split("@")[0];
   };
 
-  // Fetch backend profile after getting a valid email
   useEffect(() => {
     if (!isLoading && user && typeof user.email === "string") {
       const fetchProfile = async () => {
         try {
           const email = user.email as string;
           console.log("Fetching profile for", email);
-          const { data } = await axios.get(`${API_BASE}/profile/${encodeURIComponent(email)}`);
-          
+          const { data } = await axios.get(
+            `${API_BASE}/profile/${encodeURIComponent(email)}`
+          );
+
           console.log("Profile data received:", data);
-          
-          // Ensure name is never empty
-          const profileName = data.name || data.nickname || data.email.split('@')[0];
-          
+
+          let profileName = data.name;
+          if (!profileName || profileName === data.email) {
+            profileName = data.nickname || data.email.split("@")[0];
+          }
+
           setProfileData({
             ...data,
             name: profileName,
@@ -140,8 +142,7 @@ export default function ProfilePage() {
     setIsUpdating(true);
     try {
       const formData = new FormData();
-      // Ensure we never send empty name
-      formData.append("name", values.name || values.email.split('@')[0]);
+      formData.append("name", values.name);
       formData.append("gender", values.gender);
       formData.append("nic", values.nic);
       formData.append("telephone", values.telephone);
@@ -154,8 +155,11 @@ export default function ProfilePage() {
         formData.append("picture", newPicture);
       }
 
-      console.log("Updating profile with data:", Object.fromEntries(formData.entries()));
-      
+      console.log(
+        "Updating profile with data:",
+        Object.fromEntries(formData.entries())
+      );
+
       const { data } = await axios.patch(
         `${API_BASE}/profile/${encodeURIComponent(values.email)}`,
         formData,
@@ -163,17 +167,14 @@ export default function ProfilePage() {
       );
 
       console.log("Update response:", data);
-      
-      // Ensure the name in state is never set to email if it's empty
-      const updatedName = data.name || data.nickname || values.email.split('@')[0];
-      
+
       setProfileData({
         ...data,
-        name: updatedName,
+        name: data.name,
       });
 
       form.reset({
-        name: updatedName,
+        name: data.name,
         email: data.email,
         gender: data.gender,
         nic: data.nic,
@@ -186,10 +187,8 @@ export default function ProfilePage() {
       setShowAlert(true);
       setIsEditing(false);
 
-      // Only reload if picture changed
-      if (newPicture) {
-        window.location.reload();
-      }
+      // Always reload after successful update
+      window.location.reload();
     } catch (err) {
       console.error("Error updating profile:", err);
       setAlertSuccess(false);
@@ -205,7 +204,10 @@ export default function ProfilePage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileData((prev: any) => ({ ...prev, picture: reader.result }));
+        setProfileData((prev: any) => ({
+          ...prev,
+          picture: reader.result as string,
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -225,9 +227,9 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="max-w-3xl mx-auto bg-[hsl(172.5,_66%,_50.4%)]">
+      <Card className="max-w-3xl mx-auto bg-teal-400">
         <CardHeader>
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 min-h-[400px]">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 min-h-[400px]">
             {/* Left Side */}
             <div className="flex flex-col items-center justify-center w-full md:w-1/3 h-full">
               <label
@@ -245,7 +247,6 @@ export default function ProfilePage() {
                       : "/default.png"
                   }
                   alt="Profile Picture"
-                  style={{ width: "160px", height: "160px" }}
                   className="object-cover w-full h-full rounded-full"
                 />
 
@@ -269,21 +270,24 @@ export default function ProfilePage() {
                   {getDisplayName(profileData)}
                 </h2>
                 <p className="text-md text-gray-800">{profileData.email}</p>
-                {!isEditing && (
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    onClick={handleEditToggle}
-                    className="bg-white text-black text-md cursor-pointer mt-10"
-                  >
-                    <Pencil className="h-4 w-4" /> Edit Profile
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className={`bg-white text-black text-md mt-4 md:mt-10 ${
+                    isEditing
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
+                  onClick={handleEditToggle}
+                  disabled={isEditing}
+                >
+                  <Pencil className="h-4 w-4 mr-2" /> Edit Profile
+                </Button>
               </div>
             </div>
             {/* Right Side - Form */}
             <div className="w-full md:w-2/3">
-              <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
                 <Form {...form}>
                   <form
                     className="space-y-4"
@@ -397,22 +401,22 @@ export default function ProfilePage() {
                       )}
                     />
                     {isEditing && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setIsEditing(false)}
-                          className="w-full"
+                          className="w-full sm:w-32"
                           disabled={isUpdating}
                         >
                           Cancel
                         </Button>
-                        <Button 
-                          type="submit" 
-                          className="w-full"
+                        <Button
+                          type="submit"
+                          className="w-full sm:w-32"
                           disabled={isUpdating}
                         >
-                          {isUpdating ? "Saving..." : "Save Changes"}
+                          {isUpdating ? "Saving..." : "Save"}
                         </Button>
                       </div>
                     )}

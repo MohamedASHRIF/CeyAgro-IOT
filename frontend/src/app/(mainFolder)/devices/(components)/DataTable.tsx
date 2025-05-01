@@ -144,8 +144,9 @@ export const columns: ColumnDef<Device>[] = [
     accessorKey: "deviceName",
     header: "Device Name",
     cell: ({ row }) => (
-      <Link 
-        href={`/devices/${row.original.id}`} 
+      <Link
+        href={`/devices/${row.original.id}`}
+        target="_blank"
         rel="noopener noreferrer"
         className="hover:underline"
       >
@@ -186,8 +187,11 @@ export const columns: ColumnDef<Device>[] = [
 
 export function DeviceTable() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
@@ -213,7 +217,7 @@ export function DeviceTable() {
   });
 
   // Get unique types for filter dropdown
-  const deviceTypes = Array.from(new Set(data.map(device => device.type)));
+  const deviceTypes = Array.from(new Set(data.map((device) => device.type)));
   const statusOptions = ["Active", "Inactive"];
 
   return (
@@ -223,7 +227,9 @@ export function DeviceTable() {
         <div className="w-full sm:w-auto">
           <Input
             placeholder="Filter by device name"
-            value={(table.getColumn("deviceName")?.getFilterValue() as string) ?? ""}
+            value={
+              (table.getColumn("deviceName")?.getFilterValue() as string) ?? ""
+            }
             onChange={(event) =>
               table.getColumn("deviceName")?.setFilterValue(event.target.value)
             }
@@ -241,7 +247,9 @@ export function DeviceTable() {
                 table.getColumn("type")?.setFilterValue(value);
               }
             }}
-            value={(table.getColumn("type")?.getFilterValue() as string) || "all"}
+            value={
+              (table.getColumn("type")?.getFilterValue() as string) || "all"
+            }
           >
             <SelectTrigger className="w-[180px] bg-white">
               <SelectValue placeholder="Filter by type" />
@@ -261,9 +269,13 @@ export function DeviceTable() {
         <div className="w-full sm:w-auto">
           <Select
             onValueChange={(value) => {
-              table.getColumn("status")?.setFilterValue(value === "all" ? undefined : value);
+              table
+                .getColumn("status")
+                ?.setFilterValue(value === "all" ? undefined : value);
             }}
-            value={(table.getColumn("status")?.getFilterValue() as string) || "all"}
+            value={
+              (table.getColumn("status")?.getFilterValue() as string) || "all"
+            }
           >
             <SelectTrigger className="w-[180px] bg-white">
               <SelectValue placeholder="Filter by status" />
@@ -292,9 +304,7 @@ export function DeviceTable() {
                   key={column.id}
                   className="capitalize"
                   checked={column.getIsVisible()}
-                  onCheckedChange={(value) =>
-                    column.toggleVisibility(!!value)
-                  }
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
                   {column.id}
                 </DropdownMenuCheckboxItem>
@@ -334,7 +344,10 @@ export function DeviceTable() {
                         key={cell.id}
                         className="text-center p-2 w-1/4"
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>

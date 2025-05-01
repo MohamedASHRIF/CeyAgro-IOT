@@ -8,15 +8,14 @@
 import { redirect } from "next/navigation";
 import { useUser } from "@auth0/nextjs-auth0/client";
 
-
 export default function Page() {
   const { user, isLoading } = useUser();
   if (isLoading)
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-12 h-12 border-4 border-[hsl(172.5,_66%,_50.4%)]  border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-teal-400  border-t-transparent rounded-full animate-spin" />
       </div>
-    );//loading spin
+    ); //loading spin
 
   if (user) {
     redirect("/dashboard");
