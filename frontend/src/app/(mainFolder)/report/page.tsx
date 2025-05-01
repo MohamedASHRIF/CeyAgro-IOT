@@ -25,7 +25,7 @@ export default function DeviceReports() {
     downloadHistory,
     generatingReport,
     handleGenerateReport,
-    handleDownload,
+    handleDownloadClick,
     handleDeleteHistory,
     handleClearForm,
     isMounted,
@@ -36,6 +36,8 @@ export default function DeviceReports() {
     setShowConfirmDialog,
     deleteErrorMessage, 
     handlePermanentDelete,
+    showExpiredDialog,
+    setShowExpiredDialog,
   } = useDeviceReports();
 
   if (!isMounted) {
@@ -63,13 +65,14 @@ export default function DeviceReports() {
           {/* Table displaying device data  */}
           <DeviceDataTable data={deviceData} loading={loading} error={error} />
 
-          {/* Button to generate or download the report */}
-          <div className="mt-4">
+         {/* Button to generate or download the report */}
+         <div className="mt-4 flex justify-center">
             {downloadUrl ? (
-              <Button asChild onClick={handleDownload}>
-                <a href={downloadUrl} download>
-                  Download Report
-                </a>
+              <Button
+                onClick={() => handleDownloadClick(downloadUrl, new Date().toISOString())}
+                className="w-full sm:w-auto"
+              >
+                Download Report
               </Button>
             ) : (
               <Button
@@ -77,6 +80,7 @@ export default function DeviceReports() {
                 disabled={
                   generatingReport || !deviceName || !startDate || !endDate
                 }
+                className="w-full sm:w-auto"
               >
                 {generatingReport ? (
                   <>
@@ -86,12 +90,12 @@ export default function DeviceReports() {
                 ) : (
                   "Generate Report"
                 )}
-              
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
+
 
       {/* Download history section and delete selection */}
       <Card>
@@ -109,6 +113,9 @@ export default function DeviceReports() {
             setShowConfirmDialog={setShowConfirmDialog} 
             deleteErrorMessage={deleteErrorMessage} 
             handlePermanentDelete={handlePermanentDelete} 
+            handleDownloadClick={handleDownloadClick}
+            showExpiredDialog={showExpiredDialog}
+            setShowExpiredDialog={setShowExpiredDialog}
           />
         </CardContent>
       </Card>
