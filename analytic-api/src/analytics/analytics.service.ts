@@ -226,4 +226,72 @@ export class AnalyticsService {
       );
     }
   }
+  // Visualization Methods
+// Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
+async getRealtimeStats(name: string, metric: 'temperature' | 'humidity') {
+  const latest = await this.deviceModel
+    .findOne({ name })
+    .sort({ date: -1, _id: -1 })
+    .select('name temperatureValue humidityValue date');
+  if (!latest) {
+    return {
+      name: name,
+      metric,
+      value: 0,
+      timestamp: new Date().toISOString(),
+    };
+  }
+  return {
+    name: latest.name,
+    metric,
+    value: metric === 'temperature' ? latest.temperatureValue ?? 0 : latest.humidityValue ?? 0,
+    timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
+  };
+}
+
+// Retrieves historical stats for a device within a specified date range
+async getHistoricalStats(name: string, metric: 'temperature' | 'humidity', startDate: string, endDate: string) {
+  const data = await this.deviceModel
+    .find({
+      name,
+      date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+    })
+    .select('name temperatureValue humidityValue date');
+  if (!data || data.length === 0) {
+    return [];
+  }
+  return data.map(item => ({
+    name: item.name,
+    metric,
+    value: metric === 'temperature' ? item.temperatureValue ?? 0 : item.humidityValue ?? 0,
+    timestamp: item.date ? item.date.toISOString() : new Date().toISOString(),
+  }));
+}
+
+// Retrieves aggregated stats (min, max, avg) for a device over a time range (lastHour or lastDay)
+async getStats(name: string, metric: 'temperature' | 'humidity', timeRange: string) {
+  const now = new Date();
+  const startDate = new Date(
+    now.getTime() - (timeRange === 'lastHour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000),
+  );
+  const data = await this.deviceModel
+    .find({
+      name,
+      date: { $gte: startDate, $lte: now },
+    })
+    .select('temperatureValue humidityValue');
+  const values = data
+    .map(item => (metric === 'temperature' ? item.temperatureValue : item.humidityValue))
+    .filter((value): value is number => value !== undefined);
+  return {
+    min: values.length > 0 ? Math.min(...values) : 0,
+    max: values.length > 0 ? Math.max(...values) : 0,
+    avg: values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0,
+  };
+}
+
+// Returns the available metrics for a device 
+async getAvailableMetrics(name: string) {
+  return ['temperature', 'humidity'];
+}
 }
