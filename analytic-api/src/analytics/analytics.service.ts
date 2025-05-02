@@ -138,10 +138,10 @@ export class AnalyticsService {
       query.name = queryDto.name;
     }
     if (queryDto.temperatureValue) {
-      query.value = queryDto.temperatureValue;
+      query.tempValue = queryDto.temperatureValue;
     }
     if (queryDto.humidityValue) {
-      query.value = queryDto.humidityValue;
+      query.humidityValue = queryDto.humidityValue;
     }
     if (queryDto.location) {
       query.location = queryDto.location;
