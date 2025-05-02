@@ -26,23 +26,11 @@ export const NotificationList: React.FC = () => {
     "BPLGOtyyZvSjlT06sF_GUfdSjgV-AI8RNIuZtskSDKcl0i4vN-zatt1x5RJImPTF66qhnje13S1LgxjLlbT1kUg";
 
   //fetch existing notifications
-  // const fetchNotifications = async () => {
-  //   try {
-  //     const response = await fetch(
-  //       `http://localhost:3001/notifications/${userId}`
-  //     );
-  //     const data = await response.json();
-  //     setNotifications(data);
-  //   } catch (error) {
-  //     console.error("Error fetching notifications:", error);
-  //   }
-  // };
-
   const fetchNotifications = async () => {
     try {
       console.log("Fetching notifications for user:", userId);
       const response = await fetch(
-        `http://localhost:3001/notifications/${userId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/${userId}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -60,7 +48,7 @@ export const NotificationList: React.FC = () => {
     try {
       console.log("Sending FCM token to backend:", token);
       const response = await fetch(
-        `http://localhost:3001/users/${userId}/fcm-token`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}/fcm-token`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,22 +63,7 @@ export const NotificationList: React.FC = () => {
     }
   };
 
-  // monitor token refresh
-  // const checkTokenRefresh = async () => {
-  //   try {
-  //     const permission = await Notification.requestPermission();
-  //     if (permission === "granted") {
-  //       const newToken = await getToken(messaging, { vapidKey });
-  //       if (newToken !== fcmToken && newToken) {
-  //         console.log("FCM token changed:", newToken);
-  //         sendFcmTokenToBackend(newToken);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error checking FCM token:", error);
-  //   }
-  // };
-
+  //monitior token refresh
   const checkTokenRefresh = async () => {
     try {
       const permission = await Notification.requestPermission();
@@ -153,7 +126,7 @@ export const NotificationList: React.FC = () => {
 
     // WebSocket setup
     console.log("Establishing WebSocket connection");
-    socketRef.current = io("http://localhost:3001");
+    socketRef.current = io(`${process.env.NEXT_PUBLIC_BACKEND_URL}`);
     const socket = socketRef.current;
 
     socket.on("connect", () => {

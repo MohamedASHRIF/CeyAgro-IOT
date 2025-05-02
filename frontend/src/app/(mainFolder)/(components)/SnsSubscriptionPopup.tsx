@@ -12,6 +12,7 @@ export default function SnsSubscriptionPopup() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasSentRequest = useRef(false);
 
+  //If the user is logged out it resets these states
   useEffect(() => {
     if (!user) {
       hasSentRequest.current = false;
@@ -23,6 +24,7 @@ export default function SnsSubscriptionPopup() {
     }
   }, [user]);
 
+  //send SNS subscription email based on subscription status
   useEffect(() => {
     if (user && !hasSentRequest.current) {
       hasSentRequest.current = true;
@@ -40,7 +42,7 @@ export default function SnsSubscriptionPopup() {
       }
 
       axios
-        .post("http://localhost:3001/auth/login", {
+        .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`, {
           email: normalizedEmail,
           name: user.name || user.nickname || "Unknown",
         })
@@ -71,24 +73,27 @@ export default function SnsSubscriptionPopup() {
     }
   }, [user]);
 
+  //automatically dismissing error messages after a delay
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => {
         setErrorMessage(null);
-      }, 10000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
 
+  //specifically manages the popup-related error message(dismiss after delay)
   useEffect(() => {
     if (popupError) {
       const timer = setTimeout(() => {
         setPopupError(null);
-      }, 10000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [popupError]);
 
+  // controls when to automatically close the SNS subscription popup after the user has confirmed their subscription.
   useEffect(() => {
     if (popupMessage && !popupError && popupMessage.includes("confirmed")) {
       const timer = setTimeout(() => {
@@ -100,6 +105,9 @@ export default function SnsSubscriptionPopup() {
     }
   }, [popupMessage, popupError]);
 
+  //Verifies that the user is logged in.
+  // Sends a confirmation request to the backend with the user’s email.
+  // Updates the UI based on success or failure
   const handleConfirmSubscription = async () => {
     if (!user) {
       setPopupError("You must be logged in to confirm your subscription.");
@@ -110,7 +118,7 @@ export default function SnsSubscriptionPopup() {
       const normalizedEmail = user.email?.toLowerCase();
       console.log(`Sending confirmation request for ${normalizedEmail}`);
       const response = await axios.post(
-        "http://localhost:3001/auth/confirm-subscription",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/confirm-subscription`,
         { email: normalizedEmail }
       );
       console.log("Confirmation response:", response.data);
@@ -158,7 +166,7 @@ export default function SnsSubscriptionPopup() {
               <div className="flex justify-center gap-4">
                 <button
                   onClick={handleConfirmSubscription}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  className="bg-green-400 text-black px-4 py-2 rounded hover:bg-green-500"
                 >
                   Confirm Subscription
                 </button>

@@ -37,7 +37,8 @@ let SnsService = SnsService_1 = class SnsService {
             this.logger.log(`Subscribing ${email} to SNS topic`);
             const params = {
                 Protocol: 'email',
-                TopicArn: 'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
+                TopicArn: process.env.SNS_TOPIC_ARN ||
+                    'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
                 Endpoint: email,
             };
             const response = await this.sns.subscribe(params).promise();
@@ -52,7 +53,8 @@ let SnsService = SnsService_1 = class SnsService {
         try {
             this.logger.log(`Sending subscription email to ${email}`);
             const params = {
-                TopicArn: 'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
+                TopicArn: process.env.SNS_TOPIC_ARN ||
+                    'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
                 Message: JSON.stringify({
                     default: `Welcome ${name}!`,
                     email: {
@@ -80,7 +82,8 @@ let SnsService = SnsService_1 = class SnsService {
         try {
             this.logger.log(`Sending login success email to ${email}`);
             const params = {
-                TopicArn: 'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
+                TopicArn: process.env.SNS_TOPIC_ARN ||
+                    'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
                 Message: JSON.stringify({
                     default: `Login Successful for ${name}`,
                     email: {

@@ -17,6 +17,7 @@ export class SnsService {
       throw new Error('AWS credentials are missing');
     }
 
+    //Initializes the SNS client with region and credentials
     this.sns = new SNS({
       region: 'eu-north-1',
       credentials: {
@@ -27,12 +28,15 @@ export class SnsService {
     this.logger.log('SNS client initialized successfully');
   }
 
+  //Subscribes the given email address to an AWS SNS topic
   async subscribeEmail(email: string): Promise<void> {
     try {
       this.logger.log(`Subscribing ${email} to SNS topic`);
       const params = {
         Protocol: 'email',
-        TopicArn: 'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
+        TopicArn:
+          process.env.SNS_TOPIC_ARN ||
+          'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
         Endpoint: email,
       };
       const response = await this.sns.subscribe(params).promise();
@@ -47,11 +51,14 @@ export class SnsService {
     }
   }
 
+  //Sends subscription email to user
   async sendSubscriptionEmail(email: string, name: string): Promise<void> {
     try {
       this.logger.log(`Sending subscription email to ${email}`);
       const params = {
-        TopicArn: 'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
+        TopicArn:
+          process.env.SNS_TOPIC_ARN ||
+          'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
         Message: JSON.stringify({
           default: `Welcome ${name}!`,
           email: {
@@ -79,11 +86,14 @@ export class SnsService {
     }
   }
 
+  //Sends an email to notify the user that they successfully logged in
   async sendLoginSuccessEmail(email: string, name: string): Promise<void> {
     try {
       this.logger.log(`Sending login success email to ${email}`);
       const params = {
-        TopicArn: 'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
+        TopicArn:
+          process.env.SNS_TOPIC_ARN ||
+          'arn:aws:sns:eu-north-1:911167929681:aws-sns-auth',
         Message: JSON.stringify({
           default: `Login Successful for ${name}`,
           email: {

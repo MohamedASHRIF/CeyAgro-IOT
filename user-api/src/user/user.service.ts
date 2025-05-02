@@ -7,6 +7,7 @@ import { User } from './schema/user.schema';
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
+  //Finding or creating users on login
   async findOrCreateUser(email: string, name: string): Promise<User> {
     const normalizedEmail = email.toLowerCase();
     try {
@@ -51,6 +52,7 @@ export class UserService {
         return updatedUser;
       }
 
+      //if user doesn't exist Logs that no user was found, so we’re going to create one
       console.log(`Creating new user for ${normalizedEmail}`);
       const newUser = new this.userModel({
         email: normalizedEmail,
@@ -78,6 +80,7 @@ export class UserService {
     }
   }
 
+  //Tracks user activity on each login and increment login count
   async incrementLoginCount(email: string): Promise<User> {
     const normalizedEmail = email.toLowerCase();
     try {
@@ -107,6 +110,7 @@ export class UserService {
     }
   }
 
+  //Keeps SNS subscription state in sync with AWS SNS
   async updateSubscriptionStatus(
     email: string,
     status: string,
