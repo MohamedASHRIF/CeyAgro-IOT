@@ -15,10 +15,10 @@ export class SnsService {
       this.logger.error(
         'AWS credentials are missing. Ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set in .env',
       );
-      throw new Error('AWS credentials are missing');
+      throw new Error('AWS credentials are missing...');
     }
 
-    //initialize the sns client
+    //Initializes the SNS client with region and credentials.
     this.sns = new SNS({
       region: 'eu-north-1',
       credentials: {
