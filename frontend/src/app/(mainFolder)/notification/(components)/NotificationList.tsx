@@ -38,11 +38,12 @@ export const NotificationList: React.FC = () => {
   //   }
   // };
 
+  //fetch existing notifications
   const fetchNotifications = async () => {
     try {
       console.log("Fetching notifications for user:", userId);
       const response = await fetch(
-        `http://localhost:3001/notifications/${userId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/${userId}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -60,7 +61,7 @@ export const NotificationList: React.FC = () => {
     try {
       console.log("Sending FCM token to backend:", token);
       const response = await fetch(
-        `http://localhost:3001/users/${userId}/fcm-token`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}/fcm-token`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -91,6 +92,7 @@ export const NotificationList: React.FC = () => {
   //   }
   // };
 
+  //monitior token refresh
   const checkTokenRefresh = async () => {
     try {
       const permission = await Notification.requestPermission();
@@ -153,7 +155,7 @@ export const NotificationList: React.FC = () => {
 
     // WebSocket setup
     console.log("Establishing WebSocket connection");
-    socketRef.current = io("http://localhost:3001");
+    socketRef.current = io(`${process.env.NEXT_PUBLIC_BACKEND_URL}`);
     const socket = socketRef.current;
 
     socket.on("connect", () => {

@@ -20,9 +20,12 @@ export const NotificationBox: React.FC<NotificationBoxProps> = ({
 }) => {
   const handleDelete = async () => {
     try {
-      await fetch(`http://localhost:3001/notifications/${notification.id}`, {
-        method: "DELETE",
-      });
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/${notification.id}`,
+        {
+          method: "DELETE",
+        }
+      );
       // State update is handled in NotificationList via WebSocket or refetch
     } catch (error) {
       console.error("Error deleting notification:", error);
