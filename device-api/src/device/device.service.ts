@@ -19,8 +19,6 @@ export class DeviceService implements OnModuleInit {
     private notificationsService: NotificationsService,
   ) {}
 
- 
-
   async onModuleInit() {
     const changeStream = this.deviceDataModel.watch();
 
@@ -42,10 +40,6 @@ export class DeviceService implements OnModuleInit {
 
     changeStream.on('error', (error) => {
       console.error('ChangeStream error:', error);
-    }); 
-  }
-
-  
 
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();

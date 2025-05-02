@@ -11,7 +11,6 @@ const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const auth_module_1 = require("./auth/auth.module");
-const protected_module_1 = require("./protected/protected.module");
 const aws_module_1 = require("../aws/aws.module");
 const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
@@ -22,15 +21,13 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             auth_module_1.AuthModule,
-            protected_module_1.ProtectedModule,
             aws_module_1.AwsModule,
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 envFilePath: '.env',
                 ignoreEnvFile: false,
             }),
-            mongoose_1.MongooseModule.forRoot(process.env.MONGO_URI ||
-                'mongodb+srv://wecode49:medXoomxMqjMz4ow@cluster0.4cf5g7r.mongodb.net/users_db?retryWrites=true&w=majority&appName=Cluster0'),
+            mongoose_1.MongooseModule.forRoot(process.env.MONGO_URI),
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
