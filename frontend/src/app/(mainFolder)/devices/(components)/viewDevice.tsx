@@ -43,42 +43,35 @@ const DevicePage = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSuccess, setAlertSuccess] = useState(true);
 
+  // Sample device data
+  const sampleDeviceData = {
+    dname: "Temperator Sensor 1",
+    serialNumber: "SN-2023-8472",
+    model: "ESP-2000X",
+    type: "temperatorSensor",
+    manufacturer: "SensorTech Inc.",
+    seller: "IoT Devices Co.",
+    measurementParameter: "Temperator",
+    measurementUnit: "K",
+    minThreshold: "20",
+    maxThreshold: "80",
+    description:
+      "Professional-grade environmental sensor for temperator monitoring with high accuracy and reliability. Suitable for industrial and laboratory use.",
+    picture: "/placeholder-device.jpg",
+  };
+
   const form = useForm({
-    defaultValues: {
-      dname: "",
-      serialNumber: "",
-      model: "", // Added model field
-      type: "",
-      manufacturer: "",
-      seller: "",
-      measurementParameter: "",
-      measurementUnit: "",
-      minThreshold: "",
-      maxThreshold: "",
-      description: "",
-    },
+    defaultValues: sampleDeviceData,
   });
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3002/users/full-profile/amali@example.com"
-        );
-        const data = await response.json();
-        setUser(data);
-        // Update form values with device data when available
-        form.setValue("dname", data.dname || "");
-        form.setValue("serialNumber", data.serialNumber || "");
-        form.setValue("model", data.model || ""); // Initialize model field
-        form.setValue("type", data.type || "");
-        form.setValue("manufacturer", data.manufacturer || "");
-        form.setValue("seller", data.seller || "");
-        form.setValue("measurementParameter", data.measurementParameter || "");
-        form.setValue("measurementUnit", data.measurementUnit || "");
-        form.setValue("minThreshold", data.minThreshold || "");
-        form.setValue("maxThreshold", data.maxThreshold || "");
-        form.setValue("description", data.description || "");
+        // Simulate API call with timeout
+        setTimeout(() => {
+          setUser(sampleDeviceData);
+          form.reset(sampleDeviceData);
+        }, 500);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -95,17 +88,7 @@ const DevicePage = () => {
     setIsEditing(false);
     // Reset form values to original user data
     if (user) {
-      form.setValue("dname", user.dname || "");
-      form.setValue("serialNumber", user.serialNumber || "");
-      form.setValue("model", user.model || "");
-      form.setValue("type", user.type || "");
-      form.setValue("manufacturer", user.manufacturer || "");
-      form.setValue("seller", user.seller || "");
-      form.setValue("measurementParameter", user.measurementParameter || "");
-      form.setValue("measurementUnit", user.measurementUnit || "");
-      form.setValue("minThreshold", user.minThreshold || "");
-      form.setValue("maxThreshold", user.maxThreshold || "");
-      form.setValue("description", user.description || "");
+      form.reset(user);
     }
   };
 
@@ -114,7 +97,7 @@ const DevicePage = () => {
       const formData = new FormData();
       formData.append("dname", values.dname);
       formData.append("serialNumber", values.serialNumber);
-      formData.append("model", values.model); // Include model in form data
+      formData.append("model", values.model);
       formData.append("type", values.type);
       formData.append("manufacturer", values.manufacturer);
       formData.append("seller", values.seller);
@@ -135,32 +118,21 @@ const DevicePage = () => {
         console.log(`${key}: ${value}`);
       }
 
-      // send PATCH request to backend
-      const response = await axios.patch(
-        `http://localhost:3002/devices/${values.serialNumber}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      // Simulate API response
+      setTimeout(() => {
+        const updatedData = {
+          ...values,
+          picture: fileInput?.files?.[0]
+            ? URL.createObjectURL(fileInput.files[0])
+            : user.picture,
+        };
 
-      console.log("Response:", response.data);
-
-      // Update device data with returned data
-      setUser((prev: any) => ({
-        ...prev,
-        ...response.data,
-        picture: fileInput?.files?.[0]
-          ? URL.createObjectURL(fileInput.files[0])
-          : response.data.pictureUrl || prev.picture,
-      }));
-
-      setIsEditing(false);
-      setAlertSuccess(true);
-      setAlertMessage("Device updated successfully!");
-      setShowAlert(true);
+        setUser(updatedData);
+        setIsEditing(false);
+        setAlertSuccess(true);
+        setAlertMessage("Device updated successfully!");
+        setShowAlert(true);
+      }, 1000);
     } catch (error) {
       console.error("Error saving changes:", error);
       setAlertSuccess(false);
@@ -182,12 +154,6 @@ const DevicePage = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  useEffect(() => {
-    if (user && user.picture) {
-      console.log(user.picture);
-    }
-  }, [user]);
 
   if (!user)
     return (
@@ -222,8 +188,10 @@ const DevicePage = () => {
                 />
               </label>
 
-              <div className="flex flex-col items-center mt-6 space-y-2">
-                <h2 className="text-2xl font-bold text-black">{user.dname}</h2>
+              <div className="flex flex-col items-center justify-center mt-6 space-y-2">
+                <h2 className="text-xl font-bold text-black text-center">
+                  {user.dname}
+                </h2>
 
                 <Button
                   variant="ghost"
@@ -283,7 +251,7 @@ const DevicePage = () => {
                         )}
                       />
 
-                      {/* Model - Added this new field */}
+                      {/* Model */}
                       <FormField
                         name="model"
                         render={({ field }) => (
