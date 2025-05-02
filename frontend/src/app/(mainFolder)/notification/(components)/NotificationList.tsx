@@ -26,19 +26,6 @@ export const NotificationList: React.FC = () => {
     "BPLGOtyyZvSjlT06sF_GUfdSjgV-AI8RNIuZtskSDKcl0i4vN-zatt1x5RJImPTF66qhnje13S1LgxjLlbT1kUg";
 
   //fetch existing notifications
-  // const fetchNotifications = async () => {
-  //   try {
-  //     const response = await fetch(
-  //       `http://localhost:3001/notifications/${userId}`
-  //     );
-  //     const data = await response.json();
-  //     setNotifications(data);
-  //   } catch (error) {
-  //     console.error("Error fetching notifications:", error);
-  //   }
-  // };
-
-  //fetch existing notifications
   const fetchNotifications = async () => {
     try {
       console.log("Fetching notifications for user:", userId);
@@ -75,22 +62,6 @@ export const NotificationList: React.FC = () => {
       console.error("Error sending FCM token to backend:", error);
     }
   };
-
-  // monitor token refresh
-  // const checkTokenRefresh = async () => {
-  //   try {
-  //     const permission = await Notification.requestPermission();
-  //     if (permission === "granted") {
-  //       const newToken = await getToken(messaging, { vapidKey });
-  //       if (newToken !== fcmToken && newToken) {
-  //         console.log("FCM token changed:", newToken);
-  //         sendFcmTokenToBackend(newToken);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error checking FCM token:", error);
-  //   }
-  // };
 
   //monitior token refresh
   const checkTokenRefresh = async () => {
