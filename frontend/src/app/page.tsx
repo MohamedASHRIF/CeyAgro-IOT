@@ -1,10 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, UserContext } from "@auth0/nextjs-auth0/client";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 export default function Page() {
-  const { user, isLoading, error }: UserContext = useUser();
+  const {
+    user,
+    isLoading,
+    error,
+  }: { user?: any; isLoading: boolean; error?: Error | null | undefined } =
+    useUser();
   const router = useRouter();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
