@@ -40,7 +40,7 @@ export const DashboardHeader = () => {
     day: "numeric",
   });
 
-  const Icon = hour < 18 ? SunIcon : MoonIcon;
+  const Icon = hour < 15 ? SunIcon : MoonIcon;
 
   // Fetch user info
   const { user, isLoading } = useUser();
@@ -76,7 +76,7 @@ export const DashboardHeader = () => {
           <span className="text-md text-foreground font-semibold flex items-center gap-1">
             <Icon
               className={`w-4 h-4 ${
-                hour < 18 ? "text-yellow-400" : "text-blue-800"
+                hour < 15 ? "text-yellow-400" : "text-blue-800"
               }`}
             />
             {greeting}, {getDisplayName(profileData.name)} | {formattedDate} | {formattedTime}
