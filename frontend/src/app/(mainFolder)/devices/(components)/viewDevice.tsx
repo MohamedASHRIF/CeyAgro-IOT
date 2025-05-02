@@ -48,7 +48,7 @@ const DevicePage = () => {
     dname: "Temperator Sensor 1",
     serialNumber: "SN-2023-8472",
     model: "ESP-2000X",
-    type: "temperatorSensor",
+    type: "Temperature Sensor",
     manufacturer: "SensorTech Inc.",
     seller: "IoT Devices Co.",
     measurementParameter: "Temperator",
