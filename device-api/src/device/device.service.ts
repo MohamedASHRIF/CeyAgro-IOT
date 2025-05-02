@@ -12,7 +12,7 @@ import { Notification as NotificationInterface } from '../notifications/interfac
 export class DeviceService implements OnModuleInit {
 
   private readonly logger = new Logger(DeviceService.name);
-  
+
   constructor(
     @InjectModel(DeviceData.name)
     private deviceDataModel: Model<DeviceDataDocument>,
@@ -40,6 +40,8 @@ export class DeviceService implements OnModuleInit {
 
     changeStream.on('error', (error) => {
       console.error('ChangeStream error:', error);
+    });
+  }
 
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
