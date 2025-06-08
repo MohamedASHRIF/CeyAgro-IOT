@@ -31,7 +31,7 @@ export default function SnsSubscriptionPopup() {
       const normalizedEmail = user.email?.toLowerCase();
       console.log("Sending login request:", {
         email: normalizedEmail,
-        name: user.name,
+        //name: user.name,
         user_id: user.sub,
       });
 
