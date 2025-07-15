@@ -11,6 +11,110 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { UsersService } from '../users/users.service';
 import mongoose from 'mongoose';
 
+// @Injectable()
+// export class NotificationsService {
+//   constructor(
+//     @InjectModel(Notification.name)
+//     private notificationModel: Model<NotificationDocument>,
+//     private notificationsGateway: NotificationsGateway,
+//     private firebaseService: FirebaseService,
+//     private usersService: UsersService,
+//   ) {}
+
+//   //create notifications
+//   async createNotification(
+//     notification: Partial<NotificationInterface>,
+//   ): Promise<NotificationInterface> {
+//     const notificationId = new mongoose.Types.ObjectId().toString();
+//     const newNotification = new this.notificationModel({
+//       ...notification,
+//       _id: notificationId,
+//     });
+//     // Save the notification to the database
+//     const saved: NotificationDocument = await newNotification.save();
+//     const result = {
+//       id: saved.id.toString(),
+//       title: saved.title,
+//       message: saved.message,
+//       userId: saved.userId,
+//       timestamp: saved.timestamp,
+//     };
+//     console.log('Notification created:', result);
+
+//     // Emit WebSocket notification
+//     this.notificationsGateway.emitNotification(result);
+
+//     // get FCM token and Send push notification using firebase
+//     const fcmToken = await this.usersService.getFcmToken(result.userId);
+//     if (fcmToken) {
+//       try {
+//         await this.firebaseService.sendPushNotification(
+//           fcmToken,
+//           result.title,
+//           result.message,
+//           { notificationId: result.id },
+//         );
+//       } catch (error) {
+//         console.error(
+//           `Failed to send push notification for user ${result.userId}:`,
+//           error,
+//         );
+//         // Optionally, remove invalid token
+//         if (error.code === 'messaging/registration-token-not-registered') {
+//           await this.usersService.updateFcmToken(result.userId, null);
+//           console.log(`Cleared invalid FCM token for user ${result.userId}`);
+//         }
+//       }
+//     } else {
+//       console.log(`No FCM token found for user ${result.userId}`);
+//     }
+
+//     return result;
+//   }
+
+//   //Finds all notifications for a specific user, sorted by latest first
+//   async findAllByUserId(userId: string): Promise<NotificationInterface[]> {
+//     const notifications = await this.notificationModel
+//       .find({ userId })
+//       .sort({ timestamp: -1 })
+//       .exec();
+//     //   return notifications.map((notification) => ({
+//     //     id: notification.id.toString(),
+//     //     title: notification.title,
+//     //     message: notification.message,
+//     //     userId: notification.userId,
+//     //     timestamp: notification.timestamp,
+//     //   }));
+//     // }
+//     return notifications
+//       .map((notification, index) => {
+//         if (!notification.id) {
+//           console.warn(
+//             `Notification at index ${index} for user ${userId} has no id:`,
+//             notification,
+//           );
+//           return null; // Skip notifications with missing id
+//         }
+//         return {
+//           id: notification.id.toString(),
+//           title: notification.title,
+//           message: notification.message,
+//           userId: notification.userId,
+//           timestamp: notification.timestamp,
+//         };
+//       })
+//       .filter((notification) => notification !== null); // Remove null entries
+//   }
+
+//   // Deletes a notification by its ID and notifies the frontend via WebSocket
+//   async deleteNotification(id: string): Promise<void> {
+//     await this.notificationModel.findByIdAndDelete(id).exec();
+//     console.log('Notification deleted, emitting notificationDeleted:', id);
+//     this.notificationsGateway.emitNotificationDeleted(id);
+//   }
+// }
+
+// notifications.service.ts
 @Injectable()
 export class NotificationsService {
   constructor(
@@ -21,7 +125,6 @@ export class NotificationsService {
     private usersService: UsersService,
   ) {}
 
-  //create notifications
   async createNotification(
     notification: Partial<NotificationInterface>,
   ): Promise<NotificationInterface> {
@@ -30,7 +133,6 @@ export class NotificationsService {
       ...notification,
       _id: notificationId,
     });
-    // Save the notification to the database
     const saved: NotificationDocument = await newNotification.save();
     const result = {
       id: saved.id.toString(),
@@ -39,26 +141,30 @@ export class NotificationsService {
       userId: saved.userId,
       timestamp: saved.timestamp,
     };
-    console.log('Notification created:', result);
+    console.log(`Notification created: ${JSON.stringify(result)}`);
 
     // Emit WebSocket notification
+    console.log(`Emitting WebSocket notification: ${result.id}`);
     this.notificationsGateway.emitNotification(result);
 
-    // get FCM token and Send push notification using firebase
+    // Get FCM token and send push notification using Firebase
     const fcmToken = await this.usersService.getFcmToken(result.userId);
     if (fcmToken) {
       try {
+        console.log(
+          `Sending Firebase notification to ${fcmToken}: ${result.id}`,
+        );
         await this.firebaseService.sendPushNotification(
           fcmToken,
           result.title,
           result.message,
+          { notificationId: result.id },
         );
       } catch (error) {
         console.error(
           `Failed to send push notification for user ${result.userId}:`,
           error,
         );
-        // Optionally, remove invalid token
         if (error.code === 'messaging/registration-token-not-registered') {
           await this.usersService.updateFcmToken(result.userId, null);
           console.log(`Cleared invalid FCM token for user ${result.userId}`);
@@ -71,25 +177,34 @@ export class NotificationsService {
     return result;
   }
 
-  //Finds all notifications for a specific user, sorted by latest first
   async findAllByUserId(userId: string): Promise<NotificationInterface[]> {
     const notifications = await this.notificationModel
       .find({ userId })
       .sort({ timestamp: -1 })
       .exec();
-    return notifications.map((notification) => ({
-      id: notification.id.toString(),
-      title: notification.title,
-      message: notification.message,
-      userId: notification.userId,
-      timestamp: notification.timestamp,
-    }));
+    return notifications
+      .map((notification, index) => {
+        if (!notification.id) {
+          console.warn(
+            `Notification at index ${index} for user ${userId} has no id:`,
+            notification,
+          );
+          return null;
+        }
+        return {
+          id: notification.id.toString(),
+          title: notification.title,
+          message: notification.message,
+          userId: notification.userId,
+          timestamp: notification.timestamp,
+        };
+      })
+      .filter((notification) => notification !== null);
   }
 
-  // Deletes a notification by its ID and notifies the frontend via WebSocket
   async deleteNotification(id: string): Promise<void> {
     await this.notificationModel.findByIdAndDelete(id).exec();
-    console.log('Notification deleted, emitting notificationDeleted:', id);
+    console.log(`Notification deleted, emitting notificationDeleted: ${id}`);
     this.notificationsGateway.emitNotificationDeleted(id);
   }
 }
