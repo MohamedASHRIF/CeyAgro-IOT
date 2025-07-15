@@ -148,10 +148,19 @@ export const NotificationList: React.FC = () => {
     });
 
     socket.on("notificationDeleted", (id: string) => {
-      console.log("Received notificationDeleted:", id);
-      setNotifications((prev) =>
-        prev.filter((notification) => notification.id !== id)
-      );
+      console.log("Received notificationDeleted event with id:", id);
+      console.log("Current notifications:", notifications);
+      setNotifications((prev) => {
+        const updatedNotifications = prev.filter((notification) => {
+          const match = notification.id !== id;
+          if (!match) {
+            console.log(`Removing notification with id: ${id}`);
+          }
+          return match;
+        });
+        console.log("Updated notifications:", updatedNotifications);
+        return updatedNotifications;
+      });
     });
 
     socket.on("disconnect", () => {
