@@ -60,11 +60,13 @@ export function HistoryChart({
     ).toISOString();
     const endDate = now.toISOString();
 
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+
     // Fetch historical data from the API
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/history/${deviceId}?metric=${metric}&startDate=${startDate}&endDate=${endDate}`
+          `${API_BASE}/analytics/history/${deviceId}?metric=${metric}&startDate=${startDate}&endDate=${endDate}`
         );
         const data = response.data;
         console.log("HistoryChart API response:", data);

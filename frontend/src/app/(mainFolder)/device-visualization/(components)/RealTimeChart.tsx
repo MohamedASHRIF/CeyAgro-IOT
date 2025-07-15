@@ -57,11 +57,13 @@ export function RealTimeChart({
   // Relevant: Ensures new data is only added if timestamp changes
   const [lastTimestamp, setLastTimestamp] = useState<string | null>(null);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+
   // Fetches the latest data from the API
   const fetchLatestData = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/analytics/realtime/${deviceId}?metric=${metric}`
+        `${API_BASE}/analytics/realtime/${deviceId}?metric=${metric}`
       );
       const data = response.data;
       console.log("RealTimeChart API response:", data);
@@ -132,7 +134,7 @@ export function RealTimeChart({
     const interval = setInterval(async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/realtime/${deviceId}?metric=${metric}`
+          `${API_BASE}/analytics/realtime/${deviceId}?metric=${metric}`
         );
         const data = response.data;
         console.log("RealTimeChart polling response:", data);

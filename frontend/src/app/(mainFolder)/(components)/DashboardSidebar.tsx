@@ -14,8 +14,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { login, logout } from "../../../../actions/auth";
-import { getSession } from "@auth0/nextjs-auth0";
 
 import {
   Sidebar,
@@ -50,8 +48,6 @@ const items = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const session = getSession();
-  const isAuthenticated = !!session;
 
   // Determine if any settings children match the current route
   const isAnySettingsChildActive = items
@@ -154,26 +150,14 @@ export function DashboardSidebar() {
         <SidebarFooter className="mt-auto">
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              {/* <Link
+              <Link
                 href="/api/auth/login"
                 className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
                 onClick={() => setSettingsOpen(false)}
               >
                 <LogOutIcon />
                 <span className="text-base">Logout</span>
-              </Link> */}
-
-              {isAuthenticated && (
-                <form action={logout}>
-                  <button
-                    type="submit"
-                    className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
-                  >
-                    <LogOutIcon />
-                    <span className="text-base">Logout</span>
-                  </button>
-                </form>
-              )}
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarFooter>

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Pencil, BarChart } from "lucide-react";
-import axios from "axios";
 
 import {
   AlertDialog,
@@ -48,6 +47,7 @@ const DevicePage = () => {
     description:
       "Professional-grade environmental sensor for temperature monitoring with high accuracy and reliability. Suitable for industrial and laboratory use.",
     picture: "/placeholder-device.jpg",
+    isActive: true,
   };
 
   const form = useForm({
@@ -89,6 +89,7 @@ const DevicePage = () => {
       formData.append("measurementUnit", values.measurementUnit);
       formData.append("location", values.location);
       formData.append("description", values.description);
+      formData.append("isActive", values.isActive ? "true" : "false");
 
       const fileInput = document.getElementById("picture") as HTMLInputElement;
       if (fileInput?.files?.[0]) {
@@ -164,11 +165,23 @@ const DevicePage = () => {
                 />
               </label>
 
-              <div className="flex flex-col items-center justify-center mt-6 space-y-2">
-                <h2 className="text-xl font-bold text-black text-center">
-                  {user.dname}
-                </h2>
-                <div className="flex gap-2">
+              <div className="flex flex-col items-start w-full mt-6 px-2">
+                <h2 className="text-2xl font-bold text-black">{user.dname}</h2>
+                <div
+                  className={`mt-2 inline-flex items-center gap-3 px-3 py-1 rounded-full font-semibold
+                  ${user.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                    }`}
+                >
+                  <span
+                    className={`h-4 w-4 rounded-full ${user.isActive ? "bg-green-600" : "bg-red-600"
+                      }`}
+                  />
+                  <span>{user.isActive ? "Active" : "Inactive"}</span>
+                </div>
+
+                <div className="flex gap-2 mt-4">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -286,6 +299,7 @@ const DevicePage = () => {
                         )}
                       />
                     </div>
+
                     <FormField
                       name="location"
                       render={({ field }) => (
@@ -336,15 +350,11 @@ const DevicePage = () => {
       <AlertDialog open={showAlert} onOpenChange={(isOpen) => setShowAlert(isOpen)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {alertSuccess ? "Success!" : "Error!"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{alertSuccess ? "Success!" : "Error!"}</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogDescription>{alertMessage}</AlertDialogDescription>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowAlert(false)}>
-              Close
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setShowAlert(false)}>Close</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => setShowAlert(false)}
               className={alertSuccess ? "bg-black" : "bg-red-500"}
