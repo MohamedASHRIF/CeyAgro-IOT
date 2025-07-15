@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit,Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { KafkaContext } from '@nestjs/microservices';
@@ -7,10 +7,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import mongoose from 'mongoose';
 import { Notification as NotificationInterface } from '../notifications/interfaces/notification.interface';
 
-
 @Injectable()
 export class DeviceService implements OnModuleInit {
-
   private readonly logger = new Logger(DeviceService.name);
 
   constructor(
@@ -45,7 +43,9 @@ export class DeviceService implements OnModuleInit {
 
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
-    this.logger.log(`Received message from topic ${topic}: ${JSON.stringify(data)}`);
+    this.logger.log(
+      `Received message from topic ${topic}: ${JSON.stringify(data)}`,
+    );
 
     try {
       const deviceData = new this.deviceDataModel({
@@ -62,7 +62,10 @@ export class DeviceService implements OnModuleInit {
       this.logger.log(`Saved device data for ${data.name} to MongoDB`);
       return { status: 'processed', data: deviceData };
     } catch (error) {
-      this.logger.error(`Failed to process IoT data for ${data.name}`, error.stack);
+      this.logger.error(
+        `Failed to process IoT data for ${data.name}`,
+        error.stack,
+      );
       throw new Error(`Failed to save device data: ${error.message}`);
     }
   }

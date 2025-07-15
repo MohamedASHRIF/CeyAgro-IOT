@@ -18,15 +18,23 @@ interface NotificationBoxProps {
 export const NotificationBox: React.FC<NotificationBoxProps> = ({
   notification,
 }) => {
+  // NotificationBox.tsx
   const handleDelete = async () => {
     try {
-      await fetch(
+      console.log("Sending DELETE request for notification:", notification.id);
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/${notification.id}`,
         {
           method: "DELETE",
         }
       );
-      // State update is handled in NotificationList via WebSocket or refetch
+      if (!response.ok) {
+        throw new Error(
+          `Failed to delete notification. Status: ${response.status}`
+        );
+      }
+      console.log("Notification deleted successfully:", notification.id);
+      // State update is handled in NotificationList via WebSocket
     } catch (error) {
       console.error("Error deleting notification:", error);
     }

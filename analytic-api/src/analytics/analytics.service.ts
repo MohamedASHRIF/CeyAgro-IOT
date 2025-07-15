@@ -29,9 +29,10 @@ export class AnalyticsService {
     // Create a new DeviceData document with fields from the Kafka message
     const deviceData = new this.deviceModel({
       name: data.name,
+      deviceId: data.deviceId, // new field
       temperatureValue: data.temperatureValue,
       humidityValue: data.humidityValue,
-      location: data.location,
+      // location: data.location, // removed
       isActive: data.isActive ?? true,
       date: data.date ? new Date(data.date) : new Date(),
       topic: topic,
@@ -228,20 +229,21 @@ export class AnalyticsService {
   }
   // Visualization Methods
 // Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
-async getRealtimeStats(name: string, metric: 'temperature' | 'humidity') {
+async getRealtimeStats(deviceId: string, metric: 'temperature' | 'humidity') {
   const latest = await this.deviceModel
-    .findOne({ name })
+    .findOne({ deviceId })
     .sort({ date: -1, _id: -1 })
-    .select('name temperatureValue humidityValue date');
+    .select('name deviceId temperatureValue humidityValue date');
   if (!latest) {
     return {
-      name: name,
+      deviceId: deviceId,
       metric,
       value: 0,
       timestamp: new Date().toISOString(),
     };
   }
   return {
+    deviceId: latest.deviceId,
     name: latest.name,
     metric,
     value: metric === 'temperature' ? latest.temperatureValue ?? 0 : latest.humidityValue ?? 0,
@@ -250,17 +252,18 @@ async getRealtimeStats(name: string, metric: 'temperature' | 'humidity') {
 }
 
 // Retrieves historical stats for a device within a specified date range
-async getHistoricalStats(name: string, metric: 'temperature' | 'humidity', startDate: string, endDate: string) {
+async getHistoricalStats(deviceId: string, metric: 'temperature' | 'humidity', startDate: string, endDate: string) {
   const data = await this.deviceModel
     .find({
-      name,
+      deviceId,
       date: { $gte: new Date(startDate), $lte: new Date(endDate) },
     })
-    .select('name temperatureValue humidityValue date');
+    .select('name deviceId temperatureValue humidityValue date');
   if (!data || data.length === 0) {
     return [];
   }
   return data.map(item => ({
+    deviceId: item.deviceId,
     name: item.name,
     metric,
     value: metric === 'temperature' ? item.temperatureValue ?? 0 : item.humidityValue ?? 0,
@@ -269,14 +272,14 @@ async getHistoricalStats(name: string, metric: 'temperature' | 'humidity', start
 }
 
 // Retrieves aggregated stats (min, max, avg) for a device over a time range (lastHour or lastDay)
-async getStats(name: string, metric: 'temperature' | 'humidity', timeRange: string) {
+async getStats(deviceId: string, metric: 'temperature' | 'humidity', timeRange: string) {
   const now = new Date();
   const startDate = new Date(
     now.getTime() - (timeRange === 'lastHour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000),
   );
   const data = await this.deviceModel
     .find({
-      name,
+      deviceId,
       date: { $gte: startDate, $lte: now },
     })
     .select('temperatureValue humidityValue');
@@ -291,7 +294,8 @@ async getStats(name: string, metric: 'temperature' | 'humidity', timeRange: stri
 }
 
 // Returns the available metrics for a device 
-async getAvailableMetrics(name: string) {
+async getAvailableMetrics(deviceId: string) {
+  // Optionally, you could check if the device exists by deviceId
   return ['temperature', 'humidity'];
 }
 }
