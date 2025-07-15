@@ -20,6 +20,8 @@ export class DeviceData {
   @Prop()
   date: Date;
 
+  @Prop({ required: true })
+  deviceId: string;
 
   @Prop()
   topic: string;
