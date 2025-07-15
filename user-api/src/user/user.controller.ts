@@ -44,4 +44,18 @@ export class UserController {
       picture: profile.picture,
     };
   }
+
+   //get id by email
+ @Get('id-by-email/:email')
+async getUserIdByEmail(@Param('email') email: string) {
+  try {
+    console.log('Fetching user ID for email:', email);
+    const userId = await this.userService.getUserIdByEmail(email);
+    return { userId };
+  } catch (error) {
+    console.error('Error in getUserIdByEmail:', error);
+    throw error;
+  }
+}
+
 }

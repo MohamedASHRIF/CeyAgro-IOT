@@ -323,6 +323,14 @@ export class UserService {
       picture: user.picture,
     };
   }
+  async getUserIdByEmail(email: string): Promise<string> {
+  const user = await this.userModel.findOne({ email }).exec();
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+  return user.user_id; // Make sure user_id exists in your schema
+}
+
 
   // ==================== AUTH0 & USER MANAGEMENT METHODS ====================
 

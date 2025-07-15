@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Pencil } from "lucide-react";
+import { Pencil, BarChart } from "lucide-react";
 import axios from "axios";
 
 import {
@@ -28,14 +28,6 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
 const DevicePage = () => {
   const [user, setUser] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -43,20 +35,18 @@ const DevicePage = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSuccess, setAlertSuccess] = useState(true);
 
-  // Sample device data
   const sampleDeviceData = {
+    id: "d002",
     dname: "Temperator Sensor 1",
     serialNumber: "SN-2023-8472",
-    model: "ESP-2000X",
     type: "Temperature Sensor",
-    manufacturer: "SensorTech Inc.",
-    seller: "IoT Devices Co.",
     measurementParameter: "Temperator",
     measurementUnit: "K",
     minThreshold: "20",
     maxThreshold: "80",
+    location: "Factory Floor A",
     description:
-      "Professional-grade environmental sensor for temperator monitoring with high accuracy and reliability. Suitable for industrial and laboratory use.",
+      "Professional-grade environmental sensor for temperature monitoring with high accuracy and reliability. Suitable for industrial and laboratory use.",
     picture: "/placeholder-device.jpg",
   };
 
@@ -67,7 +57,6 @@ const DevicePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Simulate API call with timeout
         setTimeout(() => {
           setUser(sampleDeviceData);
           form.reset(sampleDeviceData);
@@ -86,7 +75,6 @@ const DevicePage = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form values to original user data
     if (user) {
       form.reset(user);
     }
@@ -96,31 +84,20 @@ const DevicePage = () => {
     try {
       const formData = new FormData();
       formData.append("dname", values.dname);
-      formData.append("serialNumber", values.serialNumber);
-      formData.append("model", values.model);
       formData.append("type", values.type);
-      formData.append("manufacturer", values.manufacturer);
-      formData.append("seller", values.seller);
       formData.append("measurementParameter", values.measurementParameter);
       formData.append("measurementUnit", values.measurementUnit);
-      formData.append("minThreshold", values.minThreshold);
-      formData.append("maxThreshold", values.maxThreshold);
+      formData.append("location", values.location);
       formData.append("description", values.description);
 
-      // Append the image if it exists
       const fileInput = document.getElementById("picture") as HTMLInputElement;
       if (fileInput?.files?.[0]) {
         formData.append("picture", fileInput.files[0]);
       }
 
-      // Log FormData content to check
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-
-      // Simulate API response
       setTimeout(() => {
         const updatedData = {
+          ...user,
           ...values,
           picture: fileInput?.files?.[0]
             ? URL.createObjectURL(fileInput.files[0])
@@ -158,7 +135,7 @@ const DevicePage = () => {
   if (!user)
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-12 h-12 border-4 border-teal-400  border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-teal-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
 
@@ -167,7 +144,6 @@ const DevicePage = () => {
       <Card className="max-w-3xl mx-auto bg-teal-400">
         <CardHeader>
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8 min-h-[400px]">
-            {/* Left Side - Device Image Section */}
             <div className="flex flex-col items-center justify-center w-full md:w-1/3 h-full">
               <label
                 htmlFor="picture"
@@ -192,273 +168,148 @@ const DevicePage = () => {
                 <h2 className="text-xl font-bold text-black text-center">
                   {user.dname}
                 </h2>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleEditToggle}
-                  className="text-black bg-white cursor-pointer flex items-center gap-2"
-                  disabled={isEditing}
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit Device
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditToggle}
+                    className="text-black bg-white cursor-pointer flex items-center gap-2"
+                    disabled={isEditing}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit Device
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-black bg-white cursor-pointer flex items-center gap-2"
+                    onClick={() => alert("Visualize Device Clicked")}
+                  >
+                    <BarChart className="h-4 w-4" />
+                    Visualize
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Right Side - Form Section */}
             <div className="w-full md:w-2/3">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <Form {...form}>
-                  <form
-                    className="space-y-4"
-                    onSubmit={form.handleSubmit(handleSave)}
-                  >
+                  <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Device Name */}
+                      <FormField
+                        name="id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Device ID</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         name="dname"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Device Name</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
+                              <Input {...field} disabled={!isEditing} />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Serial Number */}
                       <FormField
                         name="serialNumber"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Serial Number</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
+                              <Input {...field} disabled />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Model */}
-                      <FormField
-                        name="model"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Model</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Device Type */}
                       <FormField
                         name="type"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Device Type</FormLabel>
                             <FormControl>
-                              {isEditing ? (
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select sensor type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="temperatureSensor">
-                                      Temperature Sensor
-                                    </SelectItem>
-                                    <SelectItem value="pressureSensor">
-                                      Pressure Sensor
-                                    </SelectItem>
-                                    <SelectItem value="proximitySensor">
-                                      Proximity Sensor
-                                    </SelectItem>
-                                    <SelectItem value="motionSensor">
-                                      Motion Sensor
-                                    </SelectItem>
-                                    <SelectItem value="lightSensor">
-                                      Light Sensor
-                                    </SelectItem>
-                                    <SelectItem value="soundSensor">
-                                      Sound Sensor
-                                    </SelectItem>
-                                    <SelectItem value="gasSensor">
-                                      Gas Sensor
-                                    </SelectItem>
-                                    <SelectItem value="humiditySensor">
-                                      Humidity Sensor
-                                    </SelectItem>
-                                    <SelectItem value="touchSensor">
-                                      Touch Sensor
-                                    </SelectItem>
-                                    <SelectItem value="magneticSensor">
-                                      Magnetic Sensor
-                                    </SelectItem>
-                                    <SelectItem value="imageSensor">
-                                      Image Sensor
-                                    </SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Input {...field} disabled />
-                              )}
+                              <Input {...field} disabled={!isEditing} />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Manufacturer */}
-                      <FormField
-                        name="manufacturer"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Manufacturer</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Seller */}
-                      <FormField
-                        name="seller"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Seller</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Measurement Parameter */}
                       <FormField
                         name="measurementParameter"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Measurement Parameter</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
+                              <Input {...field} disabled={!isEditing} />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Measurement Unit */}
                       <FormField
                         name="measurementUnit"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Measurement Unit</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
+                              <Input {...field} disabled={!isEditing} />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Min Threshold */}
                       <FormField
                         name="minThreshold"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Min Threshold</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
+                              <Input {...field} disabled />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Max Threshold */}
                       <FormField
                         name="maxThreshold"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Max Threshold</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                className="mt-2"
-                                disabled={!isEditing}
-                              />
+                              <Input {...field} disabled />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+                    <FormField
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditing} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Description */}
                     <FormField
                       name="description"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Textarea
-                              {...field}
-                              className="mt-2"
-                              disabled={!isEditing}
-                              rows={4}
-                            />
+                            <Textarea {...field} rows={4} disabled={!isEditing} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    {/* Save and Cancel buttons */}
                     {isEditing && (
                       <div className="flex gap-4 justify-center">
                         <Button type="submit" className="w-full sm:w-32">
@@ -482,11 +333,7 @@ const DevicePage = () => {
         </CardHeader>
       </Card>
 
-      {/* Alert dialog */}
-      <AlertDialog
-        open={showAlert}
-        onOpenChange={(isOpen) => setShowAlert(isOpen)}
-      >
+      <AlertDialog open={showAlert} onOpenChange={(isOpen) => setShowAlert(isOpen)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>

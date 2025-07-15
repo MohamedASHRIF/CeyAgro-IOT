@@ -148,6 +148,7 @@ async function bootstrap() {
         // User profile routes
         /^\/user\/profile.*/,
         /^\/uploads\/.*/,
+         /^\/user\/id-by-email.*/,
       ],
     }),
   );
