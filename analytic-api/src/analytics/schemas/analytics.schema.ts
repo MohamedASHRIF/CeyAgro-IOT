@@ -14,8 +14,8 @@ export class DeviceData {
   @Prop({ type: Number })
   humidityValue: number; 
   
-  @Prop()
-  location: string;
+  @Prop({ required: true })
+  deviceId: string;
 
   @Prop({ default: true })
   isActive: boolean;
