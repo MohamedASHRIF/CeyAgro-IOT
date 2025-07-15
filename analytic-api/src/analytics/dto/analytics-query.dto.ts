@@ -7,6 +7,11 @@ export class AnalyticsQueryDto {
 
   @IsOptional()
   @IsString()
+  readonly name?: string;
+
+
+  @IsOptional()
+  @IsString()
   readonly temperatureValue?: string;
 
   @IsOptional()

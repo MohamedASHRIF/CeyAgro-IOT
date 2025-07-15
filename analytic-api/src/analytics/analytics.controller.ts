@@ -9,12 +9,33 @@ import {
   Body,
   InternalServerErrorException,
   Delete,
-  Param
+  Param,
+  ForbiddenException,
+  Req
 } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
 import { KafkaContext } from '@nestjs/microservices';
+// @ts-ignore
+import axios from 'axios';
+import { Request } from 'express';
+
+// Helper to get userId from JWT (assume req.user is populated by JWT middleware)
+function getUserIdFromRequest(req: Request): string | null {
+  // @ts-ignore
+  return (req.user as any)?.sub || null;
+}
+// Helper to get deviceIds for a user from device-api
+async function getUserDeviceIds(userId: string): Promise<string[]> {
+  const deviceApiUrl = process.env.DEVICE_API_URL || 'http://localhost:3001/device-user/devices';
+  const response = await axios.get(deviceApiUrl, { params: { userId } });
+  // The response data structure: { success: true, count: N, data: [...] }
+  if (response.data && Array.isArray(response.data.data)) {
+    return response.data.data.map((item: any) => item.userDevice.deviceId);
+  }
+  return [];
+}
 
 @Controller('analytics')
 export class AnalyticsController {
@@ -87,7 +108,7 @@ export class AnalyticsController {
         success: true,
         message: 'Readings fetched successfully',
         data: {
-          deviceName: queryDto.name,
+          deviceId: queryDto.deviceId,
           startDate: queryDto.startDate,
           endDate: queryDto.endDate,
           readings,
@@ -147,7 +168,12 @@ export class AnalyticsController {
 async getRealtimeStats(
   @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
+  @Req() req: Request,
 ) {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) throw new ForbiddenException('User not authenticated');
+  const userDeviceIds = await getUserDeviceIds(userId);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
     return await this.analyticsService.getRealtimeStats(deviceId, metric);
   } catch (error) {
@@ -167,7 +193,12 @@ async getHistoricalStats(
   @Query('metric') metric: 'temperature' | 'humidity',
   @Query('startDate') startDate: string,
   @Query('endDate') endDate: string,
+  @Req() req: Request,
 ) {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) throw new ForbiddenException('User not authenticated');
+  const userDeviceIds = await getUserDeviceIds(userId);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
     return await this.analyticsService.getHistoricalStats(deviceId, metric, startDate, endDate);
   } catch (error) {
@@ -186,7 +217,12 @@ async getStats(
   @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
   @Query('timeRange') timeRange: 'lastHour' | 'lastDay',
+  @Req() req: Request,
 ) {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) throw new ForbiddenException('User not authenticated');
+  const userDeviceIds = await getUserDeviceIds(userId);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
     return await this.analyticsService.getStats(deviceId, metric, timeRange);
   } catch (error) {

@@ -144,9 +144,9 @@ export class AnalyticsService {
     if (queryDto.humidityValue) {
       query.humidityValue = queryDto.humidityValue;
     }
-    if (queryDto.location) {
-      query.location = queryDto.location;
-    }
+    // if (queryDto.location) {
+    //   query.location = queryDto.location;
+    // }
     // Add single-day date filter if provided
     if (queryDto.date) {
       const startDate = new Date(queryDto.date);
