@@ -142,14 +142,14 @@ export class AnalyticsController {
   }
   // Visualization Endpoints
 // Retrieves real-time stats for a device by name and metric
-@Get('realtime/:name')
+@Get('realtime/:deviceId')
 @UsePipes(new ValidationPipe({ transform: true }))
 async getRealtimeStats(
-  @Param('name') name: string,
+  @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
 ) {
   try {
-    return await this.analyticsService.getRealtimeStats(name, metric);
+    return await this.analyticsService.getRealtimeStats(deviceId, metric);
   } catch (error) {
     return {
       success: false,
@@ -160,16 +160,16 @@ async getRealtimeStats(
 }
 
 // Retrieves historical stats for a device within a date range
-@Get('history/:name')
+@Get('history/:deviceId')
 @UsePipes(new ValidationPipe({ transform: true }))
 async getHistoricalStats(
-  @Param('name') name: string,
+  @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
   @Query('startDate') startDate: string,
   @Query('endDate') endDate: string,
 ) {
   try {
-    return await this.analyticsService.getHistoricalStats(name, metric, startDate, endDate);
+    return await this.analyticsService.getHistoricalStats(deviceId, metric, startDate, endDate);
   } catch (error) {
     return {
       success: false,
@@ -180,15 +180,15 @@ async getHistoricalStats(
 }
 
 // Retrieves aggregated stats (min, max, avg) for a device over a time range
-@Get('stats/:name')
+@Get('stats/:deviceId')
 @UsePipes(new ValidationPipe({ transform: true }))
 async getStats(
-  @Param('name') name: string,
+  @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
   @Query('timeRange') timeRange: 'lastHour' | 'lastDay',
 ) {
   try {
-    return await this.analyticsService.getStats(name, metric, timeRange);
+    return await this.analyticsService.getStats(deviceId, metric, timeRange);
   } catch (error) {
     return {
       success: false,
@@ -199,10 +199,10 @@ async getStats(
 }
 
 // Retrieves available metrics for a device
-@Get('metrics/:name')
-async getAvailableMetrics(@Param('name') name: string) {
+@Get('metrics/:deviceId')
+async getAvailableMetrics(@Param('deviceId') deviceId: string) {
   try {
-    return await this.analyticsService.getAvailableMetrics(name);
+    return await this.analyticsService.getAvailableMetrics(deviceId);
   } catch (error) {
     return {
       success: false,
