@@ -2,9 +2,8 @@ import { IsString, IsOptional, IsDateString, IsArray, IsBoolean } from 'class-va
 import { Type, Transform } from 'class-transformer';
 
 export class AnalyticsQueryDto {
-  @IsOptional()
   @IsString()
-  readonly name?: string;
+  readonly deviceId: string;
 
   @IsOptional()
   @IsString()
@@ -13,10 +12,6 @@ export class AnalyticsQueryDto {
   @IsOptional()
   @IsString()
   readonly humidityValue?: string;
-
-  @IsOptional()
-  @IsString()
-  readonly location?: string;
 
   @IsOptional()
   @IsDateString()
