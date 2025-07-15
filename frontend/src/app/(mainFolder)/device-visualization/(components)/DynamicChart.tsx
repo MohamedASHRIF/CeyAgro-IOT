@@ -52,11 +52,12 @@ export function DynamicChart({
       return;
     }
 
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
    
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/stats/${deviceId}?metric=${metric}&timeRange=${timeRange}`
+          `${API_BASE}/analytics/stats/${deviceId}?metric=${metric}&timeRange=${timeRange}`
         );
         const data = response.data;
         console.log("DynamicChart API response:", data);
