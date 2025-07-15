@@ -17,10 +17,176 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const user_schema_1 = require("./schema/user.schema");
+const path = require("path");
+const fs = require("fs");
+const uuid = require("uuid");
 let UserService = class UserService {
     userModel;
+    uploadsDir;
     constructor(userModel) {
         this.userModel = userModel;
+        this.uploadsDir = path.join(process.cwd(), 'uploads');
+        console.log(' Uploads directory path:', this.uploadsDir);
+        if (!fs.existsSync(this.uploadsDir)) {
+            fs.mkdirSync(this.uploadsDir, { recursive: true });
+            console.log('✅ Created uploads directory:', this.uploadsDir);
+        }
+        else {
+            console.log('✅ Uploads directory already exists:', this.uploadsDir);
+        }
+    }
+    async getProfile(email) {
+        const user = await this.userModel
+            .findOne({ email })
+            .select('name email nic gender telephone address picture -_id')
+            .exec();
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        return user;
+    }
+    async updateProfile(email, updateUserDto, picture, removePicture) {
+        const user = await this.userModel.findOne({ email });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        console.log(' Update DTO received:', updateUserDto);
+        console.log(' Email:', email);
+        console.log(' Current user name:', user.name);
+        console.log(' Remove picture flag:', removePicture);
+        if (removePicture === 'true') {
+            console.log(' Removing existing picture...');
+            if (user.picture && user.picture.startsWith('/uploads/')) {
+                const fileName = user.picture.replace('/uploads/', '');
+                const oldFilePath = path.join(this.uploadsDir, fileName);
+                if (fs.existsSync(oldFilePath)) {
+                    try {
+                        fs.unlinkSync(oldFilePath);
+                        console.log(' Old picture file deleted:', oldFilePath);
+                    }
+                    catch (error) {
+                        console.error('❌ Error deleting old picture file:', error);
+                    }
+                }
+            }
+            user.picture = null;
+            console.log('✅ Picture removed from user profile');
+        }
+        if (picture && removePicture !== 'true') {
+            console.log(' Uploading new picture...');
+            console.log(' Picture buffer size:', picture.buffer.length);
+            console.log(' Picture original name:', picture.originalname);
+            if (user.picture && user.picture.startsWith('/uploads/')) {
+                const fileName = user.picture.replace('/uploads/', '');
+                const oldFilePath = path.join(this.uploadsDir, fileName);
+                if (fs.existsSync(oldFilePath)) {
+                    try {
+                        fs.unlinkSync(oldFilePath);
+                        console.log(' Old picture file replaced:', oldFilePath);
+                    }
+                    catch (error) {
+                        console.error('❌ Error deleting old picture file:', error);
+                    }
+                }
+            }
+            const fileName = `${uuid.v4()}${path.extname(picture.originalname)}`;
+            const filePath = path.join(this.uploadsDir, fileName);
+            console.log('💾 Saving picture to:', filePath);
+            try {
+                if (!fs.existsSync(this.uploadsDir)) {
+                    fs.mkdirSync(this.uploadsDir, { recursive: true });
+                    console.log('✅ Re-created uploads directory:', this.uploadsDir);
+                }
+                fs.writeFileSync(filePath, picture.buffer);
+                user.picture = `/uploads/${fileName}`;
+                console.log('✅ New picture uploaded successfully:', fileName);
+                console.log('✅ File saved at:', filePath);
+                console.log('✅ File exists check:', fs.existsSync(filePath));
+                const stats = fs.statSync(filePath);
+                console.log('File size:', stats.size, 'bytes');
+            }
+            catch (error) {
+                console.error('❌ Error saving new picture:', error);
+                console.error('❌ Upload directory:', this.uploadsDir);
+                console.error('❌ File path:', filePath);
+                throw new Error(`Failed to save picture: ${error.message}`);
+            }
+        }
+        if (updateUserDto.name !== undefined) {
+            console.log(' Name update requested:', `"${updateUserDto.name}"`);
+            console.log(' Name after trim:', `"${updateUserDto.name.trim()}"`);
+            console.log(' Is name empty after trim?', updateUserDto.name.trim() === '');
+            if (updateUserDto.name.trim() !== '') {
+                console.log('✅ Setting new name:', updateUserDto.name);
+                user.name = updateUserDto.name;
+            }
+            else if (!user.name) {
+                console.log(' Setting default name from email');
+                user.name = user.email.split('@')[0];
+            }
+            else {
+                console.log(' Keeping existing name:', user.name);
+            }
+        }
+        console.log(' Final name before save:', user.name);
+        console.log(' Final picture before save:', user.picture);
+        if (updateUserDto.nic !== undefined)
+            user.nic = updateUserDto.nic;
+        if (updateUserDto.gender !== undefined)
+            user.gender = updateUserDto.gender;
+        if (updateUserDto.telephone !== undefined)
+            user.telephone = updateUserDto.telephone;
+        if (updateUserDto.address !== undefined)
+            user.address = updateUserDto.address;
+        user.updated_at = new Date();
+        const savedUser = await user.save();
+        console.log('✅ User saved with name:', savedUser.name);
+        console.log('✅ User saved with picture:', savedUser.picture);
+        return savedUser;
+    }
+    async getProfileShort(email) {
+        const user = await this.userModel.findOne({ email });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        return {
+            name: user.name,
+            picture: user.picture,
+        };
+    }
+    async getUserIdByEmail(email) {
+        const user = await this.userModel.findOne({ email }).exec();
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        return user.user_id;
+    }
+    async getUserByEmail(email) {
+        const normalizedEmail = email.toLowerCase();
+        try {
+            const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
+            if (!user) {
+                throw new Error(`User with email ${normalizedEmail} not found`);
+            }
+            return user;
+        }
+        catch (error) {
+            console.error(`Error getting user by email ${normalizedEmail}: ${error.message}`);
+            throw new Error(`Error getting user: ${error.message}`);
+        }
+    }
+    async updateUserByEmail(email, updateDto) {
+        const normalizedEmail = email.toLowerCase();
+        try {
+            const updatedUser = await this.userModel
+                .findOneAndUpdate({ email: normalizedEmail }, { $set: { ...updateDto, updated_at: new Date() } }, { new: true })
+                .exec();
+            if (!updatedUser) {
+                throw new Error(`Failed to update user for ${normalizedEmail}`);
+            }
+            return updatedUser;
+        }
+        catch (error) {
+            console.error(`Error updating user ${normalizedEmail}: ${error.message}`);
+            throw new Error(`Error updating user: ${error.message}`);
+        }
     }
     async findOrCreateUser(email, name) {
         const normalizedEmail = email.toLowerCase();
@@ -32,7 +198,6 @@ let UserService = class UserService {
             if (existingUser) {
                 console.log(`Found user: email=${normalizedEmail}, sns_subscription_status=${existingUser.sns_subscription_status}, login_count=${existingUser.login_count}, user_id=${existingUser.user_id}`);
                 const updateData = {
-                    name,
                     updated_at: new Date(),
                     last_login: new Date(),
                 };
