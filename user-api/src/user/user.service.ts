@@ -151,8 +151,6 @@
 // //   }
 // // }
 
-
-
 // // src/users/user.service.ts
 // import { Injectable, NotFoundException } from '@nestjs/common';
 // import { InjectModel } from '@nestjs/mongoose';
@@ -170,9 +168,9 @@
 //   constructor(@InjectModel(User.name) private userModel: Model<User>) {
 //     // Fix: Use process.cwd() to get the project root directory
 //     this.uploadsDir = path.join(process.cwd(), 'uploads');
-    
+
 //     console.log(' Uploads directory path:', this.uploadsDir);
-    
+
 //     // Ensure uploads directory exists
 //     if (!fs.existsSync(this.uploadsDir)) {
 //       fs.mkdirSync(this.uploadsDir, { recursive: true });
@@ -210,7 +208,7 @@
 //     // Handle picture removal FIRST
 //     if (removePicture === 'true') {
 //       console.log(' Removing existing picture...');
-      
+
 //       // Delete the old picture file if it exists
 //       if (user.picture && user.picture.startsWith('/uploads/')) {
 //         const fileName = user.picture.replace('/uploads/', '');
@@ -224,7 +222,7 @@
 //           }
 //         }
 //       }
-      
+
 //       // Clear the picture field
 //       user.picture = null;
 //       console.log('✅ Picture removed from user profile');
@@ -235,7 +233,7 @@
 //       console.log(' Uploading new picture...');
 //       console.log(' Picture buffer size:', picture.buffer.length);
 //       console.log(' Picture original name:', picture.originalname);
-      
+
 //       // Delete old picture file if it exists
 //       if (user.picture && user.picture.startsWith('/uploads/')) {
 //         const fileName = user.picture.replace('/uploads/', '');
@@ -249,30 +247,30 @@
 //           }
 //         }
 //       }
-      
+
 //       // Generate unique filename
 //       const fileName = `${uuid.v4()}${path.extname(picture.originalname)}`;
 //       const filePath = path.join(this.uploadsDir, fileName);
-      
+
 //       console.log('💾 Saving picture to:', filePath);
-      
+
 //       try {
 //         // Ensure the uploads directory still exists
 //         if (!fs.existsSync(this.uploadsDir)) {
 //           fs.mkdirSync(this.uploadsDir, { recursive: true });
 //           console.log('✅ Re-created uploads directory:', this.uploadsDir);
 //         }
-        
+
 //         fs.writeFileSync(filePath, picture.buffer);
 //         user.picture = `/uploads/${fileName}`;
 //         console.log('✅ New picture uploaded successfully:', fileName);
 //         console.log('✅ File saved at:', filePath);
 //         console.log('✅ File exists check:', fs.existsSync(filePath));
-        
+
 //         // Log file stats for debugging
 //         const stats = fs.statSync(filePath);
 //         console.log('File size:', stats.size, 'bytes');
-        
+
 //       } catch (error) {
 //         console.error('❌ Error saving new picture:', error);
 //         console.error('❌ Upload directory:', this.uploadsDir);
@@ -286,7 +284,7 @@
 //       console.log(' Name update requested:', `"${updateUserDto.name}"`);
 //       console.log(' Name after trim:', `"${updateUserDto.name.trim()}"`);
 //       console.log(' Is name empty after trim?', updateUserDto.name.trim() === '');
-      
+
 //       if (updateUserDto.name.trim() !== '') {
 //         console.log('✅ Setting new name:', updateUserDto.name);
 //         user.name = updateUserDto.name;
@@ -330,7 +328,6 @@
 //   }
 //   return user.user_id; // Make sure user_id exists in your schema
 // }
-
 
 //   // ==================== AUTH0 & USER MANAGEMENT METHODS ====================
 
@@ -510,8 +507,7 @@
 //   }
 // }
 
-
-// src/users/user.service.ts
+// // hari eka
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -528,9 +524,9 @@ export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {
     // Fix: Use process.cwd() to get the project root directory
     this.uploadsDir = path.join(process.cwd(), 'uploads');
-    
+
     console.log(' Uploads directory path:', this.uploadsDir);
-    
+
     // Ensure uploads directory exists
     if (!fs.existsSync(this.uploadsDir)) {
       fs.mkdirSync(this.uploadsDir, { recursive: true });
@@ -555,7 +551,7 @@ export class UserService {
     email: string,
     updateUserDto: UpdateUserDto,
     picture?: Express.Multer.File,
-    removePicture?: string
+    removePicture?: string,
   ): Promise<User> {
     const user = await this.userModel.findOne({ email });
     if (!user) throw new NotFoundException('User not found');
@@ -568,7 +564,7 @@ export class UserService {
     // Handle picture removal FIRST
     if (removePicture === 'true') {
       console.log(' Removing existing picture...');
-      
+
       // Delete the old picture file if it exists
       if (user.picture && user.picture.startsWith('/uploads/')) {
         const fileName = user.picture.replace('/uploads/', '');
@@ -582,7 +578,7 @@ export class UserService {
           }
         }
       }
-      
+
       // Clear the picture field
       user.picture = null;
       console.log('✅ Picture removed from user profile');
@@ -593,7 +589,7 @@ export class UserService {
       console.log(' Uploading new picture...');
       console.log(' Picture buffer size:', picture.buffer.length);
       console.log(' Picture original name:', picture.originalname);
-      
+
       // Delete old picture file if it exists
       if (user.picture && user.picture.startsWith('/uploads/')) {
         const fileName = user.picture.replace('/uploads/', '');
@@ -607,30 +603,29 @@ export class UserService {
           }
         }
       }
-      
+
       // Generate unique filename
       const fileName = `${uuid.v4()}${path.extname(picture.originalname)}`;
       const filePath = path.join(this.uploadsDir, fileName);
-      
+
       console.log('💾 Saving picture to:', filePath);
-      
+
       try {
         // Ensure the uploads directory still exists
         if (!fs.existsSync(this.uploadsDir)) {
           fs.mkdirSync(this.uploadsDir, { recursive: true });
           console.log('✅ Re-created uploads directory:', this.uploadsDir);
         }
-        
+
         fs.writeFileSync(filePath, picture.buffer);
         user.picture = `/uploads/${fileName}`;
         console.log('✅ New picture uploaded successfully:', fileName);
         console.log('✅ File saved at:', filePath);
         console.log('✅ File exists check:', fs.existsSync(filePath));
-        
+
         // Log file stats for debugging
         const stats = fs.statSync(filePath);
         console.log('File size:', stats.size, 'bytes');
-        
       } catch (error) {
         console.error('❌ Error saving new picture:', error);
         console.error('❌ Upload directory:', this.uploadsDir);
@@ -643,8 +638,11 @@ export class UserService {
     if (updateUserDto.name !== undefined) {
       console.log(' Name update requested:', `"${updateUserDto.name}"`);
       console.log(' Name after trim:', `"${updateUserDto.name.trim()}"`);
-      console.log(' Is name empty after trim?', updateUserDto.name.trim() === '');
-      
+      console.log(
+        ' Is name empty after trim?',
+        updateUserDto.name.trim() === '',
+      );
+
       if (updateUserDto.name.trim() !== '') {
         console.log('✅ Setting new name:', updateUserDto.name);
         user.name = updateUserDto.name;
@@ -661,8 +659,10 @@ export class UserService {
 
     if (updateUserDto.nic !== undefined) user.nic = updateUserDto.nic;
     if (updateUserDto.gender !== undefined) user.gender = updateUserDto.gender;
-    if (updateUserDto.telephone !== undefined) user.telephone = updateUserDto.telephone;
-    if (updateUserDto.address !== undefined) user.address = updateUserDto.address;
+    if (updateUserDto.telephone !== undefined)
+      user.telephone = updateUserDto.telephone;
+    if (updateUserDto.address !== undefined)
+      user.address = updateUserDto.address;
 
     // Update the updated_at timestamp
     user.updated_at = new Date();
@@ -687,18 +687,25 @@ export class UserService {
   async getUserByEmail(email: string): Promise<User> {
     const normalizedEmail = email.toLowerCase();
     try {
-      const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
+      const user = await this.userModel
+        .findOne({ email: normalizedEmail })
+        .exec();
       if (!user) {
         throw new Error(`User with email ${normalizedEmail} not found`);
       }
       return user;
     } catch (error) {
-      console.error(`Error getting user by email ${normalizedEmail}: ${error.message}`);
+      console.error(
+        `Error getting user by email ${normalizedEmail}: ${error.message}`,
+      );
       throw new Error(`Error getting user: ${error.message}`);
     }
   }
 
-  async updateUserByEmail(email: string, updateDto: Partial<User>): Promise<User> {
+  async updateUserByEmail(
+    email: string,
+    updateDto: Partial<User>,
+  ): Promise<User> {
     const normalizedEmail = email.toLowerCase();
     try {
       const updatedUser = await this.userModel
@@ -859,4 +866,3 @@ export class UserService {
     }
   }
 }
-
