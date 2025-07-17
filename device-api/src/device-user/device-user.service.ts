@@ -850,7 +850,6 @@ async getDeviceForUser(email: string, deviceId: string) {
     }
   }
   
-}
 
  //location part - anjana
   async findDeviceLocationsForUser(email: string) {
