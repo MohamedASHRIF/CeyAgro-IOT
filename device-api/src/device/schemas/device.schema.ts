@@ -13,18 +13,15 @@ export class DeviceData {
 
   @Prop({ type: Number })
   humidityValue: number;
-
-  @Prop()
-  location: string;
-
+  
   @Prop({ default: true })
   isActive: boolean;
 
   @Prop()
   date: Date;
 
-  @Prop()
-  userId: string;
+  @Prop({ required: true })
+  deviceId: string;
 
   @Prop()
   topic: string;

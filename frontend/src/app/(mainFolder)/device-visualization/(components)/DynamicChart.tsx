@@ -17,11 +17,11 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 
 export function DynamicChart({
-  device,
+  deviceId,
   metric,
   timeRange,
 }: {
-  device: string | null;
+  deviceId: string | null;
   metric: "temperature" | "humidity";
   timeRange: "lastHour" | "lastDay";
 }) {
@@ -44,19 +44,20 @@ export function DynamicChart({
 
  
   useEffect(() => {
-    console.log("DynamicChart props:", { device, metric, timeRange });
+    console.log("DynamicChart props:", { deviceId, metric, timeRange });
 
     // Validate props to prevent invalid API calls
-    if (!device || !metric || !timeRange) {
-      setError("Invalid device, metric, or time range");
+    if (!deviceId || !metric || !timeRange) {
+      setError("Invalid deviceId, metric, or time range");
       return;
     }
 
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
    
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/stats/${device}?metric=${metric}&timeRange=${timeRange}`
+          `${API_BASE}/analytics/stats/${deviceId}?metric=${metric}&timeRange=${timeRange}`
         );
         const data = response.data;
         console.log("DynamicChart API response:", data);
@@ -97,7 +98,7 @@ export function DynamicChart({
     };
 
     fetchData();
-  }, [device, metric, timeRange]);
+  }, [deviceId, metric, timeRange]);
 
   // Render error or no-data message if applicable
   if (error || noData) {

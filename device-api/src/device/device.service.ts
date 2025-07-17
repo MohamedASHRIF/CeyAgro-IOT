@@ -50,9 +50,10 @@ export class DeviceService implements OnModuleInit {
     try {
       const deviceData = new this.deviceDataModel({
         name: data.name,
+        deviceId: data.deviceId, // new field
         temperatureValue: data.temperatureValue,
         humidityValue: data.humidityValue,
-        location: data.location,
+        // location: data.location, // remove if not needed
         isActive: data.isActive ?? true,
         date: data.date ? new Date(data.date) : new Date(),
         topic: topic,

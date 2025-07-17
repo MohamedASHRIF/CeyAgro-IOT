@@ -26,10 +26,10 @@ ChartJS.register(
 
 
 export function RealTimeChart({
-  device,
+  deviceId,
   metric,
 }: {
-  device: string | null;
+  deviceId: string | null;
   metric: "temperature" | "humidity";
 }) {
   // State for chart data (labels and dataset for the line chart)
@@ -57,11 +57,13 @@ export function RealTimeChart({
   // Relevant: Ensures new data is only added if timestamp changes
   const [lastTimestamp, setLastTimestamp] = useState<string | null>(null);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+
   // Fetches the latest data from the API
   const fetchLatestData = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/analytics/realtime/${device}?metric=${metric}`
+        `${API_BASE}/analytics/realtime/${deviceId}?metric=${metric}`
       );
       const data = response.data;
       console.log("RealTimeChart API response:", data);
@@ -117,11 +119,11 @@ export function RealTimeChart({
 
   
   useEffect(() => {
-    console.log("RealTimeChart props:", { device, metric });
+    console.log("RealTimeChart props:", { deviceId, metric });
 
     // Validate props to prevent invalid API calls
-    if (!device || !metric) {
-      setError("Invalid device or metric");
+    if (!deviceId || !metric) {
+      setError("Invalid deviceId or metric");
       return;
     }
 
@@ -132,7 +134,7 @@ export function RealTimeChart({
     const interval = setInterval(async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/realtime/${device}?metric=${metric}`
+          `${API_BASE}/analytics/realtime/${deviceId}?metric=${metric}`
         );
         const data = response.data;
         console.log("RealTimeChart polling response:", data);
@@ -181,7 +183,7 @@ export function RealTimeChart({
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
-  }, [device, metric]);
+  }, [deviceId, metric]);
 
   // Render error or no-data message if applicable
   if (error || noData) {
@@ -189,7 +191,7 @@ export function RealTimeChart({
       <div>
         <h2>
           Real-Time {metric.charAt(0).toUpperCase() + metric.slice(1)} for{" "}
-          {device || "Device"}
+          {deviceId || "Device"}
         </h2>
         <p className="text-red-500">
           {error || "No data available for this device and metric"}

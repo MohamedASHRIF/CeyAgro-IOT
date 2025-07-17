@@ -17,10 +17,11 @@ export default function VisualizationPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
   
   useEffect(() => {
     axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/names`)
+      .get(`${API_BASE}/analytics/names`)
       .then((response) => {
         if (!Array.isArray(response.data) || response.data.length === 0) {
           setError("No devices found");

@@ -17,11 +17,11 @@ import axios from "axios";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export function HistoryChart({
-  device,
+  deviceId,
   metric,
   timeRange,
 }: {
-  device: string | null;
+  deviceId: string | null;
   metric: "temperature" | "humidity";
   timeRange: "lastHour" | "lastDay";
 }) {
@@ -45,11 +45,11 @@ export function HistoryChart({
 
  
   useEffect(() => {
-    console.log("HistoryChart props:", { device, metric, timeRange });
+    console.log("HistoryChart props:", { deviceId, metric, timeRange });
 
     // Validate props to prevent invalid API calls
-    if (!device || !metric || !timeRange) {
-      setError("Invalid device, metric, or time range");
+    if (!deviceId || !metric || !timeRange) {
+      setError("Invalid deviceId, metric, or time range");
       return;
     }
 
@@ -60,11 +60,13 @@ export function HistoryChart({
     ).toISOString();
     const endDate = now.toISOString();
 
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+
     // Fetch historical data from the API
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/history/${device}?metric=${metric}&startDate=${startDate}&endDate=${endDate}`
+          `${API_BASE}/analytics/history/${deviceId}?metric=${metric}&startDate=${startDate}&endDate=${endDate}`
         );
         const data = response.data;
         console.log("HistoryChart API response:", data);
@@ -106,13 +108,13 @@ export function HistoryChart({
     };
 
     fetchData();
-  }, [device, metric, timeRange]);
+  }, [deviceId, metric, timeRange]);
 
   // Render error or no-data message if applicable
   if (error || noData) {
     return (
       <div>
-        <h2>Historical {metric.charAt(0).toUpperCase() + metric.slice(1)} for {device || "Device"}</h2>
+        <h2>Historical {metric.charAt(0).toUpperCase() + metric.slice(1)} for {deviceId || "Device"}</h2>
         <p className="text-red-500">{error || "No data available for this device and metric"}</p>
       </div>
     );
