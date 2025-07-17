@@ -197,67 +197,8 @@
 //     }
 //   }
 
-//   // ==Location== 
 
-//   // Get locations for  user
-//   @Get('locations')
-//   async findDeviceLocationsForUser(@Query('email') email: string) {
-//     try {
-//       if (!email) {
-//         throw new BadRequestException('userId is required');
-//       }
-      
-//       const locations = await this.deviceUserService.findDeviceLocationsForUser(email);
-//       return locations;
-//     } catch (error) {
-//       if (error instanceof BadRequestException) {
-//         throw error;
-//       }
-//       throw new HttpException(
-//         'Failed to fetch device locations',
-//         HttpStatus.INTERNAL_SERVER_ERROR,
-//       );
-//     }
-//   }
-
-// //  Update device location
-//   @Put(':id/location')
-//   async updateDeviceLocation(
-//     @Param('id') deviceId: string,
-//     @Body() updateData: { location: string },
-//     @Query('email') email?: string
-//   ) {
-//     try {
-//       const updatedDevice = await this.deviceUserService.updateDeviceLocation(
-//         deviceId, 
-//         updateData, 
-//         email
-//       );
-      
-//       if (!updatedDevice) {
-//         throw new HttpException(
-//           'Device not found or user not authorized',
-//           HttpStatus.NOT_FOUND,
-//         );
-//       }
-      
-//       return updatedDevice;
-//     } catch (error) {
-//       if (error instanceof HttpException) {
-//         throw error;
-//       }
-//       throw new HttpException(
-//         'Failed to update device location',
-//         HttpStatus.INTERNAL_SERVER_ERROR,
-//       );
-//     }
-//   }
-// }
-
-
-
-
-import {
+      import {
   Controller,
   Post,
   Body,
@@ -268,6 +209,8 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  HttpException,
+ HttpStatus,Param,Put
 } from '@nestjs/common';
 import { DeviceUserService } from './device-user.service';
 import { CreateDeviceUserDto } from './dto/create-device-user.dto';
@@ -475,6 +418,61 @@ console.log('Full DTO:', createDto);
       };
     }
   }
-  
+  // ==Location== 
+
+  // Get locations for  user
+  @Get('locations')
+  async findDeviceLocationsForUser(@Query('email') email: string) {
+    try {
+      if (!email) {
+        throw new BadRequestException('userId is required');
+      }
+      
+      const locations = await this.deviceUserService.findDeviceLocationsForUser(email);
+      return locations;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new HttpException(
+        'Failed to fetch device locations',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+//  Update device location
+  @Put(':id/location')
+  async updateDeviceLocation(
+    @Param('id') deviceId: string,
+    @Body() updateData: { location: string },
+    @Query('email') email?: string
+  ) {
+    try {
+      const updatedDevice = await this.deviceUserService.updateDeviceLocation(
+        deviceId, 
+        updateData, 
+        email
+      );
+      
+      if (!updatedDevice) {
+        throw new HttpException(
+          'Device not found or user not authorized',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      
+      return updatedDevice;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        'Failed to update device location',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
+
 
