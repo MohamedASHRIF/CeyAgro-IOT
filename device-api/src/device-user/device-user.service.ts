@@ -530,6 +530,50 @@ export class DeviceUserService {
       };
     }
   }
+
+  async findDeviceLocationsForUser(email: string) {
+    const userDevices = await this.deviceUserModel.find({email }).select('deviceId location deviceName');
+    
+    if (userDevices.length === 0) {
+      return {
+        success: true,
+        message: 'No devices found for user',
+        data: []
+      };
+    }
+
+    const locationsWithDevices = userDevices.map(device => ({
+      deviceId: device.deviceId,
+      deviceName: device.deviceName,
+      location: device.location || 'Location not set'
+    }));
+
+    return {
+      success: true,
+      message: 'Device locations retrieved successfully',
+      data: locationsWithDevices
+    };
+  }
+
+
+    async updateDeviceLocation(
+    deviceId: string,
+    updateData: { location: string },
+    email?: string
+  ): Promise<DeviceUser | null> {
+    const query = email ? { deviceId, email } : { deviceId };
+    
+    const updatedDevice = await this.deviceUserModel.findOneAndUpdate(
+      query,
+      { location: updateData.location },
+      { new: true }
+    );
+
+    return updatedDevice;
+  }
+
+
+
 }
 
 

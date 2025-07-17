@@ -30,7 +30,7 @@ import {
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Device Management", url: "/devices", icon: Monitor },
-  { title: "Location Management", url: "#", icon: MapPinCheckIcon },
+  { title: "Location Management", url: "/location", icon: MapPinCheckIcon },
   { title: "Visualization", url: "/device-visualization", icon: ChartAreaIcon },
   { title: "Reports", url: "/report", icon: LetterText },
   {
