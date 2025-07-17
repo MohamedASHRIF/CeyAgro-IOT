@@ -1,3 +1,4 @@
+
 // "use client";
 
 // import { useState, useEffect } from "react";
@@ -10,11 +11,6 @@
 //   CardTitle,
 // } from "@/components/ui/card";
 
-// interface SectionCardsProps {
-//   // Keep this optional if you want fallback or manual userId
-//   userId?: string;
-// }
-
 // interface DeviceStatistics {
 //   total: number;
 //   active: number;
@@ -23,11 +19,8 @@
 //   error: string | null;
 // }
 
-// export function SectionCards(props: SectionCardsProps = {}) {
+// export function SectionCards() {
 //   const { user, isLoading } = useUser();
-
-//   // Store fetched userId here
-//   const [userId, setUserId] = useState<string | undefined>(props.userId);
 
 //   const [statistics, setStatistics] = useState<DeviceStatistics>({
 //     total: 0,
@@ -37,42 +30,12 @@
 //     error: null,
 //   });
 
-//   // Fetch user ID from email if no userId prop passed
-
-
-// useEffect(() => {
-//   if (!isLoading && user?.email && !userId) {
-//     fetch(`http://localhost:3001/user/id-by-email/${encodeURIComponent(user.email)}`)
-//       .then(res => res.json())
-//       .then(data => {
-//         console.log('Response data:', data);
-//         if (data.userId) {
-//           setUserId(data.userId);
-//         } else {
-//           console.error('User ID not found in response', data);
-//         }
-//       })
-//       .catch(err => console.error('Failed to fetch user ID:', err));
-//   }
-// }, [isLoading, user, userId]);
-
-
-//   // Fetch device statistics from backend when userId changes
-//   const fetchDeviceStatistics = async () => {
-//     if (!userId) {
-//       setStatistics((prev) => ({
-//         ...prev,
-//         loading: false,
-//         error: "User ID is required",
-//       }));
-//       return;
-//     }
-
+//   const fetchDeviceStatistics = async (email: string) => {
 //     try {
 //       setStatistics((prev) => ({ ...prev, loading: true, error: null }));
 
 //       const response = await fetch(
-//         `http://localhost:3002/device-user/statistics?userId=${userId}`
+//         `http://localhost:3002/device-user/statistics?email=${encodeURIComponent(email)}`
 //       );
 
 //       const result = await response.json();
@@ -103,20 +66,21 @@
 //   };
 
 //   useEffect(() => {
-//     if (userId) {
-//       fetchDeviceStatistics();
+//     if (!isLoading && user?.email) {
+//       fetchDeviceStatistics(user.email);
 //     }
-//   }, [userId]);
+//   }, [isLoading, user]);
 
-//   // Auto-refresh every 30 seconds
+//   // Auto-refresh every 60 seconds (60000 ms)
 //   useEffect(() => {
-//     if (!userId) return;
+//     if (!user?.email) return;
 
-//     const interval = setInterval(fetchDeviceStatistics, 30000);
+//     const interval = setInterval(() => {
+//       fetchDeviceStatistics(user.email!);
+//     }, 60000);
+
 //     return () => clearInterval(interval);
-//   }, [userId]);
-
-//   // *** THE REST IS YOUR ORIGINAL LAYOUT AND JSX BELOW ***
+//   }, [user]);
 
 //   if (statistics.loading) {
 //     return (
@@ -151,7 +115,7 @@
 //           </CardHeader>
 //           <CardFooter className="justify-center">
 //             <button
-//               onClick={fetchDeviceStatistics}
+//               onClick={() => user?.email && fetchDeviceStatistics(user.email)}
 //               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
 //             >
 //               Retry
@@ -203,7 +167,7 @@
 //       {/* Refresh indicator */}
 //       <div className="col-span-full flex justify-center mt-4">
 //         <button
-//           onClick={fetchDeviceStatistics}
+//           onClick={() => user?.email && fetchDeviceStatistics(user.email)}
 //           className="text-sm text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2"
 //           disabled={statistics.loading}
 //         >
@@ -226,6 +190,12 @@
 //     </div>
 //   );
 // }
+
+
+
+
+
+
 
 "use client";
 
