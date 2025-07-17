@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -19,75 +18,72 @@ export default function Home() {
   const [editingDevice, setEditingDevice] = useState<DeviceLocation | null>(null);
   const [editForm, setEditForm] = useState({ location: '' });
 
+  const fetchDeviceLocations = useCallback(async () => {
+    if (!user?.email) return;
 
-// Fetch device locations for the logged-in user
-const fetchDeviceLocations = useCallback(async () => {
-  if (!user?.email) return;
-
-  try {
-    setIsLoading(true);
-    // Updated endpoint and query parameter
-    const response = await fetch(`http://localhost:3002/device-user/locations?email=${encodeURIComponent(user.email)}`);
-    if (response.ok) {
-      const { data } = await response.json();
-      const formattedData: DeviceLocation[] = data.map((item: any) => ({
-        name: item.deviceName,
-        location: item.location,
-        _id: item.deviceId, // Map deviceId to _id for consistency
-      }));
-      setDeviceLocations(formattedData);
-    } else {
-      console.error("Failed to fetch user locations:", response.statusText);
+    try {
+      setIsLoading(true);
+      const response = await fetch(`http://localhost:3002/device-user/locations?email=${encodeURIComponent(user.email)}`);
+      if (response.ok) {
+        const { data } = await response.json();
+        if (!Array.isArray(data)) {
+          console.error('Invalid response format: data is not an array', data);
+          return;
+        }
+        const formattedData: DeviceLocation[] = data.map((item: any) => ({
+          name: item.deviceName,
+          location: item.location || 'Location not set',
+          _id: item.deviceId,
+        }));
+        console.log('Fetched device locations:', formattedData);
+        setDeviceLocations(formattedData);
+      } else {
+        console.error("Failed to fetch user locations:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching user locations:", error);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching user locations:", error);
-  } finally {
-    setIsLoading(false);
-  }
-}, [user?.email]);
+  }, [user?.email]);
 
-  // Fetch on page load and when user.email changes
   useEffect(() => {
     if (!isAuthLoading && user?.email) {
       fetchDeviceLocations();
     }
   }, [fetchDeviceLocations, isAuthLoading, user?.email]);
 
-  // Handle edit click
   const handleEditClick = (device: DeviceLocation) => {
+    console.log('Editing device:', device);
     setEditingDevice(device);
     setEditForm({ location: device.location });
   };
 
-  // Handle edit form submission
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingDevice?._id || !user?.email) return;
 
     try {
-      const response = await fetch(`http://localhost:3002/device-user/${editingDevice._id}/location`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          location: editForm.location,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:3002/device-user/${editingDevice._id}/location?email=${encodeURIComponent(user.email)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            location: editForm.location,
+          }),
+        }
+      );
 
       if (response.ok) {
-        const updatedDevice = await response.json();
-        setDeviceLocations((prev) =>
-          prev.map((device) =>
-            device._id === editingDevice._id
-              ? { ...device, location: updatedDevice.location }
-              : device
-          )
-        );
+        await fetchDeviceLocations(); // Re-fetch to update UI
         setEditingDevice(null);
         setEditForm({ location: '' });
       } else {
-        alert("Failed to update device location");
+        const errorData = await response.json();
+        alert(errorData.message || `Failed to update device location (Status: ${response.status})`);
       }
     } catch (error) {
       console.error("Error updating device location:", error);
@@ -95,13 +91,14 @@ const fetchDeviceLocations = useCallback(async () => {
     }
   };
 
-
-
-  // Cancel edit
   const handleCancelEdit = () => {
     setEditingDevice(null);
     setEditForm({ location: '' });
   };
+
+  useEffect(() => {
+    console.log('Updated deviceLocations:', deviceLocations);
+  }, [deviceLocations]);
 
   if (isAuthLoading) {
     return <p>Loading user information...</p>;
@@ -191,7 +188,7 @@ const fetchDeviceLocations = useCallback(async () => {
               </div>
             ) : (
               <ReactFlowProvider>
-                <LocationFlowVisualization data={deviceLocations} />
+                <LocationFlowVisualization data={deviceLocations} key={JSON.stringify(deviceLocations)} />
               </ReactFlowProvider>
             )}
           </div>

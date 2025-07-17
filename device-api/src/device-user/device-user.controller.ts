@@ -398,40 +398,46 @@ export class DeviceUserController {
     }
   }
 
-//  Update device location
-  @Put(':id/location')
-  async updateDeviceLocation(
-    @Param('id') deviceId: string,
-    @Body() updateData: { location: string },
-    @Query('email') email?: string
-  ) {
-    try {
-      const updatedDevice = await this.deviceUserService.updateDeviceLocation(
-        deviceId, 
-        updateData, 
-        email
-      );
-      
-      if (!updatedDevice) {
-        throw new HttpException(
-          'Device not found or user not authorized',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      
-      return updatedDevice;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        'Failed to update device location',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+ //  Update device location
+@Put(':id/location')
+async updateDeviceLocation(
+  @Param('id') deviceId: string,
+  @Body() updateData: { location: string },
+  @Query('email') email: string
+) {
+  try {
+    if (!email) {
+      throw new BadRequestException('email is required');
     }
+
+    const updatedDevice = await this.deviceUserService.updateDeviceLocation(
+      deviceId,
+      updateData,
+      email
+    );
+
+    return {
+      success: true,
+      message: 'Device location updated successfully',
+      data: updatedDevice,
+    };
+  } catch (error) {
+    if (error instanceof HttpException || error instanceof BadRequestException) {
+      throw error;
+    }
+    throw new HttpException(
+      'Failed to update device location',
+      HttpStatus.INTERNAL_SERVER_ERROR
+    );
   }
 
 
 
 
 }
+<<<<<<< Updated upstream
+=======
+}
+
+
+>>>>>>> Stashed changes

@@ -555,23 +555,30 @@ export class DeviceUserService {
     };
   }
 
-
-    async updateDeviceLocation(
-    deviceId: string,
-    updateData: { location: string },
-    email?: string
-  ): Promise<DeviceUser | null> {
-    const query = email ? { deviceId, email } : { deviceId };
+//update location
+async updateDeviceLocation(
+  deviceId: string,
+  updateData: { location: string },
+  email: string 
+): Promise<DeviceUser | null> {
+  try {
     
     const updatedDevice = await this.deviceUserModel.findOneAndUpdate(
-      query,
+      { deviceId, email },
       { location: updateData.location },
       { new: true }
     );
 
-    return updatedDevice;
-  }
+    if (!updatedDevice) {
+      throw new NotFoundException('Device not found for this user');
+    }
 
+    return updatedDevice;
+  } catch (error) {
+    console.error('Error updating device location:', error);
+    throw error;
+  }
+}
 
 
 }
