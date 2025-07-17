@@ -184,6 +184,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+import { login, logout } from "../../../../actions/auth";
+import { getSession } from "@auth0/nextjs-auth0";
+import { useRouter } from "next/navigation";
+
+
 import {
   Sidebar,
   SidebarContent,
@@ -232,6 +237,12 @@ export function DashboardSidebar() {
       setSettingsOpen(true);
     }
   }, [pathname, isAnySettingsChildActive]);
+
+  const router = useRouter();
+  const handleLogout = async () => {
+    await logout(); // Call server action
+    router.refresh(); // Refresh UI to reflect logout
+  };
 
   return (
     <Sidebar>
@@ -325,14 +336,23 @@ export function DashboardSidebar() {
         <SidebarFooter className="mt-auto">
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link
-                href="/api/auth/login"
-                className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
-                onClick={() => setSettingsOpen(false)}
-              >
-                <LogOutIcon />
-                <span className="text-base">Logout</span>
-              </Link>
+              
+
+              {isAuthenticated && (
+                <form action={logout}>
+                  <button
+                    onClick={handleLogout}
+                    type="submit"
+                    className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
+                  >
+                    <LogOutIcon />
+                    <span className="text-base">Logout</span>
+                  </button>
+                </form>
+              )}
+
+             
+
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarFooter>
