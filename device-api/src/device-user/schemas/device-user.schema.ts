@@ -1,3 +1,4 @@
+
 // // schemas/device-user.schema.ts
 // import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 // import { Document } from 'mongoose';
@@ -5,7 +6,7 @@
 // @Schema({ timestamps: true })
 // export class DeviceUser {
 //   @Prop({ required: true })
-//   userId: string;
+//   email: string;
 
 //   @Prop({ required: true })
 //   deviceId: string;

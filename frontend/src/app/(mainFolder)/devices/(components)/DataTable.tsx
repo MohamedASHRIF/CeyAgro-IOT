@@ -1,3 +1,4 @@
+
 // "use client";
 // import React, { useEffect, useState } from "react";
 // import Link from "next/link";
@@ -52,7 +53,7 @@
 //     cell: ({ row }) => (
 //       <Link
 //         href={`/devices/${row.original.id}`}
-//         target="_blank"
+//        // target="_blank"
 //         rel="noopener noreferrer"
 //         className="hover:underline text-black hover:text-[hsl(172.5,_66%,_50.4%)] font-medium"
 //       >
@@ -92,7 +93,6 @@
 // ];
 
 // export function DeviceTable({ userEmail }: { userEmail: string }) {
-//   const [userId, setUserId] = useState<string | null>(null);
 //   const [devices, setDevices] = useState<Device[]>([]);
 //   const [loading, setLoading] = useState(true);
 
@@ -108,26 +108,7 @@
 //     if (!userEmail) return;
 
 //     setLoading(true);
-//     fetch(`http://localhost:3001/user/id-by-email/${encodeURIComponent(userEmail)}`)
-//       .then((res) => res.json())
-//       .then((data) => {
-//         if (data.userId) {
-//           setUserId(data.userId);
-//         } else {
-//           console.error("User ID not found in response", data);
-//           setLoading(false);
-//         }
-//       })
-//       .catch((err) => {
-//         console.error("Failed to fetch user ID:", err);
-//         setLoading(false);
-//       });
-//   }, [userEmail]);
-
-//   useEffect(() => {
-//     if (!userId) return;
-
-//     fetch(`http://localhost:3002/device-user/devices?userId=${userId}`)
+//     fetch(`http://localhost:3002/device-user/devices?email=${encodeURIComponent(userEmail)}`)
 //       .then((res) => res.json())
 //       .then((data) => {
 //         if (data.success && Array.isArray(data.data)) {
@@ -153,7 +134,7 @@
 //         setDevices([]);
 //       })
 //       .finally(() => setLoading(false));
-//   }, [userId]);
+//   }, [userEmail]);
 
 //   const table = useReactTable({
 //     data: devices,
@@ -301,7 +282,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -458,7 +438,17 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     onPaginationChange: setPagination,
   });
 
-  if (loading) return <div>Loading devices...</div>;
+  if (loading)  return (
+      <div
+        className="flex items-center justify-center h-screen"
+        role="status"
+        aria-label="Loading"
+      >
+        <div className="w-12 h-12 border-4 border-teal-400 border-t-transparent rounded-full animate-spin" />
+        <span className="sr-only">Loading...</span>
+      </div>
+    );
+  ;
 
   return (
     <div className="w-full p-4">
@@ -585,6 +575,7 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     </div>
   );
 }
+
 
 
 
