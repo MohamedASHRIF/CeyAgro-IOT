@@ -259,6 +259,22 @@ async getUserDevices(@Query('email') email: string) {
   return { success: true, data: deviceIds };
 }
 
+  @Get('user-device-list')
+  async getUserDeviceList(@Query('email') email: string) {
+    if (!email) {
+      throw new ForbiddenException('User email is required');
+    }
+    try {
+      const deviceList = await this.analyticsService.getUserDeviceList(email);
+      return { success: true, data: deviceList };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message, data: [] };
+      }
+      throw new InternalServerErrorException('Failed to fetch user device list');
+    }
+  }
+
 // --- Advanced Analytics Endpoints ---
 // Anomaly Detection
 @Get('anomaly/:deviceId')
@@ -327,6 +343,50 @@ async getCorrelation(
     return {
       success: false,
       message: error.message || 'Failed to fetch correlation',
+      data: null,
+    };
+  }
+}
+// Prediction endpoint: returns actual and predicted values for a device/metric
+@Get('predict/:deviceId')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getPrediction(
+  @Param('deviceId') deviceId: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('futureWindow') futureWindow: string, // in hours
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
+  try {
+    return await this.analyticsService.getPrediction(deviceId, metric, Number(futureWindow) || 24);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch prediction',
+      data: null,
+    };
+  }
+}
+// Forecast endpoint: returns forecasted values for a device/metric
+@Get('forecast/:deviceId')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getForecast(
+  @Param('deviceId') deviceId: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('futureWindow') futureWindow: string, // in hours
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
+  try {
+    return await this.analyticsService.getForecast(deviceId, metric, Number(futureWindow) || 24);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch forecast',
       data: null,
     };
   }

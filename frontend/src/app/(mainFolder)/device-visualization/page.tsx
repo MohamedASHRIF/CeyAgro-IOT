@@ -10,11 +10,14 @@ import { ComparisonChart } from "./(components)/ComparisonChart";
 import { CorrelationChart } from "./(components)/CorrelationChart";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
+// import { PredictionChart } from "./(components)/PredictionChart";
+// import { ForecastChart } from "./(components)/ForecastChart";
+import ForecastAreaChart from "./(components)/ForecastAreaChart";
 
 
 export default function VisualizationPage() {
   const { user, isLoading } = useUser();
-  const [devices, setDevices] = useState<string[]>([]);
+  const [devices, setDevices] = useState<{ deviceId: string; deviceName: string }[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [metrics] = useState<string[]>(["temperature", "humidity"]);
   const [selectedMetric, setSelectedMetric] = useState<"temperature" | "humidity" | null>(null);
@@ -32,7 +35,7 @@ export default function VisualizationPage() {
     if (!user || !user.email) return;
     setIsLoadingDevices(true);
     axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/user-devices`, {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/user-device-list`, {
         params: { email: user.email },
       })
       .then((response) => {
@@ -42,7 +45,7 @@ export default function VisualizationPage() {
           return;
         }
         setDevices(response.data.data);
-        setSelectedDevice(response.data.data[0]);
+        setSelectedDevice(response.data.data[0].deviceId);
         setSelectedMetric("temperature");
         setIsLoadingDevices(false);
       })
@@ -68,6 +71,11 @@ export default function VisualizationPage() {
   if (selectedDevice && selectedMetric) {
     console.log('Rendering HistoryChart', { device: selectedDevice, metric: selectedMetric, timeRange });
     console.log('Rendering DynamicChart', { device: selectedDevice, metric: selectedMetric, timeRange });
+  }
+
+  // Debug: log device IDs for comparison chart
+  if (devices.length >= 2 && devices[0] && devices[1]) {
+    console.log('ComparisonChart deviceA:', devices[0].deviceId, 'deviceB:', devices[1].deviceId);
   }
 
   if (isLoading) {
@@ -104,8 +112,8 @@ export default function VisualizationPage() {
           </SelectTrigger>
           <SelectContent>
             {devices.map((device) => (
-              <SelectItem key={device} value={device}>
-                {device}
+              <SelectItem key={device.deviceId} value={device.deviceId}>
+                {device.deviceName}
               </SelectItem>
             ))}
           </SelectContent>
@@ -174,37 +182,6 @@ export default function VisualizationPage() {
               />
             </CardContent>
           </Card>
-          {/* Anomaly Detection */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle>Anomaly Detection</CardTitle></CardHeader>
-            <CardContent>
-              <AnomalyChart
-                device={selectedDevice}
-                metric={selectedMetric}
-                startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
-                endDate={new Date().toISOString()}
-              />
-            </CardContent>
-          </Card>
-          {/* Comparison */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle>Device Comparison</CardTitle></CardHeader>
-            <CardContent>
-              {devices.length >= 2 ? (
-                <ComparisonChart
-                  deviceA={devices[0]}
-                  deviceB={devices[1]}
-                  metric={selectedMetric}
-                  startDateA={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
-                  endDateA={new Date().toISOString()}
-                  startDateB={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
-                  endDateB={new Date().toISOString()}
-                />
-              ) : (
-                <div className="text-gray-400 text-center">Need at least 2 devices</div>
-              )}
-            </CardContent>
-          </Card>
           {/* Correlation */}
           <Card className="mb-6">
             <CardHeader><CardTitle>Correlation (Temp vs. Humidity)</CardTitle></CardHeader>
@@ -216,11 +193,49 @@ export default function VisualizationPage() {
               />
             </CardContent>
           </Card>
-          {/* Forecasting (placeholder) */}
+          {/* Forecast (moved here, replacing Prediction) */}
           <Card className="mb-6">
             <CardHeader><CardTitle>Forecast</CardTitle></CardHeader>
             <CardContent>
-              <div className="text-gray-400 text-center">Coming soon</div>
+              {user && user.email && (
+                <ForecastAreaChart
+                  device={selectedDevice}
+                  metric={selectedMetric}
+                  email={user.email}
+                  futureWindow={24}
+                />
+              )}
+            </CardContent>
+          </Card>
+          {/* Device Comparison */}
+          <Card className="mb-6">
+            <CardHeader><CardTitle>Device Comparison</CardTitle></CardHeader>
+            <CardContent>
+              {devices.length >= 2 && devices[0] && devices[1] ? (
+                <ComparisonChart
+                  deviceA={devices[0].deviceId}
+                  deviceB={devices[1].deviceId}
+                  metric={selectedMetric}
+                  startDateA={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
+                  endDateA={new Date().toISOString()}
+                  startDateB={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
+                  endDateB={new Date().toISOString()}
+                />
+              ) : (
+                <div className="text-gray-400 text-center">Need at least 2 devices</div>
+              )}
+            </CardContent>
+          </Card>
+          {/* Anomaly Detection */}
+          <Card className="mb-6">
+            <CardHeader><CardTitle>Anomaly Detection</CardTitle></CardHeader>
+            <CardContent>
+              <AnomalyChart
+                device={selectedDevice}
+                metric={selectedMetric}
+                startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
+                endDate={new Date().toISOString()}
+              />
             </CardContent>
           </Card>
         </div>
