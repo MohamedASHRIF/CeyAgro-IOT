@@ -140,17 +140,19 @@
 //         </CardFooter>
 //       </Card>
 
-//       <Card className="bg-[#B5F6B2] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
-//         <CardHeader className="relative flex flex-col justify-center items-center text-center">
-//           <CardDescription className="text-2xl text-3xl">Active Devices</CardDescription>
-//           <CardTitle className="text-4xl tabular-nums pt-2">
-//             {statistics.active.toString().padStart(2, "0")}
-//           </CardTitle>
-//         </CardHeader>
-//         <CardFooter className="flex-col gap-1 text-md">
-//           Number of Currently Active devices
-//         </CardFooter>
-//       </Card>
+      <Card className="bg-[#B5F6B2] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
+        <CardHeader className="relative flex flex-col justify-center items-center text-center">
+          <CardDescription className="text-2xl text-3xl">
+            Active Devices
+          </CardDescription>
+          <CardTitle className="text-4xl  tabular-nums pt-2">
+            08
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="flex-col gap-1 text-md ">
+          Number of Currently Active devices
+        </CardFooter>
+      </Card>
 
 //       <Card className="bg-[#FF97978A] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
 //         <CardHeader className="relative flex flex-col justify-center items-center text-center">
@@ -167,7 +169,7 @@
 //       {/* Refresh indicator */}
 //       <div className="col-span-full flex justify-center mt-4">
 //         <button
-//           onClick={() => user?.email && fetchDeviceStatistics(user.email)}
+//           onClick={fetchDeviceStatistics}
 //           className="text-sm text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2"
 //           disabled={statistics.loading}
 //         >
@@ -190,12 +192,6 @@
 //     </div>
 //   );
 // }
-
-
-
-
-
-
 
 "use client";
 
@@ -388,4 +384,3 @@ export function SectionCards() {
     </div>
   );
 }
-

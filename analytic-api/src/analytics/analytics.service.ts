@@ -10,12 +10,15 @@ import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { ExcelService } from './excel.service';
 import { S3Service } from './s3.service';
 import { KafkaContext } from '@nestjs/microservices';
+import { DeviceUser, DeviceUserDocument } from './schemas/device-user.schema';
 
 @Injectable()
 export class AnalyticsService {
   constructor(
     @InjectModel(DeviceData.name)
     private deviceModel: Model<DeviceDataDocument>,
+    @InjectModel(DeviceUser.name)
+    private deviceUserModel: Model<DeviceUserDocument>, // Inject DeviceUser model
     private excelService: ExcelService,
     private s3Service: S3Service,
   ) {}
@@ -230,45 +233,60 @@ export class AnalyticsService {
   // Visualization Methods
 // Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
 async getRealtimeStats(deviceId: string, metric: 'temperature' | 'humidity') {
-  const latest = await this.deviceModel
-    .findOne({ deviceId })
-    .sort({ date: -1, _id: -1 })
-    .select('name deviceId temperatureValue humidityValue date');
-  if (!latest) {
+  console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
+  try {
+    const latest = await this.deviceModel
+      .findOne({ deviceId })
+      .sort({ date: -1, _id: -1 })
+      .select('name deviceId temperatureValue humidityValue date');
+    console.log('SERVICE DEBUG: getRealtimeStats latest', latest);
+    if (!latest) {
+      console.log('SERVICE DEBUG: No data found for device');
+      return {
+        deviceId: deviceId,
+        metric,
+        value: 0,
+        timestamp: new Date().toISOString(),
+      };
+    }
     return {
-      deviceId: deviceId,
+      deviceId: latest.deviceId,
       metric,
-      value: 0,
-      timestamp: new Date().toISOString(),
+      value: metric === 'temperature' ? latest.temperatureValue ?? 0 : latest.humidityValue ?? 0,
+      timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
     };
+  } catch (err) {
+    console.error('SERVICE ERROR: getRealtimeStats', err);
+    throw err;
   }
-  return {
-    deviceId: latest.deviceId,
-    name: latest.name,
-    metric,
-    value: metric === 'temperature' ? latest.temperatureValue ?? 0 : latest.humidityValue ?? 0,
-    timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
-  };
 }
 
 // Retrieves historical stats for a device within a specified date range
 async getHistoricalStats(deviceId: string, metric: 'temperature' | 'humidity', startDate: string, endDate: string) {
-  const data = await this.deviceModel
-    .find({
-      deviceId,
-      date: { $gte: new Date(startDate), $lte: new Date(endDate) },
-    })
-    .select('name deviceId temperatureValue humidityValue date');
-  if (!data || data.length === 0) {
-    return [];
+  const query = {
+    deviceId,
+    date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+  };
+  console.log('DEBUG: getHistoricalStats query:', JSON.stringify(query));
+  try {
+    const data = await this.deviceModel
+      .find(query)
+      .select('name deviceId temperatureValue humidityValue date');
+    console.log('DEBUG: getHistoricalStats results:', data.length);
+    if (!data || data.length === 0) {
+      console.log('SERVICE DEBUG: No historical data found');
+      return [];
+    }
+    return data.map(item => ({
+      name: item.name,
+      metric,
+      value: metric === 'temperature' ? item.temperatureValue ?? 0 : item.humidityValue ?? 0,
+      timestamp: item.date ? item.date.toISOString() : new Date().toISOString(),
+    }));
+  } catch (err) {
+    console.error('SERVICE ERROR: getHistoricalStats', err);
+    throw err;
   }
-  return data.map(item => ({
-    deviceId: item.deviceId,
-    name: item.name,
-    metric,
-    value: metric === 'temperature' ? item.temperatureValue ?? 0 : item.humidityValue ?? 0,
-    timestamp: item.date ? item.date.toISOString() : new Date().toISOString(),
-  }));
 }
 
 // Retrieves aggregated stats (min, max, avg) for a device over a time range (lastHour or lastDay)
@@ -277,25 +295,112 @@ async getStats(deviceId: string, metric: 'temperature' | 'humidity', timeRange: 
   const startDate = new Date(
     now.getTime() - (timeRange === 'lastHour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000),
   );
-  const data = await this.deviceModel
-    .find({
-      deviceId,
-      date: { $gte: startDate, $lte: now },
-    })
-    .select('temperatureValue humidityValue');
-  const values = data
-    .map(item => (metric === 'temperature' ? item.temperatureValue : item.humidityValue))
-    .filter((value): value is number => value !== undefined);
-  return {
-    min: values.length > 0 ? Math.min(...values) : 0,
-    max: values.length > 0 ? Math.max(...values) : 0,
-    avg: values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0,
+  const query = {
+    deviceId,
+    date: { $gte: startDate, $lte: now },
   };
+  console.log('DEBUG: getStats query:', JSON.stringify(query));
+  try {
+    const data = await this.deviceModel
+      .find(query)
+      .select('temperatureValue humidityValue');
+    console.log('DEBUG: getStats results:', data.length);
+    const values = data
+      .map(item => (metric === 'temperature' ? item.temperatureValue : item.humidityValue));
+    return {
+      min: values.length > 0 ? Math.min(...values) : 0,
+      max: values.length > 0 ? Math.max(...values) : 0,
+      avg: values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0,
+    };
+  } catch (err) {
+    console.error('SERVICE ERROR: getStats', err);
+    throw err;
+  }
 }
 
 // Returns the available metrics for a device 
 async getAvailableMetrics(deviceId: string) {
   // Optionally, you could check if the device exists by deviceId
   return ['temperature', 'humidity'];
+}
+
+  // Helper: Get all deviceIds for a user by email
+  async getDeviceIdsForUser(email: string): Promise<string[]> {
+    const userDevices = await this.deviceUserModel.find({ email }).lean();
+    return userDevices.map((d) => d.deviceId);
+  }
+
+  // Fetch readings for multiple deviceIds with filtering
+  async getReadingsForDevices(deviceIds: string[], queryDto: AnalyticsQueryDto) {
+    const query: any = { deviceId: { $in: deviceIds } };
+    if (queryDto.startDate || queryDto.endDate) {
+      query.date = {};
+      if (queryDto.startDate) {
+        query.date.$gte = new Date(queryDto.startDate);
+      }
+      if (queryDto.endDate) {
+        query.date.$lte = new Date(queryDto.endDate);
+      }
+    }
+    // Add more filters as needed from queryDto
+    return this.deviceModel.find(query).lean();
+  }
+
+// --- Advanced Analytics Methods ---
+// Anomaly Detection (simple z-score or threshold based)
+async getAnomalies(deviceId: string, metric: 'temperature' | 'humidity', startDate: string, endDate: string) {
+  const query = {
+    deviceId,
+    date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+  };
+  console.log('DEBUG: getAnomalies query:', JSON.stringify(query));
+  const data = await this.deviceModel.find(query).select('date temperatureValue humidityValue').lean();
+  console.log('DEBUG: getAnomalies results:', data.length);
+  const values = data.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue);
+  if (values.length === 0) return [];
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const std = Math.sqrt(values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length);
+  // Mark as anomaly if value is >2 std from mean
+  const anomalies = data.filter((item, idx) => Math.abs(values[idx] - mean) > 2 * std).map(item => ({
+    timestamp: item.date,
+    value: metric === 'temperature' ? item.temperatureValue : item.humidityValue,
+  }));
+  return { anomalies, mean, std };
+}
+// Device/Period Comparison (returns stats for each)
+async compareDevicesOrPeriods(deviceA: string, deviceB: string, metric: 'temperature' | 'humidity', startDateA: string, endDateA: string, startDateB: string, endDateB: string) {
+  const getStats = async (deviceId: string, start: string, end: string) => {
+    const data = await this.deviceModel.find({
+      deviceId,
+      date: { $gte: new Date(start), $lte: new Date(end) },
+    }).select('temperatureValue humidityValue');
+    const values = data.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue);
+    return {
+      min: values.length > 0 ? Math.min(...values) : 0,
+      max: values.length > 0 ? Math.max(...values) : 0,
+      avg: values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0,
+    };
+  };
+  const statsA = await getStats(deviceA, startDateA, endDateA);
+  const statsB = await getStats(deviceB, startDateB, endDateB);
+  return { deviceA: statsA, deviceB: statsB };
+}
+// Correlation (Pearson correlation between temp and humidity)
+async getCorrelation(deviceId: string, startDate: string, endDate: string) {
+  const data = await this.deviceModel.find({
+    deviceId,
+    date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+  }).select('temperatureValue humidityValue');
+  const temps = data.map(item => item.temperatureValue);
+  const hums = data.map(item => item.humidityValue);
+  if (temps.length === 0 || hums.length === 0) return { correlation: null, points: [] };
+  const meanT = temps.reduce((a, b) => a + b, 0) / temps.length;
+  const meanH = hums.reduce((a, b) => a + b, 0) / hums.length;
+  const numerator = temps.reduce((sum, t, i) => sum + (t - meanT) * (hums[i] - meanH), 0);
+  const denominator = Math.sqrt(temps.reduce((sum, t) => sum + Math.pow(t - meanT, 2), 0) * hums.reduce((sum, h) => sum + Math.pow(h - meanH, 2), 0));
+  const corr = denominator === 0 ? null : numerator / denominator;
+  // Return points as {x, y} for scatter plot compatibility
+  const points = data.map(item => ({ x: item.temperatureValue, y: item.humidityValue }));
+  return { correlation: corr, points };
 }
 }

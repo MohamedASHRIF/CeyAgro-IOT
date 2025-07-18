@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -12,19 +12,21 @@ import {
   Legend,
 } from "chart.js";
 import axios from "axios";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 // Register Chart.js components for rendering line charts
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export function HistoryChart({
-  deviceId,
+  device,
   metric,
   timeRange,
 }: {
-  deviceId: string | null;
+  device: string | null;
   metric: "temperature" | "humidity";
   timeRange: "lastHour" | "lastDay";
 }) {
+  const { user } = useUser();
   // State for chart data (labels and dataset for the line chart)
   const [chartData, setChartData] = useState({
     labels: [] as string[],
@@ -45,11 +47,11 @@ export function HistoryChart({
 
  
   useEffect(() => {
-    console.log("HistoryChart props:", { deviceId, metric, timeRange });
+    console.log("HistoryChart props:", { device, metric, timeRange });
 
     // Validate props to prevent invalid API calls
-    if (!deviceId || !metric || !timeRange) {
-      setError("Invalid deviceId, metric, or time range");
+    if (!device || !metric || !timeRange) {
+      setError("Invalid device, metric, or time range");
       return;
     }
 
@@ -60,19 +62,18 @@ export function HistoryChart({
     ).toISOString();
     const endDate = now.toISOString();
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
-
     // Fetch historical data from the API
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE}/analytics/history/${deviceId}?metric=${metric}&startDate=${startDate}&endDate=${endDate}`
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/history/${device}?metric=${metric}&startDate=${startDate}&endDate=${endDate}&email=${encodeURIComponent(user?.email || "")}`
         );
-        const data = response.data;
-        console.log("HistoryChart API response:", data);
+        const apiResponse = response.data;
+        const points = Array.isArray(apiResponse) ? apiResponse : apiResponse.data;
+        console.log("HistoryChart API response:", points);
 
         // Validate response as an array; empty array indicates no data
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!Array.isArray(points) || points.length === 0) {
           setNoData(true);
           setChartData({
             labels: [],
@@ -83,13 +84,13 @@ export function HistoryChart({
 
         // Update chart with fetched data
         setChartData({
-          labels: data.map(item =>
+          labels: points.map(item =>
             item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown"
           ),
           datasets: [
             {
               ...chartData.datasets[0],
-              data: data.map(item => item.value ?? 0),
+              data: points.map(item => item.value ?? 0),
               label: `Historical ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
             },
           ],
@@ -108,13 +109,18 @@ export function HistoryChart({
     };
 
     fetchData();
-  }, [deviceId, metric, timeRange]);
+  }, [device, metric, timeRange, user]);
+
+  useLayoutEffect(() => {
+    // Force a re-render when chartData changes
+    console.log('useLayoutEffect: chartData updated', chartData);
+  }, [chartData]);
 
   // Render error or no-data message if applicable
   if (error || noData) {
     return (
       <div>
-        <h2>Historical {metric.charAt(0).toUpperCase() + metric.slice(1)} for {deviceId || "Device"}</h2>
+        <h2>Historical {metric.charAt(0).toUpperCase() + metric.slice(1)} for {device || "Device"}</h2>
         <p className="text-red-500">{error || "No data available for this device and metric"}</p>
       </div>
     );
@@ -124,10 +130,13 @@ export function HistoryChart({
   const minValue = Math.min(...chartData.datasets[0].data, 0);
   const maxValue = Math.max(...chartData.datasets[0].data, 0);
 
+  // Log final chartData before rendering
+  console.log('Final chartData (HistoryChart):', chartData);
   // Render the line chart using Chart.js
   return (
-    <div className="chart-container w-full h-[300px]">
+    <div className="chart-container w-full h-[300px] min-h-[300px]" style={{ minHeight: 300 }}>
       <Line
+        key={JSON.stringify(chartData)}
         data={chartData}
         options={{
           responsive: true,
@@ -138,8 +147,8 @@ export function HistoryChart({
             },
             y: {
               title: { display: true, text: metric.charAt(0).toUpperCase() + metric.slice(1) },
-              min: minValue - (maxValue - minValue) * 0.1,
-              max: maxValue + (maxValue - minValue) * 0.1,
+              min: Math.min(...chartData.datasets[0].data, 0) - (Math.max(...chartData.datasets[0].data, 0) - Math.min(...chartData.datasets[0].data, 0)) * 0.1,
+              max: Math.max(...chartData.datasets[0].data, 0) + (Math.max(...chartData.datasets[0].data, 0) - Math.min(...chartData.datasets[0].data, 0)) * 0.1,
             },
           },
           plugins: {

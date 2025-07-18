@@ -20,6 +20,9 @@ import { KafkaContext } from '@nestjs/microservices';
 // @ts-ignore
 import axios from 'axios';
 import { Request } from 'express';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { DeviceUser, DeviceUserDocument } from './schemas/device-user.schema';
 
 // Helper to get userId from JWT (assume req.user is populated by JWT middleware)
 function getUserIdFromRequest(req: Request): string | null {
@@ -100,27 +103,27 @@ export class AnalyticsController {
   //HTTP GET endpoint to retrieve filtered device readings based on query parameters
   @Get('readings')
   @UsePipes(new ValidationPipe({ transform: true }))
-  async getReadings(@Query() queryDto: AnalyticsQueryDto) {
+  async getReadings(@Query() queryDto: AnalyticsQueryDto, @Query('email') email: string) {
     try {
-      const readings =
-        await this.analyticsService.getReadingsByDeviceAndDate(queryDto);
+      let deviceIds: string[] = [];
+      if (email) {
+        deviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+      }
+      // If deviceId is provided in query, use it; otherwise, use all user's deviceIds
+      const filterDeviceIds = queryDto.deviceId ? [queryDto.deviceId] : deviceIds;
+      if (filterDeviceIds.length === 0) {
+        return { success: false, message: 'No devices found for user', data: null };
+      }
+      // Update service to accept array of deviceIds
+      const readings = await this.analyticsService.getReadingsForDevices(filterDeviceIds, queryDto);
       return {
         success: true,
         message: 'Readings fetched successfully',
-        data: {
-          deviceId: queryDto.deviceId,
-          startDate: queryDto.startDate,
-          endDate: queryDto.endDate,
-          readings,
-        },
+        data: { deviceIds: filterDeviceIds, readings },
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return {
-          success: false,
-          message: error.message,
-          data: null,
-        };
+        return { success: false, message: error.message, data: null };
       }
       throw error;
     }
@@ -168,11 +171,18 @@ export class AnalyticsController {
 async getRealtimeStats(
   @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
-  @Req() req: Request,
+  @Query('email') email: string
 ) {
-  const userId = getUserIdFromRequest(req);
-  if (!userId) throw new ForbiddenException('User not authenticated');
-  const userDeviceIds = await getUserDeviceIds(userId);
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  console.log('DEBUG:', {
+    email,
+    requestedDeviceId: deviceId,
+    userDeviceIds,
+    includes: userDeviceIds.includes(deviceId),
+    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
+    requestedDeviceIdSplit: deviceId.split(''),
+  });
   if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
     return await this.analyticsService.getRealtimeStats(deviceId, metric);
@@ -193,11 +203,18 @@ async getHistoricalStats(
   @Query('metric') metric: 'temperature' | 'humidity',
   @Query('startDate') startDate: string,
   @Query('endDate') endDate: string,
-  @Req() req: Request,
+  @Query('email') email: string
 ) {
-  const userId = getUserIdFromRequest(req);
-  if (!userId) throw new ForbiddenException('User not authenticated');
-  const userDeviceIds = await getUserDeviceIds(userId);
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  console.log('DEBUG:', {
+    email,
+    requestedDeviceId: deviceId,
+    userDeviceIds,
+    includes: userDeviceIds.includes(deviceId),
+    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
+    requestedDeviceIdSplit: deviceId.split(''),
+  });
   if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
     return await this.analyticsService.getHistoricalStats(deviceId, metric, startDate, endDate);
@@ -216,12 +233,19 @@ async getHistoricalStats(
 async getStats(
   @Param('deviceId') deviceId: string,
   @Query('metric') metric: 'temperature' | 'humidity',
-  @Query('timeRange') timeRange: 'lastHour' | 'lastDay',
-  @Req() req: Request,
+  @Query('timeRange') timeRange: string,
+  @Query('email') email: string
 ) {
-  const userId = getUserIdFromRequest(req);
-  if (!userId) throw new ForbiddenException('User not authenticated');
-  const userDeviceIds = await getUserDeviceIds(userId);
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  console.log('DEBUG:', {
+    email,
+    requestedDeviceId: deviceId,
+    userDeviceIds,
+    includes: userDeviceIds.includes(deviceId),
+    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
+    requestedDeviceIdSplit: deviceId.split(''),
+  });
   if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
     return await this.analyticsService.getStats(deviceId, metric, timeRange);
@@ -243,6 +267,89 @@ async getAvailableMetrics(@Param('deviceId') deviceId: string) {
     return {
       success: false,
       message: error.message || 'Failed to fetch metrics',
+      data: null,
+    };
+  }
+}
+
+// Endpoint: Get all deviceIds for a user (for frontend dropdowns)
+@Get('user-devices')
+async getUserDevices(@Query('email') email: string) {
+  if (!email) {
+    throw new ForbiddenException('User email is required');
+  }
+  const deviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  return { success: true, data: deviceIds };
+}
+
+// --- Advanced Analytics Endpoints ---
+// Anomaly Detection
+@Get('anomaly/:deviceId')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getAnomalies(
+  @Param('deviceId') deviceId: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('startDate') startDate: string,
+  @Query('endDate') endDate: string,
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
+  try {
+    return await this.analyticsService.getAnomalies(deviceId, metric, startDate, endDate);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch anomalies',
+      data: null,
+    };
+  }
+}
+// Device/Period Comparison
+@Get('compare')
+@UsePipes(new ValidationPipe({ transform: true }))
+async compareDevicesOrPeriods(
+  @Query('deviceA') deviceA: string,
+  @Query('deviceB') deviceB: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('startDateA') startDateA: string,
+  @Query('endDateA') endDateA: string,
+  @Query('startDateB') startDateB: string,
+  @Query('endDateB') endDateB: string,
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  if (!userDeviceIds.includes(deviceA) || !userDeviceIds.includes(deviceB)) throw new ForbiddenException('Access to one or both devices is forbidden');
+  try {
+    return await this.analyticsService.compareDevicesOrPeriods(deviceA, deviceB, metric, startDateA, endDateA, startDateB, endDateB);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to compare',
+      data: null,
+    };
+  }
+}
+// Correlation
+@Get('correlation/:deviceId')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getCorrelation(
+  @Param('deviceId') deviceId: string,
+  @Query('startDate') startDate: string,
+  @Query('endDate') endDate: string,
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
+  try {
+    return await this.analyticsService.getCorrelation(deviceId, startDate, endDate);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch correlation',
       data: null,
     };
   }
