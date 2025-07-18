@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -46,53 +47,70 @@ export class AnalyticsService {
     return { status: 'processed', data: deviceData };
   }
 
-  //Retrieves all data records for a specific device by name, sorted by creation date (newest first)
-  async getDeviceData(name: string) {
-    return this.deviceModel.find({ name }).sort({ createdAt: -1 }).exec();
+
+    async getLatestDeviceData(name: string) {
+    return this.deviceModel.findOne({ name }).sort({ date: -1 }).exec();
   }
 
-  //Retrieves the most recent data record for a specific device by name
-  async getLatestDeviceData(name: string) {
-    return this.deviceModel.findOne({ name }).sort({ createdAt: -1 }).exec();
-  }
 
-  //Retrieves a sorted list of unique device names from the database
-  async getDeviceNames(): Promise<string[]> {
+
+  async getDeviceNamesForUser(email: string): Promise<string[]> {
     try {
-      const deviceNames = await this.deviceModel.distinct('name').exec();
-      return deviceNames
-        .filter((name): name is string => name != null)
+      console.log('Fetching device names for user email:', email);
+      const userDevices = await this.deviceUserModel
+        .find({ email })
+        .select('deviceName')
+        .exec();
+
+      const deviceNames = userDevices
+        .filter(device => device.deviceName && typeof device.deviceName === 'string')
+        .map(device => device.deviceName)
         .sort((a, b) => a.localeCompare(b));
+      console.log('Found device names for user:', deviceNames);
+
+      if (deviceNames.length === 0) {
+        console.warn(`No valid device names found for email: ${email}`);
+      }
+      return deviceNames;
     } catch (error) {
-      console.error('Failed to fetch device names:', error);
-      throw new InternalServerErrorException('Failed to fetch device names');
+      console.error('Failed to fetch user device names:', error);
+      throw new InternalServerErrorException('Failed to fetch user device names');
     }
   }
 
-  //Generates an Excel report from filtered data and uploads it to S3
-  async generateAndUploadReport(
+    async generateAndUploadReport(
     queryDto: AnalyticsQueryDto,
+    email?: string,
   ): Promise<{ downloadUrl: string; expiresIn: number; recordCount: number }> {
-    // Fetch filtered data based on query parameters
-    const data = await this.getFilteredData(queryDto);
+    let data;
+
+    if (email) {
+      const userDeviceIds = await this.getDeviceIdsForUser(email);
+      data = await this.getFilteredDataForUser(queryDto, userDeviceIds);
+    } else {
+      data = await this.getFilteredData(queryDto);
+    }
+
     if (data.length === 0) {
       throw new NotFoundException('No data found for the given criteria');
     }
+
     if (data[0].date) {
       data.sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
       );
     }
+
     let fieldsToInclude = queryDto.fields;
     if (!fieldsToInclude || fieldsToInclude.length === 0) {
-      fieldsToInclude = ['name', 'value', 'date', 'location', 'status'];
+      fieldsToInclude = ['name', 'temperatureValue', 'humidityValue', 'date', 'deviceId'];
     }
-    // Generate an Excel file from the data
+
     const excelBuffer = await this.excelService.generateExcel(
       data,
       fieldsToInclude,
     );
-    // Create a unique filename with timestamp and device info
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const deviceInfo = queryDto.name
       ? `-${queryDto.name.replace(/\s+/g, '-')}`
@@ -100,8 +118,8 @@ export class AnalyticsService {
     const dateInfo = queryDto.date ? `-${queryDto.date}` : '';
     const filename = `device-report${deviceInfo}${dateInfo}-${timestamp}.xlsx`;
     const s3Key = `analytics/${filename}`;
+
     try {
-      // Upload the Excel file to AWS S3
       await this.s3Service.uploadFile(
         excelBuffer,
         s3Key,
@@ -114,9 +132,7 @@ export class AnalyticsService {
       );
     }
 
-    // Set the expiration time for the signed URL (30 minutes)
     const expiresIn = 1800;
-    // Generate a pre-signed URL for downloading the file
     const downloadUrl = this.s3Service.getSignedUrl(s3Key, expiresIn);
     return {
       downloadUrl,
@@ -124,90 +140,185 @@ export class AnalyticsService {
       recordCount: data.length,
     };
   }
-  //Retrieves filtered device data based on query parameters
-  async getReadingsByDeviceAndDate(
+
+
+ async getReadingsByDeviceAndDate(
     queryDto: AnalyticsQueryDto,
+    email?: string,
   ): Promise<any[]> {
-    const data = await this.getFilteredData(queryDto);
+    let data;
+
+    if (email) {
+      const userDeviceIds = await this.getDeviceIdsForUser(email);
+      data = await this.getFilteredDataForUser(queryDto, userDeviceIds);
+    } else {
+      data = await this.getFilteredData(queryDto);
+    }
+
     if (data.length === 0) {
-      throw new NotFoundException('No readings found for the given criteria');
+      return [];
     }
     return data;
   }
 
-  //Builds and executes a MongoDB query to filter device data
-  private async getFilteredData(queryDto: AnalyticsQueryDto): Promise<any[]> {
+  
+
+
+ private async getFilteredDataForUser(queryDto: AnalyticsQueryDto, userDeviceIds: string[]): Promise<any[]> {
+    if (!userDeviceIds.length) {
+      console.warn('No valid device IDs provided for the user');
+      throw new NotFoundException('No valid device IDs provided for the user');
+    }
+
+    const query: any = { deviceId: { $in: userDeviceIds } };
+
+    if (queryDto.name) {
+      const deviceInfo = await this.deviceUserModel
+        .findOne({ deviceName: queryDto.name })
+        .select('deviceId deviceName')
+        .exec();
+      if (!deviceInfo) {
+        console.warn(`Device name ${queryDto.name} not found for user`);
+        throw new NotFoundException(`Device name ${queryDto.name} not found for the user`);
+      }
+      if (!userDeviceIds.includes(deviceInfo.deviceId)) {
+        console.warn(`Device name ${queryDto.name} not associated with user device IDs`);
+        throw new NotFoundException(`Device name ${queryDto.name} not associated with user`);
+      }
+      if (typeof deviceInfo.deviceId !== 'string') {
+        console.error(`Invalid deviceId for deviceName ${queryDto.name}: deviceId=${deviceInfo.deviceId}`);
+        throw new BadRequestException(`Invalid deviceId for deviceName ${queryDto.name}`);
+      }
+      query.deviceId = deviceInfo.deviceId;
+      query.name = deviceInfo.deviceName; // Ensure name matches for consistency
+    }
+
+    if (queryDto.temperatureValue != null) {
+      query.temperatureValue = queryDto.temperatureValue;
+    }
+    if (queryDto.humidityValue != null) {
+      query.humidityValue = queryDto.humidityValue;
+    }
+
+    if (queryDto.date || queryDto.startDate || queryDto.endDate) {
+      query.date = {};
+      if (queryDto.date) {
+        const targetDate = new Date(queryDto.date);
+        if (isNaN(targetDate.getTime())) {
+          throw new BadRequestException('Invalid date format provided');
+        }
+        const startDate = new Date(targetDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(targetDate);
+        endDate.setHours(23, 59, 59, 999);
+        query.date.$gte = startDate;
+        query.date.$lte = endDate;
+      } else {
+        if (queryDto.startDate) {
+          const startDate = new Date(queryDto.startDate);
+          if (isNaN(startDate.getTime())) {
+            throw new BadRequestException('Invalid startDate format provided');
+          }
+          startDate.setHours(0, 0, 0, 0);
+          query.date.$gte = startDate;
+        }
+        if (queryDto.endDate) {
+          const endDate = new Date(queryDto.endDate);
+          if (isNaN(endDate.getTime())) {
+            throw new BadRequestException('Invalid endDate format provided');
+          }
+          endDate.setHours(23, 59, 59, 999);
+          query.date.$lte = endDate;
+        }
+      }
+    }
+
+    console.log('Filtered query for user:', JSON.stringify(query));
+    try {
+      const devices = await this.deviceModel.find(query).lean().exec();
+      console.log(`Query returned ${devices.length} results for user`);
+      return devices.map((device) => {
+        const rawDevice = device as Record<string, any>;
+        const id = rawDevice._id ? rawDevice._id.toString() : null;
+        const { _id, __v, ...cleanDevice } = rawDevice;
+        if (cleanDevice.date) {
+          cleanDevice.date = new Date(cleanDevice.date).toISOString();
+        }
+        return { ...cleanDevice, id };
+      });
+    } catch (error) {
+      console.error('Query error:', error);
+      throw new InternalServerErrorException('Failed to fetch device data');
+    }
+  }
+
+ private async getFilteredData(queryDto: AnalyticsQueryDto): Promise<any[]> {
     const query: any = {};
+
     if (queryDto.name) {
       query.name = queryDto.name;
     }
-    if (queryDto.temperatureValue) {
-      query.tempValue = queryDto.temperatureValue;
+    if (queryDto.temperatureValue != null) {
+      query.temperatureValue = queryDto.temperatureValue;
     }
-    if (queryDto.humidityValue) {
+    if (queryDto.humidityValue != null) {
       query.humidityValue = queryDto.humidityValue;
     }
-    // if (queryDto.location) {
-    //   query.location = queryDto.location;
-    // }
-    // Add single-day date filter if provided
-    if (queryDto.date) {
-      const startDate = new Date(queryDto.date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(queryDto.date);
-      endDate.setHours(23, 59, 59, 999);
-      if (this.hasDateField('date')) {
-        query.date = {
-          $gte: startDate,
-          $lte: endDate,
-        };
-      } else if (this.hasDateField('createdAt')) {
-        query.createdAt = {
-          $gte: startDate,
-          $lte: endDate,
-        };
-      }
-    }
-    // Add date range filter if startDate or endDate is provided
-    else if (queryDto.startDate || queryDto.endDate) {
-      const dateField = this.hasDateField('date') ? 'date' : 'createdAt';
-      query[dateField] = {};
 
-      if (queryDto.startDate) {
-        const startDate = new Date(queryDto.startDate);
+    if (queryDto.date || queryDto.startDate || queryDto.endDate) {
+      query.date = {};
+      if (queryDto.date) {
+        const targetDate = new Date(queryDto.date);
+        if (isNaN(targetDate.getTime())) {
+          throw new BadRequestException('Invalid date format provided');
+        }
+        const startDate = new Date(targetDate);
         startDate.setHours(0, 0, 0, 0);
-        query[dateField].$gte = startDate;
-      }
-      if (queryDto.endDate) {
-        const endDate = new Date(queryDto.endDate);
+        const endDate = new Date(targetDate);
         endDate.setHours(23, 59, 59, 999);
-        query[dateField].$lte = endDate;
+        query.date.$gte = startDate;
+        query.date.$lte = endDate;
+      } else {
+        if (queryDto.startDate) {
+          const startDate = new Date(queryDto.startDate);
+          if (isNaN(startDate.getTime())) {
+            throw new BadRequestException('Invalid startDate format provided');
+          }
+          startDate.setHours(0, 0, 0, 0);
+          query.date.$gte = startDate;
+        }
+        if (queryDto.endDate) {
+          const endDate = new Date(queryDto.endDate);
+          if (isNaN(endDate.getTime())) {
+            throw new BadRequestException('Invalid endDate format provided');
+          }
+          endDate.setHours(23, 59, 59, 999);
+          query.date.$lte = endDate;
+        }
       }
     }
+
     console.log('Final query:', JSON.stringify(query));
-    const devices = await this.deviceModel.find(query).lean().exec();
-    console.log(`Query returned ${devices.length} results`);
-    // Clean and format the results
-    return devices.map((device) => {
-      const rawDevice = device as Record<string, any>;
-      const id = rawDevice._id ? rawDevice._id.toString() : null;
-      const { _id, __v, ...cleanDevice } = rawDevice;
-      if (cleanDevice.date) {
-        cleanDevice.date = new Date(cleanDevice.date);
-      }
-      return { ...cleanDevice, id };
-    });
+    try {
+      const devices = await this.deviceModel.find(query).lean().exec();
+      console.log(`Query returned ${devices.length} results`);
+      return devices.map((device) => {
+        const rawDevice = device as Record<string, any>;
+        const id = rawDevice._id ? rawDevice._id.toString() : null;
+        const { _id, __v, ...cleanDevice } = rawDevice;
+        if (cleanDevice.date) {
+          cleanDevice.date = new Date(cleanDevice.date).toISOString();
+        }
+        return { ...cleanDevice, id };
+      });
+    } catch (error) {
+      console.error('Query error:', error);
+      throw new InternalServerErrorException('Failed to fetch device data');
+    }
   }
 
-  
-  //Checks if a field is a valid date field in the schema
-  private hasDateField(fieldName: string): boolean {
-    const schemaFields = ['date', 'createdAt', 'updatedAt'];
-    return schemaFields.includes(fieldName);
-  }
 
-  // Deletes an Excel report from the S3 bucket
-  async deleteReportFile(
+    async deleteReportFile(
     s3Key: string,
   ): Promise<{ success: boolean; message: string }> {
     try {
@@ -230,6 +341,10 @@ export class AnalyticsService {
       );
     }
   }
+
+
+
+
   // Visualization Methods
 // Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
 async getRealtimeStats(deviceId: string, metric: 'temperature' | 'humidity') {
