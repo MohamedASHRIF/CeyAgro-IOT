@@ -138,18 +138,18 @@
 //           Total number of devices registered
 //         </CardFooter>
 //       </Card>
-"use client";
-<Card className="bg-[#B5F6B2] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
-  <CardHeader className="relative flex flex-col justify-center items-center text-center">
-    <CardDescription className="text-2xl text-3xl">
-      Active Devices
-    </CardDescription>
-    <CardTitle className="text-4xl  tabular-nums pt-2">08</CardTitle>
-  </CardHeader>
-  <CardFooter className="flex-col gap-1 text-md ">
-    Number of Currently Active devices
-  </CardFooter>
-</Card>;
+// "use client";
+// <Card className="bg-[#B5F6B2] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
+//   <CardHeader className="relative flex flex-col justify-center items-center text-center">
+//     <CardDescription className="text-2xl text-3xl">
+//       Active Devices
+//     </CardDescription>
+//     <CardTitle className="text-4xl  tabular-nums pt-2">08</CardTitle>
+//   </CardHeader>
+//   <CardFooter className="flex-col gap-1 text-md ">
+//     Number of Currently Active devices
+//   </CardFooter>
+// </Card>;
 
 //       <Card className="bg-[#FF97978A] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
 //         <CardHeader className="relative flex flex-col justify-center items-center text-center">
@@ -190,6 +190,8 @@
 //   );
 // }
 
+"use client";
+
 import { useState, useEffect } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import {
@@ -224,9 +226,7 @@ export function SectionCards() {
       setStatistics((prev) => ({ ...prev, loading: true, error: null }));
 
       const response = await fetch(
-        `http://localhost:3002/device-user/statistics?email=${encodeURIComponent(
-          email
-        )}`
+        `http://localhost:3002/device-user/statistics?email=${encodeURIComponent(email)}`
       );
 
       const result = await response.json();
@@ -299,9 +299,7 @@ export function SectionCards() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 5xl:grid-cols-4 gap-4 px-4 lg:px-6 p-20">
         <Card className="bg-red-50 border-red-200 rounded-4xl pt-2 gap-2 col-span-full">
           <CardHeader className="text-center">
-            <CardTitle className="text-red-600">
-              Error Loading Statistics
-            </CardTitle>
+            <CardTitle className="text-red-600">Error Loading Statistics</CardTitle>
             <CardDescription className="text-red-500">
               {statistics.error}
             </CardDescription>
@@ -323,9 +321,7 @@ export function SectionCards() {
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 5xl:grid-cols-4 gap-4 px-4 lg:px-6 p-20">
       <Card className="bg-[#FFD9666E] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
         <CardHeader className="relative flex flex-col justify-center items-center text-center">
-          <CardDescription className="text-2xl text-3xl">
-            Total Devices
-          </CardDescription>
+          <CardDescription className="text-2xl text-3xl">Total Devices</CardDescription>
           <CardTitle className="text-4xl tabular-nums pt-2">
             {statistics.total.toString().padStart(2, "0")}
           </CardTitle>
@@ -337,9 +333,7 @@ export function SectionCards() {
 
       <Card className="bg-[#B5F6B2] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
         <CardHeader className="relative flex flex-col justify-center items-center text-center">
-          <CardDescription className="text-2xl text-3xl">
-            Active Devices
-          </CardDescription>
+          <CardDescription className="text-2xl text-3xl">Active Devices</CardDescription>
           <CardTitle className="text-4xl tabular-nums pt-2">
             {statistics.active.toString().padStart(2, "0")}
           </CardTitle>
@@ -351,9 +345,7 @@ export function SectionCards() {
 
       <Card className="bg-[#FF97978A] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2">
         <CardHeader className="relative flex flex-col justify-center items-center text-center">
-          <CardDescription className="text-2xl text-3xl">
-            Inactive Devices
-          </CardDescription>
+          <CardDescription className="text-2xl text-3xl">Inactive Devices</CardDescription>
           <CardTitle className="text-4xl tabular-nums pt-2">
             {statistics.inactive.toString().padStart(2, "0")}
           </CardTitle>
@@ -389,3 +381,5 @@ export function SectionCards() {
     </div>
   );
 }
+
+
