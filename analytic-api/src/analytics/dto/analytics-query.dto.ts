@@ -2,6 +2,8 @@ import { IsString, IsOptional, IsDateString, IsArray, IsBoolean } from 'class-va
 import { Type, Transform } from 'class-transformer';
 
 export class AnalyticsQueryDto {
+
+  @IsOptional()
   @IsString()
   readonly deviceId: string;
 

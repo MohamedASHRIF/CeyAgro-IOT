@@ -668,7 +668,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">No device to display</h2>
         <p className="text-gray-600">Your device has been deleted or not available.</p>
 
-      {/*  <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
+        {/*   <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="text-green-600">Success</AlertDialogTitle>
@@ -679,6 +679,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>*/}
+
       </div>
     );
 

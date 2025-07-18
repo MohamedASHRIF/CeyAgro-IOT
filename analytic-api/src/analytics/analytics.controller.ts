@@ -1,3 +1,4 @@
+
 import {
   Controller,
   NotFoundException,
@@ -11,8 +12,10 @@ import {
   Delete,
   Param,
   ForbiddenException,
+  BadRequestException,
   Req
 } from '@nestjs/common';
+
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
@@ -66,61 +69,44 @@ export class AnalyticsController {
     return this.analyticsService.processIoTData(data, fakeKafkaContext);
   }
 
-  //HTTP POST endpoint to generate and upload an Excel report based on query parameters
-  @Post('export')
-  @UsePipes(new ValidationPipe({ transform: true }))
-  async exportData(@Query() queryDto: AnalyticsQueryDto) {
+   @Get('device-names')
+  async getDeviceNamesForUser(@Query('email') email: string) {
     try {
-      const result =
-        await this.analyticsService.generateAndUploadReport(queryDto);
-      return {
-        success: true,
-        message: 'Report generated successfully',
-        data: {
-          downloadUrl: result.downloadUrl,
-          expiresIn: result.expiresIn,
-          recordCount: result.recordCount,
-        },
-      };
+      const deviceNames = await this.analyticsService.getDeviceNamesForUser(email);
+      return { success: true, message: 'User device names fetched successfully', data: deviceNames };
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return {
-          success: false,
-          message: error.message,
-          data: null,
-        };
+        return { success: false, message: error.message, data: [] };
       }
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch user device names');
     }
   }
 
-  //HTTP GET endpoint to retrieve a list of unique device names
-  @Get('names')
-  async getDeviceNames(): Promise<string[]> {
-    return this.analyticsService.getDeviceNames();
-  }
-
-  //HTTP GET endpoint to retrieve filtered device readings based on query parameters
-  @Get('readings')
-  @UsePipes(new ValidationPipe({ transform: true }))
-  async getReadings(@Query() queryDto: AnalyticsQueryDto, @Query('email') email: string) {
+   @Get('readings')
+  async getReadingsByDeviceAndDate(
+    @Query() queryDto: AnalyticsQueryDto,
+    @Query('email') email?: string,
+  ) {
     try {
-      let deviceIds: string[] = [];
-      if (email) {
-        deviceIds = await this.analyticsService.getDeviceIdsForUser(email);
-      }
-      // If deviceId is provided in query, use it; otherwise, use all user's deviceIds
-      const filterDeviceIds = queryDto.deviceId ? [queryDto.deviceId] : deviceIds;
-      if (filterDeviceIds.length === 0) {
-        return { success: false, message: 'No devices found for user', data: null };
-      }
-      // Update service to accept array of deviceIds
-      const readings = await this.analyticsService.getReadingsForDevices(filterDeviceIds, queryDto);
+      const data = await this.analyticsService.getReadingsByDeviceAndDate(queryDto, email);
       return {
         success: true,
-        message: 'Readings fetched successfully',
-        data: { deviceIds: filterDeviceIds, readings },
+        message: data.length > 0 ? 'Readings fetched successfully' : 'No readings found for the given criteria',
+        data: { readings: data },
       };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        return { success: false, message: error.message, data: null };
+      }
+      throw new InternalServerErrorException('Failed to fetch readings');
+    }
+  }
+
+  @Post('export')
+  async exportReport(@Query() queryDto: AnalyticsQueryDto, @Query('email') email?: string) {
+    try {
+      const result = await this.analyticsService.generateAndUploadReport(queryDto, email);
+      return { success: true, message: 'Report generated successfully', data: result };
     } catch (error) {
       if (error instanceof NotFoundException) {
         return { success: false, message: error.message, data: null };
@@ -129,41 +115,32 @@ export class AnalyticsController {
     }
   }
 
-  //HTTP DELETE endpoint to delete the file
-  @Delete('files')
-  async deleteFileByQuery(@Query('key') key: string) {
+ 
+ @Delete('files')
+  async deleteReportFile(@Query('key') s3Key: string) {
     try {
-      if (!key) {
-        return {
-          success: false,
-          message: 'File key is required',
-        };
-      }
-      // Decode the URL parameter and clean it up
-      key = decodeURIComponent(key).trim();
-
-      // For security, ensure the key starts with 'analytics/' to prevent deletion outside intended folder
-      if (!key.startsWith('analytics/')) {
-        key = `analytics/${key}`;
-      }
-
-      console.log(`Processing delete request for key: "${key}"`);
-      const result = await this.analyticsService.deleteReportFile(key);
+      const result = await this.analyticsService.deleteReportFile(s3Key);
       return result;
     } catch (error) {
-      console.error('Error in deleteFileByQuery controller:', error);
-      if (error instanceof NotFoundException) {
-        return {
-          success: false,
-          message: error.message,
-        };
-      }
-      return {
-        success: false,
-        message: `Error deleting file: ${error.message}`,
-      };
+      throw new InternalServerErrorException('Failed to delete report file');
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
   // Visualization Endpoints
 // Retrieves real-time stats for a device by name and metric
 @Get('realtime/:deviceId')
@@ -355,3 +332,4 @@ async getCorrelation(
   }
 }
 }
+

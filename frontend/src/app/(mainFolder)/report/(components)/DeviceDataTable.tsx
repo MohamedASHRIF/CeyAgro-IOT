@@ -49,14 +49,14 @@ export function DeviceDataTable({
 
   // Extract device name and location from the first data item, with fallbacks
   const deviceName = data.length > 0 ? data[0].name || "Unknown Device" : "No Data";
-  const location = data.length > 0 ? data[0].location || "Unknown Location" : "Unknown Location";
+  // const location = data.length > 0 ? data[0].location || "Unknown Location" : "Unknown Location";
 
   // Render heading and data table
   return (
     <div className="rounded-md border">
       {/* Heading with device name and location */}
       <h2 className="text-2xl font-bold text-center mb-4">
-        Device: {deviceName} ({location})
+        Device: {deviceName}
       </h2>
 
       <Table>
