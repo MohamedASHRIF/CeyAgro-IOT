@@ -376,7 +376,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -759,15 +759,17 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                     <Pencil className="h-4 w-4" />
                     Edit Device
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-black bg-white cursor-pointer flex items-center gap-2"
-                    onClick={() => alert("Visualize Device Clicked")}
-                  >
-                    <BarChart className="h-4 w-4" />
-                    Visualize
-                  </Button>
+
+                  <Link href="/device-visualization">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-black bg-white cursor-pointer flex items-center gap-2"
+                    >
+                      <BarChart className="h-4 w-4" />
+                      Visualize
+                    </Button>
+                  </Link>
                   <Button
                     variant="destructive"
                     size="sm"
