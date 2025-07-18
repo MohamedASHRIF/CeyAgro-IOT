@@ -403,4 +403,120 @@ async getCorrelation(deviceId: string, startDate: string, endDate: string) {
   const points = data.map(item => ({ x: item.temperatureValue, y: item.humidityValue }));
   return { correlation: corr, points };
 }
+// Prediction: returns actual and predicted values for a device/metric
+async getPrediction(deviceId: string, metric: 'temperature' | 'humidity', futureWindow: number) {
+  // 1. Get recent actual data (last 24h)
+  const now = new Date();
+  const past = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const actualData = await this.deviceModel.find({
+    deviceId,
+    date: { $gte: past, $lte: now },
+  }).sort({ date: 1 }).select('date temperatureValue humidityValue');
+
+  // 2. Prepare actual values for chart
+  const actualPoints = actualData.map(item => ({
+    timestamp: item.date.toISOString(),
+    actualValue: metric === 'temperature' ? item.temperatureValue : item.humidityValue,
+    predictedValue: null,
+  }));
+
+  // 3. Generate mock predictions (simple linear extrapolation)
+  let lastValue = actualPoints.length > 0 ? actualPoints[actualPoints.length - 1].actualValue : 0;
+  let slope = 0;
+  if (actualPoints.length > 1) {
+    const first = actualPoints[0].actualValue;
+    const last = actualPoints[actualPoints.length - 1].actualValue;
+    slope = (last - first) / (actualPoints.length - 1);
+  }
+  const intervalMs = 60 * 60 * 1000; // 1 hour intervals
+  const predictionPoints = [];
+  for (let i = 1; i <= futureWindow; i++) {
+    const futureDate = new Date(now.getTime() + i * intervalMs);
+    const predictedValue = lastValue + slope * i;
+    predictionPoints.push({
+      timestamp: futureDate.toISOString(),
+      actualValue: null,
+      predictedValue,
+    });
+  }
+
+  // 4. Combine actual and predicted
+  return {
+    deviceId,
+    metric,
+    points: [...actualPoints, ...predictionPoints],
+  };
+}
+// Forecast: returns forecasted values for a device/metric for the next N hours using a hybrid of moving average, exponential smoothing, and linear regression
+async getForecast(deviceId: string, metric: 'temperature' | 'humidity', futureWindow: number) {
+  // 1. Get recent actual data (last 24h)
+  const now = new Date();
+  const past = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const actualData = await this.deviceModel.find({
+    deviceId,
+    date: { $gte: past, $lte: now },
+  }).sort({ date: 1 }).select('date temperatureValue humidityValue');
+
+  // Prepare values
+  const values = actualData.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue);
+  if (values.length === 0) values.push(0);
+
+  // --- Moving Average ---
+  const windowSize = 6;
+  let maValues = [...values];
+
+  // --- Exponential Smoothing ---
+  const alpha = 0.5; // smoothing factor (0 < alpha <= 1)
+  let esValues = [values[0]];
+  for (let i = 1; i < values.length; i++) {
+    esValues.push(alpha * values[i] + (1 - alpha) * esValues[i - 1]);
+  }
+
+  // --- Linear Regression (trend) ---
+  // Fit y = a + b*x to the last N points
+  const n = values.length;
+  let lrA = 0, lrB = 0;
+  if (n > 1) {
+    const x = Array.from({ length: n }, (_, i) => i);
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = values.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((a, b, i) => a + b * values[i], 0);
+    const sumX2 = x.reduce((a, b) => a + b * b, 0);
+    lrB = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX || 1);
+    lrA = (sumY - lrB * sumX) / n;
+  } else {
+    lrA = values[0];
+    lrB = 0;
+  }
+
+  // --- Forecast future points ---
+  const forecastPoints = [];
+  let lastMA = maValues.slice(-windowSize);
+  let lastES = esValues[esValues.length - 1];
+  for (let i = 1; i <= futureWindow; i++) {
+    // Moving Average
+    const ma = lastMA.reduce((sum, v) => sum + v, 0) / lastMA.length;
+    lastMA.push(ma);
+    if (lastMA.length > windowSize) lastMA.shift();
+    // Exponential Smoothing
+    lastES = alpha * ma + (1 - alpha) * lastES;
+    // Linear Regression
+    const lr = lrA + lrB * (n + i - 1);
+    // Hybrid: average of all three
+    const hybrid = (ma + lastES + lr) / 3;
+    const futureDate = new Date(now.getTime() + i * 60 * 60 * 1000);
+    forecastPoints.push({
+      timestamp: futureDate.toISOString(),
+      forecastValue: hybrid,
+    });
+    // For next step
+    maValues.push(ma);
+    esValues.push(lastES);
+  }
+  return {
+    deviceId,
+    metric,
+    forecast: forecastPoints,
+  };
+}
 }

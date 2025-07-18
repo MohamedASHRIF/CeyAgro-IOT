@@ -10,6 +10,9 @@ import { ComparisonChart } from "./(components)/ComparisonChart";
 import { CorrelationChart } from "./(components)/CorrelationChart";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
+// import { PredictionChart } from "./(components)/PredictionChart";
+// import { ForecastChart } from "./(components)/ForecastChart";
+import ForecastAreaChart from "./(components)/ForecastAreaChart";
 
 
 export default function VisualizationPage() {
@@ -174,19 +177,32 @@ export default function VisualizationPage() {
               />
             </CardContent>
           </Card>
-          {/* Anomaly Detection */}
+          {/* Correlation */}
           <Card className="mb-6">
-            <CardHeader><CardTitle>Anomaly Detection</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Correlation (Temp vs. Humidity)</CardTitle></CardHeader>
             <CardContent>
-              <AnomalyChart
+              <CorrelationChart
                 device={selectedDevice}
-                metric={selectedMetric}
                 startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                 endDate={new Date().toISOString()}
               />
             </CardContent>
           </Card>
-          {/* Comparison */}
+          {/* Forecast (moved here, replacing Prediction) */}
+          <Card className="mb-6">
+            <CardHeader><CardTitle>Forecast</CardTitle></CardHeader>
+            <CardContent>
+              {user && user.email && (
+                <ForecastAreaChart
+                  device={selectedDevice}
+                  metric={selectedMetric}
+                  email={user.email}
+                  futureWindow={24}
+                />
+              )}
+            </CardContent>
+          </Card>
+          {/* Device Comparison */}
           <Card className="mb-6">
             <CardHeader><CardTitle>Device Comparison</CardTitle></CardHeader>
             <CardContent>
@@ -205,22 +221,16 @@ export default function VisualizationPage() {
               )}
             </CardContent>
           </Card>
-          {/* Correlation */}
+          {/* Anomaly Detection */}
           <Card className="mb-6">
-            <CardHeader><CardTitle>Correlation (Temp vs. Humidity)</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Anomaly Detection</CardTitle></CardHeader>
             <CardContent>
-              <CorrelationChart
+              <AnomalyChart
                 device={selectedDevice}
+                metric={selectedMetric}
                 startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                 endDate={new Date().toISOString()}
               />
-            </CardContent>
-          </Card>
-          {/* Forecasting (placeholder) */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle>Forecast</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-gray-400 text-center">Coming soon</div>
             </CardContent>
           </Card>
         </div>
