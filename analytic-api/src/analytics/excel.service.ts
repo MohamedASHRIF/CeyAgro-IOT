@@ -19,12 +19,12 @@ export class ExcelService {
     titleCell.font = { bold: true, size: 16 };
     titleCell.alignment = { horizontal: 'center' };
 
-    // Title: Location in row 2
-    worksheet.mergeCells('A2:C2');
-    const locationCell = worksheet.getCell('A2');
-    locationCell.value = `Location: ${location}`;
-    locationCell.font = { bold: true, size: 14 };
-    locationCell.alignment = { horizontal: 'center' };
+    // // Title: Location in row 2
+    // worksheet.mergeCells('A2:C2');
+    // const locationCell = worksheet.getCell('A2');
+    // locationCell.value = `Location: ${location}`;
+    // locationCell.font = { bold: true, size: 14 };
+    // locationCell.alignment = { horizontal: 'center' };
 
     // Headers in row 4
     const headers = ['Temperature Value', 'Humidity Value', 'Date'];
