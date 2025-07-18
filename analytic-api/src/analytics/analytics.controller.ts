@@ -126,6 +126,21 @@ export class AnalyticsController {
     }
   }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
   // Visualization Endpoints
 // Retrieves real-time stats for a device by name and metric
 @Get('realtime/:deviceId')
@@ -189,69 +204,6 @@ async getHistoricalStats(
   }
 }
 
-
-  // Visualization Endpoints
-// Retrieves real-time stats for a device by name and metric
-@Get('realtime/:deviceId')
-@UsePipes(new ValidationPipe({ transform: true }))
-async getRealtimeStats(
-  @Param('deviceId') deviceId: string,
-  @Query('metric') metric: 'temperature' | 'humidity',
-  @Query('email') email: string
-) {
-  if (!email) throw new ForbiddenException('User email is required');
-  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
-  console.log('DEBUG:', {
-    email,
-    requestedDeviceId: deviceId,
-    userDeviceIds,
-    includes: userDeviceIds.includes(deviceId),
-    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
-    requestedDeviceIdSplit: deviceId.split(''),
-  });
-  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
-  try {
-    return await this.analyticsService.getRealtimeStats(deviceId, metric);
-  } catch (error) {
-    return {
-      success: false,
-      message: error.message || 'Failed to fetch realtime stats',
-      data: null,
-    };
-  }
-}
-
-// Retrieves historical stats for a device within a date range
-@Get('history/:deviceId')
-@UsePipes(new ValidationPipe({ transform: true }))
-async getHistoricalStats(
-  @Param('deviceId') deviceId: string,
-  @Query('metric') metric: 'temperature' | 'humidity',
-  @Query('startDate') startDate: string,
-  @Query('endDate') endDate: string,
-  @Query('email') email: string
-) {
-  if (!email) throw new ForbiddenException('User email is required');
-  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
-  console.log('DEBUG:', {
-    email,
-    requestedDeviceId: deviceId,
-    userDeviceIds,
-    includes: userDeviceIds.includes(deviceId),
-    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
-    requestedDeviceIdSplit: deviceId.split(''),
-  });
-  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
-  try {
-    return await this.analyticsService.getHistoricalStats(deviceId, metric, startDate, endDate);
-  } catch (error) {
-    return {
-      success: false,
-      message: error.message || 'Failed to fetch historical stats',
-      data: null,
-    };
-  }
-}
 // Retrieves aggregated stats (min, max, avg) for a device over a time range
 @Get('stats/:deviceId')
 @UsePipes(new ValidationPipe({ transform: true }))
