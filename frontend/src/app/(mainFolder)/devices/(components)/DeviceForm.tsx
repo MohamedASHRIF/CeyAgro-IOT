@@ -60,7 +60,7 @@ export function AddDeviceForm() {
 
   function onSubmit(values: DeviceFormValues) {
     console.log("Submitted:", { ...values, image });
-    // TODO: API Integration
+   
   }
 
   return (
