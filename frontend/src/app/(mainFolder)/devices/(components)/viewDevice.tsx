@@ -436,9 +436,10 @@ type UserDevice = {
 
 type CombinedDevice = DeviceData & Partial<UserDevice>;
 
+const API_BASE = "http://localhost:3002/device-user";
+
 const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
-  //const deviceId = "d111";
-  // const email = "hasini20020116@gmail.com";
+
   const email = userEmail;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -462,7 +463,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const fetchDeviceData = async () => {
       try {
         const res = await fetch(
-          `http://localhost:3002/device-user/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
+          `${API_BASE}/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
         );
 
         if (!res.ok) throw new Error("Failed to fetch device data");
@@ -526,7 +527,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
       }
 
       const res = await fetch(
-        `http://localhost:3002/device-user/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+        `${API_BASE}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
         {
           method: "PATCH",
           body: formData,
@@ -566,7 +567,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
   };
   const handleDeleteDevice = async () => {
     try {
-      const res = await fetch(`http://localhost:3002/device-user/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`, {
+      const res = await fetch(`${API_BASE}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`, {
         method: 'DELETE',
       });
 
@@ -678,7 +679,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>*/}
-        
+
       </div>
     );
 
