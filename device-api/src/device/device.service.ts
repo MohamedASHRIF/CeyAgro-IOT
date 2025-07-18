@@ -1,45 +1,203 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+// import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+// import { InjectModel } from '@nestjs/mongoose';
+// import { Model } from 'mongoose';
+// import { KafkaContext } from '@nestjs/microservices';
+// import { DeviceData, DeviceDataDocument } from './schemas/device.schema';
+// import { NotificationsService } from '../notifications/notifications.service';
+// import mongoose from 'mongoose';
+// import { Notification as NotificationInterface } from '../notifications/interfaces/notification.interface';
+
+// @Injectable()
+// export class DeviceService implements OnModuleInit {
+//   private readonly logger = new Logger(DeviceService.name);
+
+//   constructor(
+//     @InjectModel(DeviceData.name)
+//     private deviceDataModel: Model<DeviceDataDocument>,
+//     private notificationsService: NotificationsService,
+//   ) {}
+
+//   async onModuleInit() {
+//     const changeStream = this.deviceDataModel.watch();
+
+//     changeStream.on('change', async (change) => {
+//       if (change.operationType === 'insert') {
+//         const device = change.fullDocument;
+//         console.log('ChangeStream detected new device:', device);
+//         const notification: NotificationInterface = {
+//           id: new mongoose.Types.ObjectId().toString(),
+//           title: 'New Device Added',
+//           message: `A new device (ID: ${device._id}) has been added.`,
+//           userId: device.userId,
+//           timestamp: new Date().toISOString(),
+//         };
+//         console.log('Creating notification:', notification);
+//         await this.notificationsService.createNotification(notification);
+//       }
+//     });
+
+//     changeStream.on('error', (error) => {
+//       console.error('ChangeStream error:', error);
+//     });
+//   }
+
+//   async processIoTData(data: any, context: KafkaContext) {
+//     const topic = context.getTopic();
+//     this.logger.log(
+//       `Received message from topic ${topic}: ${JSON.stringify(data)}`,
+//     );
+
+//     try {
+//       const deviceData = new this.deviceDataModel({
+//         deviceId: data.deviceId, // new field
+//         temperatureValue: data.temperatureValue,
+//         humidityValue: data.humidityValue,
+//         // location: data.location, // remove if not needed
+//         isActive: data.isActive ?? true,
+//         date: data.date ? new Date(data.date) : new Date(),
+//         topic: topic,
+//       });
+
+//       await deviceData.save();
+//       this.logger.log(`Saved device data for deviceId ${data.deviceId} to MongoDB`);
+//       return { status: 'processed', data: deviceData };
+//     } catch (error) {
+//       this.logger.error(
+//         `Failed to process IoT data for deviceId ${data.deviceId}`,
+//         error.stack,
+//       );
+//       throw new Error(`Failed to save device data: ${error.message}`);
+//     }
+//   }
+
+//   async getDeviceData(deviceId: string) {
+//     return this.deviceDataModel.find({ deviceId }).sort({ createdAt: -1 }).exec();
+//   }
+
+//   async getLatestDeviceData(deviceId: string) {
+//     return this.deviceDataModel
+//       .findOne({ deviceId })
+//       .sort({ createdAt: -1 })
+//       .exec();
+//   }
+// }
+
+
+
+
+
+// // device/device.service.ts
+// import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+// import { InjectModel } from '@nestjs/mongoose';
+// import { Model } from 'mongoose';
+// import { KafkaContext } from '@nestjs/microservices';
+// import { DeviceData, DeviceDataDocument } from './schemas/device.schema';
+// import { NotificationsService } from '../notifications/notifications.service';
+// import { UsersService } from '../users/users.service';
+// import mongoose from 'mongoose';
+// import { Notification as NotificationInterface } from '../notifications/interfaces/notification.interface';
+
+// @Injectable()
+// export class DeviceService implements OnModuleInit {
+//   private readonly logger = new Logger(DeviceService.name);
+
+//   constructor(
+//     @InjectModel(DeviceData.name)
+//     private deviceDataModel: Model<DeviceDataDocument>,
+//     private notificationsService: NotificationsService,
+//     private usersService: UsersService, // Inject UsersService
+//   ) {}
+
+//   async onModuleInit() {
+//     const changeStream = this.deviceDataModel.watch();
+
+//     changeStream.on('change', async (change) => {
+//       if (change.operationType === 'insert') {
+//         const device = change.fullDocument;
+//         console.log('ChangeStream detected new device:', device);
+//         if (!device.userId) {
+//           console.warn('No userId found in device data, skipping notification');
+//           return;
+//         }
+//         // Ensure user exists in the database
+//         await this.usersService.ensureUserExists(device.userId);
+//         const notification: NotificationInterface = {
+//           id: new mongoose.Types.ObjectId().toString(),
+//           title: 'New Device Added',
+//           message: `A new device (ID: ${device._id}) has been added.`,
+//           userId: device.userId,
+//           timestamp: new Date().toISOString(),
+//         };
+//         console.log('Creating notification:', notification);
+//         await this.notificationsService.createNotification(notification);
+//       }
+//     });
+
+//     changeStream.on('error', (error) => {
+//       console.error('ChangeStream error:', error);
+//     });
+//   }
+
+//   async processIoTData(data: any, context: KafkaContext) {
+//     const topic = context.getTopic();
+//     this.logger.log(
+//       `Received message from topic ${topic}: ${JSON.stringify(data)}`,
+//     );
+
+//     try {
+//       const deviceData = new this.deviceDataModel({
+//         deviceId: data.deviceId,
+//         temperatureValue: data.temperatureValue,
+//         humidityValue: data.humidityValue,
+//         isActive: data.isActive ?? true,
+//         date: data.date ? new Date(data.date) : new Date(),
+//         topic: topic,
+//         userId: data.userId || 'user123', // Ensure userId is set
+//       });
+
+//       await deviceData.save();
+//       this.logger.log(`Saved device data for deviceId ${data.deviceId} to MongoDB`);
+//       return { status: 'processed', data: deviceData };
+//     } catch (error) {
+//       this.logger.error(
+//         `Failed to process IoT data for deviceId ${data.deviceId}`,
+//         error.stack,
+//       );
+//       throw new Error(`Failed to save device data: ${error.message}`);
+//     }
+//   }
+
+//   async getDeviceData(deviceId: string) {
+//     return this.deviceDataModel.find({ deviceId }).sort({ createdAt: -1 }).exec();
+//   }
+
+//   async getLatestDeviceData(deviceId: string) {
+//     return this.deviceDataModel
+//       .findOne({ deviceId })
+//       .sort({ createdAt: -1 })
+//       .exec();
+//   }
+// }
+
+
+
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { KafkaContext } from '@nestjs/microservices';
 import { DeviceData, DeviceDataDocument } from './schemas/device.schema';
 import { NotificationsService } from '../notifications/notifications.service';
-import mongoose from 'mongoose';
-import { Notification as NotificationInterface } from '../notifications/interfaces/notification.interface';
+import { UsersService } from '../users/users.service';
+import { KafkaContext } from '@nestjs/microservices';
 
 @Injectable()
-export class DeviceService implements OnModuleInit {
+export class DeviceService {
   private readonly logger = new Logger(DeviceService.name);
 
   constructor(
-    @InjectModel(DeviceData.name)
-    private deviceDataModel: Model<DeviceDataDocument>,
-    private notificationsService: NotificationsService,
+    @InjectModel(DeviceData.name) private deviceDataModel: Model<DeviceDataDocument>,
+    private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
   ) {}
-
-  async onModuleInit() {
-    const changeStream = this.deviceDataModel.watch();
-
-    changeStream.on('change', async (change) => {
-      if (change.operationType === 'insert') {
-        const device = change.fullDocument;
-        console.log('ChangeStream detected new device:', device);
-        const notification: NotificationInterface = {
-          id: new mongoose.Types.ObjectId().toString(),
-          title: 'New Device Added',
-          message: `A new device (ID: ${device._id}) has been added.`,
-          userId: device.userId,
-          timestamp: new Date().toISOString(),
-        };
-        console.log('Creating notification:', notification);
-        await this.notificationsService.createNotification(notification);
-      }
-    });
-
-    changeStream.on('error', (error) => {
-      console.error('ChangeStream error:', error);
-    });
-  }
 
   async processIoTData(data: any, context: KafkaContext) {
     const topic = context.getTopic();
@@ -48,19 +206,33 @@ export class DeviceService implements OnModuleInit {
     );
 
     try {
+      const userId = decodeURIComponent(data.userId || "unknown");
+      if (!this.isValidEmail(userId)) {
+        throw new BadRequestException(`Invalid email format for userId: ${userId}`);
+      }
+
+      await this.usersService.ensureUserExists(userId);
+
       const deviceData = new this.deviceDataModel({
-        deviceId: data.deviceId, // new field
+        deviceId: data.deviceId,
         temperatureValue: data.temperatureValue,
         humidityValue: data.humidityValue,
-        // location: data.location, // remove if not needed
         isActive: data.isActive ?? true,
         date: data.date ? new Date(data.date) : new Date(),
         topic: topic,
+        userId,
       });
 
       await deviceData.save();
       this.logger.log(`Saved device data for deviceId ${data.deviceId} to MongoDB`);
-      return { status: 'processed', data: deviceData };
+
+      await this.notificationsService.createNotification({
+        title: 'New Device Added',
+        message: `Device ${data.deviceId} has been added with temperature ${data.temperatureValue}°C and humidity ${data.humidityValue}%.`,
+        userId,
+      });
+
+      return { status: "processed", data: deviceData };
     } catch (error) {
       this.logger.error(
         `Failed to process IoT data for deviceId ${data.deviceId}`,
@@ -70,14 +242,8 @@ export class DeviceService implements OnModuleInit {
     }
   }
 
-  async getDeviceData(deviceId: string) {
-    return this.deviceDataModel.find({ deviceId }).sort({ createdAt: -1 }).exec();
-  }
-
-  async getLatestDeviceData(deviceId: string) {
-    return this.deviceDataModel
-      .findOne({ deviceId })
-      .sort({ createdAt: -1 })
-      .exec();
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 }
