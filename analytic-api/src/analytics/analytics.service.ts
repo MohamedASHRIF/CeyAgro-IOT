@@ -32,11 +32,9 @@ export class AnalyticsService {
 
     // Create a new DeviceData document with fields from the Kafka message
     const deviceData = new this.deviceModel({
-      name: data.name,
       deviceId: data.deviceId, // new field
       temperatureValue: data.temperatureValue,
       humidityValue: data.humidityValue,
-      // location: data.location, // removed
       isActive: data.isActive ?? true,
       date: data.date ? new Date(data.date) : new Date(),
       topic: topic,
@@ -48,13 +46,7 @@ export class AnalyticsService {
   }
 
 
-    async getLatestDeviceData(name: string) {
-    return this.deviceModel.findOne({ name }).sort({ date: -1 }).exec();
-  }
-
-
-
-  async getDeviceNamesForUser(email: string): Promise<string[]> {
+    async getDeviceNamesForUser(email: string): Promise<string[]> {
     try {
       console.log('Fetching device names for user email:', email);
       const userDevices = await this.deviceUserModel
@@ -103,17 +95,30 @@ export class AnalyticsService {
 
     let fieldsToInclude = queryDto.fields;
     if (!fieldsToInclude || fieldsToInclude.length === 0) {
-      fieldsToInclude = ['name', 'temperatureValue', 'humidityValue', 'date', 'deviceId'];
+      fieldsToInclude = ['temperatureValue', 'humidityValue', 'date', 'deviceId'];
+    }
+
+    let deviceName = 'Device Report';
+    if (queryDto.deviceId) {
+      // Fetch device name from DeviceUser
+      const deviceUser = await this.deviceUserModel.findOne({ deviceId: queryDto.deviceId });
+      if (deviceUser && deviceUser.deviceName) {
+        deviceName = deviceUser.deviceName;
+      }
+    } else if (email) {
+      // If multiple devices, use a generic name
+      deviceName = 'Multiple Devices';
     }
 
     const excelBuffer = await this.excelService.generateExcel(
       data,
+      deviceName,
       fieldsToInclude,
     );
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const deviceInfo = queryDto.name
-      ? `-${queryDto.name.replace(/\s+/g, '-')}`
+    const deviceInfo = queryDto.deviceId
+      ? `-${queryDto.deviceId.replace(/\s+/g, '-')}`
       : '';
     const dateInfo = queryDto.date ? `-${queryDto.date}` : '';
     const filename = `device-report${deviceInfo}${dateInfo}-${timestamp}.xlsx`;
@@ -172,25 +177,11 @@ export class AnalyticsService {
 
     const query: any = { deviceId: { $in: userDeviceIds } };
 
-    if (queryDto.name) {
-      const deviceInfo = await this.deviceUserModel
-        .findOne({ deviceName: queryDto.name })
-        .select('deviceId deviceName')
-        .exec();
-      if (!deviceInfo) {
-        console.warn(`Device name ${queryDto.name} not found for user`);
-        throw new NotFoundException(`Device name ${queryDto.name} not found for the user`);
+    if (queryDto.deviceId) {
+      if (!userDeviceIds.includes(queryDto.deviceId)) {
+        throw new NotFoundException(`Device ID ${queryDto.deviceId} not associated with user`);
       }
-      if (!userDeviceIds.includes(deviceInfo.deviceId)) {
-        console.warn(`Device name ${queryDto.name} not associated with user device IDs`);
-        throw new NotFoundException(`Device name ${queryDto.name} not associated with user`);
-      }
-      if (typeof deviceInfo.deviceId !== 'string') {
-        console.error(`Invalid deviceId for deviceName ${queryDto.name}: deviceId=${deviceInfo.deviceId}`);
-        throw new BadRequestException(`Invalid deviceId for deviceName ${queryDto.name}`);
-      }
-      query.deviceId = deviceInfo.deviceId;
-      query.name = deviceInfo.deviceName; // Ensure name matches for consistency
+      query.deviceId = queryDto.deviceId;
     }
 
     if (queryDto.temperatureValue != null) {
@@ -201,7 +192,7 @@ export class AnalyticsService {
     }
 
     if (queryDto.date || queryDto.startDate || queryDto.endDate) {
-      query.date = {};
+      query.date = query.date || {};
       if (queryDto.date) {
         const targetDate = new Date(queryDto.date);
         if (isNaN(targetDate.getTime())) {
@@ -247,7 +238,6 @@ export class AnalyticsService {
         return { ...cleanDevice, id };
       });
     } catch (error) {
-      console.error('Query error:', error);
       throw new InternalServerErrorException('Failed to fetch device data');
     }
   }
@@ -255,8 +245,8 @@ export class AnalyticsService {
  private async getFilteredData(queryDto: AnalyticsQueryDto): Promise<any[]> {
     const query: any = {};
 
-    if (queryDto.name) {
-      query.name = queryDto.name;
+    if (queryDto.deviceId) {
+      query.deviceId = queryDto.deviceId;
     }
     if (queryDto.temperatureValue != null) {
       query.temperatureValue = queryDto.temperatureValue;
@@ -266,7 +256,7 @@ export class AnalyticsService {
     }
 
     if (queryDto.date || queryDto.startDate || queryDto.endDate) {
-      query.date = {};
+      query.date = query.date || {};
       if (queryDto.date) {
         const targetDate = new Date(queryDto.date);
         if (isNaN(targetDate.getTime())) {
@@ -298,10 +288,8 @@ export class AnalyticsService {
       }
     }
 
-    console.log('Final query:', JSON.stringify(query));
     try {
       const devices = await this.deviceModel.find(query).lean().exec();
-      console.log(`Query returned ${devices.length} results`);
       return devices.map((device) => {
         const rawDevice = device as Record<string, any>;
         const id = rawDevice._id ? rawDevice._id.toString() : null;
@@ -312,7 +300,6 @@ export class AnalyticsService {
         return { ...cleanDevice, id };
       });
     } catch (error) {
-      console.error('Query error:', error);
       throw new InternalServerErrorException('Failed to fetch device data');
     }
   }
@@ -353,7 +340,7 @@ async getRealtimeStats(deviceId: string, metric: 'temperature' | 'humidity') {
     const latest = await this.deviceModel
       .findOne({ deviceId })
       .sort({ date: -1, _id: -1 })
-      .select('name deviceId temperatureValue humidityValue date');
+      .select('deviceId temperatureValue humidityValue date');
     console.log('SERVICE DEBUG: getRealtimeStats latest', latest);
     if (!latest) {
       console.log('SERVICE DEBUG: No data found for device');
@@ -386,14 +373,14 @@ async getHistoricalStats(deviceId: string, metric: 'temperature' | 'humidity', s
   try {
     const data = await this.deviceModel
       .find(query)
-      .select('name deviceId temperatureValue humidityValue date');
+      .select('deviceId temperatureValue humidityValue date');
     console.log('DEBUG: getHistoricalStats results:', data.length);
     if (!data || data.length === 0) {
       console.log('SERVICE DEBUG: No historical data found');
       return [];
     }
     return data.map(item => ({
-      name: item.name,
+      deviceId: item.deviceId,
       metric,
       value: metric === 'temperature' ? item.temperatureValue ?? 0 : item.humidityValue ?? 0,
       timestamp: item.date ? item.date.toISOString() : new Date().toISOString(),
