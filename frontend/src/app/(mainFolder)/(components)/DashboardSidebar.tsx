@@ -166,10 +166,9 @@
 //   );
 // }
 
-
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ChartAreaIcon,
   LayoutDashboard,
@@ -183,11 +182,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-
-import { login, logout } from "../../../../actions/auth";
-import { getSession } from "@auth0/nextjs-auth0";
-import { useRouter } from "next/navigation";
-
+import { useUser } from "@auth0/nextjs-auth0/client"; // Import useUser for client-side auth
+import { logout } from "../../../../actions/auth"; // Only import logout since login is not used
 
 import {
   Sidebar,
@@ -222,6 +218,9 @@ const items = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading } = useUser(); // Get user and loading state from Auth0
+  const isAuthenticated = !!user; // Determine authentication status
 
   // Determine if any settings children match the current route
   const isAnySettingsChildActive = items
@@ -238,7 +237,6 @@ export function DashboardSidebar() {
     }
   }, [pathname, isAnySettingsChildActive]);
 
-  const router = useRouter();
   const handleLogout = async () => {
     await logout(); // Call server action
     router.refresh(); // Refresh UI to reflect logout
@@ -248,7 +246,13 @@ export function DashboardSidebar() {
     <Sidebar>
       <SidebarHeader className="h-20 border-b">
         <div className="flex items-center space-x-2">
-          <Image src="/image.png" alt="Logo" width={70} height={50}   className="mx-auto" />
+          <Image
+            src="/image.png"
+            alt="Logo"
+            width={70}
+            height={50}
+            className="mx-auto"
+          />
         </div>
       </SidebarHeader>
 
@@ -257,12 +261,10 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-               // const isActive = pathname === item.url;
-               
-  const isActive =
-    item.title === "Device Management"
-      ? pathname.startsWith("/devices")
-      : pathname === item.url;
+                const isActive =
+                  item.title === "Device Management"
+                    ? pathname.startsWith("/devices")
+                    : pathname === item.url;
 
                 const isSettingsActive =
                   item.title === "Settings" &&
@@ -336,8 +338,6 @@ export function DashboardSidebar() {
         <SidebarFooter className="mt-auto">
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              
-
               {isAuthenticated && (
                 <form action={logout}>
                   <button
@@ -350,9 +350,6 @@ export function DashboardSidebar() {
                   </button>
                 </form>
               )}
-
-             
-
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarFooter>
@@ -360,4 +357,3 @@ export function DashboardSidebar() {
     </Sidebar>
   );
 }
-
