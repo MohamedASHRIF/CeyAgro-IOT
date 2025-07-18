@@ -12,7 +12,7 @@ export class DeviceController {
   handleIoTData(@Payload() data: any, @Ctx() context: KafkaContext) {
     return this.deviceService.processIoTData(data, context);
   }
-  
+
   // Handle device status requests from Kafka
   @MessagePattern('iot.device.status')
   getDeviceStatus(@Payload() name: string) {
@@ -21,7 +21,9 @@ export class DeviceController {
 
   @Post('data')
   async simulateIoTData(@Body() data: any) {
-    const fakeKafkaContext = { getTopic: () => 'iot.device.data' } as KafkaContext;
+    const fakeKafkaContext = {
+      getTopic: () => 'iot.device.data',
+    } as KafkaContext;
     return this.deviceService.processIoTData(data, fakeKafkaContext);
   }
 

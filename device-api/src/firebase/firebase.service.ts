@@ -9,6 +9,7 @@ export class FirebaseService {
     });
   }
 
+  //send push notifications
   async sendPushNotification(fcmToken: string, title: string, body: string) {
     const message = {
       notification: {

@@ -1,6 +1,4 @@
-<<<<<<< Updated upstream
-import { Controller, NotFoundException, Post, Query, UsePipes, ValidationPipe, Get, Body } from '@nestjs/common';
-=======
+
 import {
   Controller,
   NotFoundException,
@@ -17,19 +15,39 @@ import {
   BadRequestException,
   Req
 } from '@nestjs/common';
->>>>>>> Stashed changes
+
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
 import { KafkaContext } from '@nestjs/microservices';
+// @ts-ignore
+import axios from 'axios';
+import { Request } from 'express';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { DeviceUser, DeviceUserDocument } from './schemas/device-user.schema';
+
+// Helper to get userId from JWT (assume req.user is populated by JWT middleware)
+function getUserIdFromRequest(req: Request): string | null {
+  // @ts-ignore
+  return (req.user as any)?.sub || null;
+}
+// Helper to get deviceIds for a user from device-api
+async function getUserDeviceIds(userId: string): Promise<string[]> {
+  const deviceApiUrl = process.env.DEVICE_API_URL || 'http://localhost:3001/device-user/devices';
+  const response = await axios.get(deviceApiUrl, { params: { userId } });
+  // The response data structure: { success: true, count: N, data: [...] }
+  if (response.data && Array.isArray(response.data.data)) {
+    return response.data.data.map((item: any) => item.userDevice.deviceId);
+  }
+  return [];
+}
 
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-
-
-//Kafka consumer for the 'iot.device.data' topic, processes incoming IoT data
+  //Kafka consumer for the 'iot.device.data' topic, processes incoming IoT data
   @MessagePattern('iot.device.data')
   handleIoTData(@Payload() data: any, @Ctx() context: KafkaContext) {
     return this.analyticsService.processIoTData(data, context);
@@ -45,28 +63,17 @@ export class AnalyticsController {
   //HTTP POST endpoint to simulate IoT data
   @Post('data')
   async simulateIoTData(@Body() data: any) {
-    const fakeKafkaContext = { getTopic: () => 'iot.device.data' } as KafkaContext;
+    const fakeKafkaContext = {
+      getTopic: () => 'iot.device.data',
+    } as KafkaContext;
     return this.analyticsService.processIoTData(data, fakeKafkaContext);
   }
 
    @Get('device-names')
   async getDeviceNamesForUser(@Query('email') email: string) {
     try {
-<<<<<<< Updated upstream
-      const result = await this.analyticsService.generateAndUploadReport(queryDto);
-      return {
-        success: true,
-        message: 'Report generated successfully',
-        data: {
-          downloadUrl: result.downloadUrl,
-          expiresIn: result.expiresIn,
-          recordCount: result.recordCount,
-        },
-      };
-=======
       const deviceNames = await this.analyticsService.getDeviceNamesForUser(email);
       return { success: true, message: 'User device names fetched successfully', data: deviceNames };
->>>>>>> Stashed changes
     } catch (error) {
       if (error instanceof NotFoundException) {
         return { success: false, message: error.message, data: [] };
@@ -75,29 +82,6 @@ export class AnalyticsController {
     }
   }
 
-<<<<<<< Updated upstream
-  //HTTP GET endpoint to retrieve a list of unique device names
-  @Get('names')
-  async getDeviceNames(): Promise<string[]> {
-    return this.analyticsService.getDeviceNames();
-  }
-
-  //HTTP GET endpoint to retrieve filtered device readings based on query parameters
-  @Get('readings')
-  @UsePipes(new ValidationPipe({ transform: true }))
-  async getReadings(@Query() queryDto: AnalyticsQueryDto) {
-    try {
-      const readings = await this.analyticsService.getReadingsByDeviceAndDate(queryDto);
-      return {
-        success: true,
-        message: 'Readings fetched successfully',
-        data: {
-          deviceName: queryDto.name,
-          startDate: queryDto.startDate,
-          endDate: queryDto.endDate,
-          readings,
-        },
-=======
    @Get('readings')
   async getReadingsByDeviceAndDate(
     @Query() queryDto: AnalyticsQueryDto,
@@ -109,7 +93,6 @@ export class AnalyticsController {
         success: true,
         message: data.length > 0 ? 'Readings fetched successfully' : 'No readings found for the given criteria',
         data: { readings: data },
->>>>>>> Stashed changes
       };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -126,20 +109,14 @@ export class AnalyticsController {
       return { success: true, message: 'Report generated successfully', data: result };
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return {
-          success: false,
-          message: error.message,
-          data: null,
-        };
+        return { success: false, message: error.message, data: null };
       }
-      throw new InternalServerErrorException('Failed to generate report');
+      throw error;
     }
   }
 
-<<<<<<< Updated upstream
-}
-=======
-  @Delete('files')
+ 
+ @Delete('files')
   async deleteReportFile(@Query('key') s3Key: string) {
     try {
       const result = await this.analyticsService.deleteReportFile(s3Key);
@@ -148,14 +125,6 @@ export class AnalyticsController {
       throw new InternalServerErrorException('Failed to delete report file');
     }
   }
-
-
-
-
-
-
-
-
 
   // Visualization Endpoints
 // Retrieves real-time stats for a device by name and metric
@@ -220,6 +189,69 @@ async getHistoricalStats(
   }
 }
 
+
+  // Visualization Endpoints
+// Retrieves real-time stats for a device by name and metric
+@Get('realtime/:deviceId')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getRealtimeStats(
+  @Param('deviceId') deviceId: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  console.log('DEBUG:', {
+    email,
+    requestedDeviceId: deviceId,
+    userDeviceIds,
+    includes: userDeviceIds.includes(deviceId),
+    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
+    requestedDeviceIdSplit: deviceId.split(''),
+  });
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
+  try {
+    return await this.analyticsService.getRealtimeStats(deviceId, metric);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch realtime stats',
+      data: null,
+    };
+  }
+}
+
+// Retrieves historical stats for a device within a date range
+@Get('history/:deviceId')
+@UsePipes(new ValidationPipe({ transform: true }))
+async getHistoricalStats(
+  @Param('deviceId') deviceId: string,
+  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('startDate') startDate: string,
+  @Query('endDate') endDate: string,
+  @Query('email') email: string
+) {
+  if (!email) throw new ForbiddenException('User email is required');
+  const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
+  console.log('DEBUG:', {
+    email,
+    requestedDeviceId: deviceId,
+    userDeviceIds,
+    includes: userDeviceIds.includes(deviceId),
+    userDeviceIdsSplit: userDeviceIds.map(id => id.split('')),
+    requestedDeviceIdSplit: deviceId.split(''),
+  });
+  if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
+  try {
+    return await this.analyticsService.getHistoricalStats(deviceId, metric, startDate, endDate);
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Failed to fetch historical stats',
+      data: null,
+    };
+  }
+}
 // Retrieves aggregated stats (min, max, avg) for a device over a time range
 @Get('stats/:deviceId')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -348,4 +380,4 @@ async getCorrelation(
   }
 }
 }
->>>>>>> Stashed changes
+
