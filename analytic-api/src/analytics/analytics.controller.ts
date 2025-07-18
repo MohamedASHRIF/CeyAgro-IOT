@@ -259,6 +259,22 @@ async getUserDevices(@Query('email') email: string) {
   return { success: true, data: deviceIds };
 }
 
+  @Get('user-device-list')
+  async getUserDeviceList(@Query('email') email: string) {
+    if (!email) {
+      throw new ForbiddenException('User email is required');
+    }
+    try {
+      const deviceList = await this.analyticsService.getUserDeviceList(email);
+      return { success: true, data: deviceList };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message, data: [] };
+      }
+      throw new InternalServerErrorException('Failed to fetch user device list');
+    }
+  }
+
 // --- Advanced Analytics Endpoints ---
 // Anomaly Detection
 @Get('anomaly/:deviceId')

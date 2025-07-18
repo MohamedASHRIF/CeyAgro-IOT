@@ -634,4 +634,22 @@ async getForecast(deviceId: string, metric: 'temperature' | 'humidity', futureWi
     forecast: forecastPoints,
   };
 }
+
+  async getUserDeviceList(email: string): Promise<{ deviceId: string; deviceName: string }[]> {
+    try {
+      const userDevices = await this.deviceUserModel
+        .find({ email })
+        .select('deviceId deviceName')
+        .exec();
+      return userDevices
+        .filter(device => device.deviceId && device.deviceName)
+        .map(device => ({
+          deviceId: device.deviceId,
+          deviceName: device.deviceName,
+        }));
+    } catch (error) {
+      console.error('Failed to fetch user device list:', error);
+      throw new InternalServerErrorException('Failed to fetch user device list');
+    }
+  }
 }

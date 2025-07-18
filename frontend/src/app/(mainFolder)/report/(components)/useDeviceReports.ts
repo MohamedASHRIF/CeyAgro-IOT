@@ -424,7 +424,7 @@ export function useDeviceReports(userEmail: string) {
     const fetchDeviceNames = async () => {
       try {
         console.log('Fetching user device names for email:', userEmail);
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analytics/device-names`, {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/device-names`, {
           params: { email: userEmail },
         });
         if (response.data.success) {
@@ -469,7 +469,7 @@ export function useDeviceReports(userEmail: string) {
         endDate: endDate?.toISOString(),
         email: userEmail,
       });
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analytics/readings`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/readings`, {
         params: {
           name: deviceName,
           startDate: startDate?.toISOString(),
@@ -524,7 +524,7 @@ export function useDeviceReports(userEmail: string) {
     setError('');
     try {
       const response = await axios.post<ReportResponse>(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/analytics/export`,
+        `${process.env.NEXT_PUBLIC_API_URL}/analytics/export`,
         null,
         {
           params: {
@@ -632,7 +632,7 @@ export function useDeviceReports(userEmail: string) {
     try {
       const item = downloadHistory[index];
       const s3Key = extractS3KeyFromUrl(item.downloadUrl);
-      const response = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analytics/files`, {
+      const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/analytics/files`, {
         params: { key: s3Key },
       });
       if (response.data.success) {
