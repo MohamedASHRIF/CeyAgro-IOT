@@ -226,35 +226,36 @@ async getDeviceStatistics(userId) {
     // Get a sample document if any exist
     const sampleDocument = await this.deviceUserModel.findOne();
     
-    return {
-      connectionInfo: {
-        mongoUri: connectionString,
-        connectedDatabase: databaseName,
-        cluster: connectionString?.split('@')[1]?.split('/')[0],
-      },
-      collectionInfo: {
-        collectionName: collectionName,
-        collectionExists: collectionExists,
-        documentCount: documentCount,
-      },
-      databaseContents: {
-        allCollections: collectionNames,
-        totalCollections: collectionNames.length,
-      },
-      sampleDocument: sampleDocument,
-      modelInfo: {
-        modelName: this.deviceUserModel.modelName,
-        schemaPath: this.deviceUserModel.schema.paths,
-      }
-    };
-  } catch (error) {
-    return {
-      error: error.message,
-      stack: error.stack
-    };
-  }
-}
-} */
+//     return {
+//       connectionInfo: {
+//         mongoUri: connectionString,
+//         connectedDatabase: databaseName,
+//         cluster: connectionString?.split('@')[1]?.split('/')[0],
+//       },
+//       collectionInfo: {
+//         collectionName: collectionName,
+//         collectionExists: collectionExists,
+//         documentCount: documentCount,
+//       },
+//       databaseContents: {
+//         allCollections: collectionNames,
+//         totalCollections: collectionNames.length,
+//       },
+//       sampleDocument: sampleDocument,
+//       modelInfo: {
+//         modelName: this.deviceUserModel.modelName,
+//         schemaPath: this.deviceUserModel.schema.paths,
+//       }
+//     };
+//   } catch (error) {
+//     return {
+//       error: error.message,
+//       stack: error.stack
+//     };
+//   }
+// }
+// }
+
 
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -427,19 +428,18 @@ async getDeviceStatistics(email: string) {
 
     const result = stats[0] || { total: 0, active: 0, inactive: 0 };
 
-    return {
-      userId: email,
-      total: result.total,
-      active: result.active,
-      inactive: result.inactive
-    };
-  } catch (error) {
-    console.error(`Error fetching device statistics for user:`, error);
-    throw error;
+      return {
+        userId: email,
+        total: result.total,
+        active: result.active,
+        inactive: result.inactive
+      };
+
+    } catch (error) {
+      console.error(`Error fetching device statistics for user ${email}:`, error);
+      throw error;
+    }
   }
-}
-
-
 
   async getDeviceForUser(email: string, deviceId: string) {
     const [userDevice, deviceData] = await Promise.all([
@@ -447,18 +447,21 @@ async getDeviceStatistics(email: string) {
       this.deviceDataModel.findOne({ deviceId })
     ]);
 
-    if (!userDevice) {
-      throw new NotFoundException('Device not registered for this user');
-    }
-    if (!deviceData) {
-      throw new NotFoundException('Device data not found in system');
-    }
-
-    return {
-      userDevice: userDevice.toObject(),
-      deviceData: deviceData.toObject(),
-    };
+  if (!userDevice) {
+    throw new NotFoundException('Device not registered for this user');
   }
+
+  if (!latestDeviceData) {
+    throw new NotFoundException('Device data not found in system');
+  }
+
+  return {
+    userDevice: userDevice.toObject(),
+    deviceData: latestDeviceData.toObject(),
+    status: latestDeviceData.isActive // Include current device status
+  };
+}
+
 
   async unregisterDevice(email: string, deviceId: string): Promise<void> {
     const result = await this.deviceUserModel.deleteOne({ email, deviceId });
@@ -570,5 +573,58 @@ async getDeviceStatistics(email: string) {
       };
     }
   }
+  
+
+ //location part - anjana
+  async findDeviceLocationsForUser(email: string) {
+    const userDevices = await this.deviceUserModel.find({email }).select('deviceId location deviceName');
+    
+    if (userDevices.length === 0) {
+      return {
+        success: true,
+        message: 'No devices found for user',
+        data: []
+      };
+    }
+
+    const locationsWithDevices = userDevices.map(device => ({
+      deviceId: device.deviceId,
+      deviceName: device.deviceName,
+      location: device.location || 'Location not set'
+    }));
+
+    return {
+      success: true,
+      message: 'Device locations retrieved successfully',
+      data: locationsWithDevices
+    };
+  }
+
+//update location
+async updateDeviceLocation(
+  deviceId: string,
+  updateData: { location: string },
+  email: string 
+): Promise<DeviceUser | null> {
+  try {
+    
+    const updatedDevice = await this.deviceUserModel.findOneAndUpdate(
+      { deviceId, email },
+      { location: updateData.location },
+      { new: true }
+    );
+
+    if (!updatedDevice) {
+      throw new NotFoundException('Device not found for this user');
+    }
+
+    return updatedDevice;
+  } catch (error) {
+    console.error('Error updating device location:', error);
+    throw error;
+  }
+}
+
+
 }
 
