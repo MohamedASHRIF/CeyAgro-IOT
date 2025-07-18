@@ -413,29 +413,6 @@ type DeviceData = {
   deviceId: string;
   deviceName: string;
   serialNumber: string;
-  type: string;
-  measurementParameter: string;
-  measurementUnit: string;
-  minThreshold: string;
-  maxThreshold: string;
-  location: string;
-  description: string;
-  deviceImage?: string | null;
-  isActive: boolean;
-};
-
-type UserDevice = {
-  email: string;
-  deviceId: string;
-  deviceImage?: string | null;
-};
-
-type CombinedDevice = DeviceData & Partial<UserDevice>;
-
-type DeviceData = {
-  deviceId: string;
-  deviceName: string;
-  serialNumber: string;
   deviceType: string;
   measurementParameter: string;
   measurementUnit: string;
