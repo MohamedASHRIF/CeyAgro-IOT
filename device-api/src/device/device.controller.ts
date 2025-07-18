@@ -15,8 +15,8 @@ export class DeviceController {
 
   // Handle device status requests from Kafka
   @MessagePattern('iot.device.status')
-  getDeviceStatus(@Payload() name: string) {
-    return this.deviceService.getLatestDeviceData(name);
+  getDeviceStatus(@Payload() deviceId: string) {
+    return this.deviceService.getLatestDeviceData(deviceId);
   }
 
   @Post('data')
@@ -27,13 +27,13 @@ export class DeviceController {
     return this.deviceService.processIoTData(data, fakeKafkaContext);
   }
 
-  @Get(':name/status')
-  async getDeviceStatusHttp(@Param('name') name: string) {
-    return this.deviceService.getLatestDeviceData(name);
+  @Get(':deviceId/status')
+  async getDeviceStatusHttp(@Param('deviceId') deviceId: string) {
+    return this.deviceService.getLatestDeviceData(deviceId);
   }
 
-  @Get(':name/history')
-  async getDeviceHistory(@Param('name') name: string) {
-    return this.deviceService.getDeviceData(name);
+  @Get(':deviceId/history')
+  async getDeviceHistory(@Param('deviceId') deviceId: string) {
+    return this.deviceService.getDeviceData(deviceId);
   }
 }
