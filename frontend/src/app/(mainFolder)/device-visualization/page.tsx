@@ -19,6 +19,7 @@ export default function VisualizationPage() {
   const { user, isLoading } = useUser();
   const [devices, setDevices] = useState<{ deviceId: string; deviceName: string }[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [selectedDeviceName, setSelectedDeviceName] = useState<string | null>(null);
   const [metrics] = useState<string[]>(["temperature", "humidity"]);
   const [selectedMetric, setSelectedMetric] = useState<"temperature" | "humidity" | null>(null);
   const [timeRange, setTimeRange] = useState<"lastHour" | "lastDay">("lastHour");
@@ -46,6 +47,7 @@ export default function VisualizationPage() {
         }
         setDevices(response.data.data);
         setSelectedDevice(response.data.data[0].deviceId);
+        setSelectedDeviceName(response.data.data[0].deviceName);
         setSelectedMetric("temperature");
         setIsLoadingDevices(false);
       })
@@ -106,7 +108,11 @@ export default function VisualizationPage() {
     <div className="dashboard-container p-6">
       {/* Top controls */}
       <div className="flex gap-4 mb-6">
-        <Select value={selectedDevice || ""} onValueChange={setSelectedDevice}>
+        <Select value={selectedDevice || ""} onValueChange={(val) => {
+          setSelectedDevice(val);
+          const found = devices.find((d) => d.deviceId === val);
+          setSelectedDeviceName(found ? found.deviceName : null);
+        }}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select Device" />
           </SelectTrigger>
@@ -153,6 +159,7 @@ export default function VisualizationPage() {
               <RealTimeChart
                 key={`realtime-${selectedDevice}-${selectedMetric}`}
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 currentTime={currentTime}
               />
@@ -165,6 +172,7 @@ export default function VisualizationPage() {
               <HistoryChart
                 key={`history-${selectedDevice}-${selectedMetric}-${timeRange}`}
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 timeRange={timeRange}
               />
@@ -177,6 +185,7 @@ export default function VisualizationPage() {
               <DynamicChart
                 key={`dynamic-${selectedDevice}-${selectedMetric}-${timeRange}`}
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 timeRange={timeRange}
               />
@@ -188,6 +197,7 @@ export default function VisualizationPage() {
             <CardContent>
               <CorrelationChart
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                 endDate={new Date().toISOString()}
               />
@@ -200,6 +210,7 @@ export default function VisualizationPage() {
               {user && user.email && (
                 <ForecastAreaChart
                   device={selectedDevice}
+                  deviceName={selectedDeviceName}
                   metric={selectedMetric}
                   email={user.email}
                   futureWindow={24}
@@ -214,7 +225,9 @@ export default function VisualizationPage() {
               {devices.length >= 2 && devices[0] && devices[1] ? (
                 <ComparisonChart
                   deviceA={devices[0].deviceId}
+                  deviceAName={devices[0].deviceName}
                   deviceB={devices[1].deviceId}
+                  deviceBName={devices[1].deviceName}
                   metric={selectedMetric}
                   startDateA={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                   endDateA={new Date().toISOString()}
@@ -232,6 +245,7 @@ export default function VisualizationPage() {
             <CardContent>
               <AnomalyChart
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                 endDate={new Date().toISOString()}

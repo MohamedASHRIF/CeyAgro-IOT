@@ -16,8 +16,9 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-export function AnomalyChart({ device, metric, startDate, endDate }: {
+export function AnomalyChart({ device, deviceName, metric, startDate, endDate }: {
   device: string | null;
+  deviceName: string | null;
   metric: "temperature" | "humidity";
   startDate: string;
   endDate: string;
@@ -100,7 +101,7 @@ export function AnomalyChart({ device, metric, startDate, endDate }: {
   }, [device, metric, startDate, endDate, user]);
 
   if (error || noData) {
-    return <div><h2>Anomaly Detection</h2><p className="text-red-500">{error || "No anomaly data available"}</p></div>;
+    return <div><h2>Anomaly Detection for {deviceName || device || "Device"}</h2><p className="text-red-500">{error || "No anomaly data available"}</p></div>;
   }
 
   return (

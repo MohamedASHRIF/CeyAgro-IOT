@@ -15,9 +15,11 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-export function ComparisonChart({ deviceA, deviceB, metric, startDateA, endDateA, startDateB, endDateB }: {
+export function ComparisonChart({ deviceA, deviceAName, deviceB, deviceBName, metric, startDateA, endDateA, startDateB, endDateB }: {
   deviceA: string;
+  deviceAName: string;
   deviceB: string;
+  deviceBName: string;
   metric: "temperature" | "humidity";
   startDateA: string;
   endDateA: string;
@@ -29,12 +31,12 @@ export function ComparisonChart({ deviceA, deviceB, metric, startDateA, endDateA
     labels: ["Min", "Max", "Avg"],
     datasets: [
       {
-        label: `Device A (${deviceA})`,
+        label: `Device A (${deviceAName || deviceA})`,
         data: [0, 0, 0],
         backgroundColor: "rgba(54, 162, 235, 0.5)",
       },
       {
-        label: `Device B (${deviceB})`,
+        label: `Device B (${deviceBName || deviceB})`,
         data: [0, 0, 0],
         backgroundColor: "rgba(255, 206, 86, 0.5)",
       },

@@ -28,10 +28,12 @@ ChartJS.register(
 
 export function RealTimeChart({
   device,
+  deviceName,
   metric,
   currentTime,
 }: {
   device: string | null;
+  deviceName: string | null;
   metric: "temperature" | "humidity";
   currentTime: Date;
 }) {
@@ -217,8 +219,7 @@ export function RealTimeChart({
     return (
       <div>
         <h2>
-          Real-Time {metric.charAt(0).toUpperCase() + metric.slice(1)} for{" "}
-          {device || "Device"}
+          Real-Time {metric.charAt(0).toUpperCase() + metric.slice(1)} for {deviceName || device || "Device"}
         </h2>
         <p className="text-red-500">
           {error || "No data available for this device and metric"}
