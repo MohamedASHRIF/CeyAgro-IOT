@@ -54,10 +54,10 @@ export class AnalyticsController {
   }
 
   //Kafka consumer for the 'iot.device.status' topic, retrieves the latest device data
-  @MessagePattern('iot.device.status')
-  getDeviceStatus(@Payload() deviceId: string) {
-    return this.analyticsService.getLatestDeviceData(deviceId);
-  }
+  // @MessagePattern('iot.device.status')
+  // getDeviceStatus(@Payload() deviceId: string) {
+  //   return this.analyticsService.getLatestDeviceData(deviceId);
+  // }
 
   //kafka post
   //HTTP POST endpoint to simulate IoT data

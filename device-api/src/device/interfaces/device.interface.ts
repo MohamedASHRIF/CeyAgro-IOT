@@ -1,6 +1,4 @@
 export interface Device {
-  name: string;
-
   temperatureValue: number;
 
   humidityValue: number;

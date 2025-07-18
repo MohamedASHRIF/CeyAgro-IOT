@@ -5,9 +5,6 @@ export type DeviceDataDocument = DeviceData & Document;
 
 @Schema({ timestamps: true })
 export class DeviceData {
-  @Prop({ required: true })
-  name: string;
-
   @Prop({ type: Number })
   temperatureValue: number;
 

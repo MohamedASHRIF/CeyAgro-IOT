@@ -27,7 +27,7 @@ export class DeviceService implements OnModuleInit {
         const notification: NotificationInterface = {
           id: new mongoose.Types.ObjectId().toString(),
           title: 'New Device Added',
-          message: `A new device "${device.name}" (ID: ${device._id}) has been added.`,
+          message: `A new device (ID: ${device._id}) has been added.`,
           userId: device.userId,
           timestamp: new Date().toISOString(),
         };
@@ -49,7 +49,6 @@ export class DeviceService implements OnModuleInit {
 
     try {
       const deviceData = new this.deviceDataModel({
-        name: data.name,
         deviceId: data.deviceId, // new field
         temperatureValue: data.temperatureValue,
         humidityValue: data.humidityValue,
@@ -60,24 +59,24 @@ export class DeviceService implements OnModuleInit {
       });
 
       await deviceData.save();
-      this.logger.log(`Saved device data for ${data.name} to MongoDB`);
+      this.logger.log(`Saved device data for deviceId ${data.deviceId} to MongoDB`);
       return { status: 'processed', data: deviceData };
     } catch (error) {
       this.logger.error(
-        `Failed to process IoT data for ${data.name}`,
+        `Failed to process IoT data for deviceId ${data.deviceId}`,
         error.stack,
       );
       throw new Error(`Failed to save device data: ${error.message}`);
     }
   }
 
-  async getDeviceData(name: string) {
-    return this.deviceDataModel.find({ name }).sort({ createdAt: -1 }).exec();
+  async getDeviceData(deviceId: string) {
+    return this.deviceDataModel.find({ deviceId }).sort({ createdAt: -1 }).exec();
   }
 
-  async getLatestDeviceData(name: string) {
+  async getLatestDeviceData(deviceId: string) {
     return this.deviceDataModel
-      .findOne({ name })
+      .findOne({ deviceId })
       .sort({ createdAt: -1 })
       .exec();
   }

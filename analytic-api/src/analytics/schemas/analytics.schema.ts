@@ -5,14 +5,11 @@ export type DeviceDataDocument = DeviceData & Document;
 
 @Schema({ timestamps: true })
 export class DeviceData {
-  @Prop({ required: true })
-  name: string; 
+  @Prop({ type: Number })
+  temperatureValue: number;
 
   @Prop({ type: Number })
-  temperatureValue: number; 
-
-  @Prop({ type: Number })
-  humidityValue: number; 
+  humidityValue: number;
   
   @Prop({ required: true })
   deviceId: string;
@@ -24,7 +21,7 @@ export class DeviceData {
   date: Date;
 
   @Prop()
-  topic: string; 
+  topic: string;
 }
 
 export const DeviceDataSchema = SchemaFactory.createForClass(DeviceData);
