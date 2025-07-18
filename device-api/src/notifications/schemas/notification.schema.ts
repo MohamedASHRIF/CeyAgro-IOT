@@ -11,11 +11,11 @@ export class Notification {
   @Prop({ required: true })
   message: string;
 
-  // @Prop({ required: true })
-  // userId: string;
-
-  @Prop({ default: 'user123' })
+  @Prop({ required: true }) //// Make userId required, remove default
   userId: string;
+
+  // @Prop({ default: 'user123' })
+  // userId: string;
 
   @Prop({ required: true })
   timestamp: string;

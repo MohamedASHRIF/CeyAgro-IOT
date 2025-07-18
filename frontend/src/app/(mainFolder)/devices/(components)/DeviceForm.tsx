@@ -276,7 +276,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -398,12 +397,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
         throw new Error(data.message || "Failed to register device");
       }
 
-
       console.log("Alert state will be triggered!");
       setAlertSuccess(true);
       setAlertMessage("Device registered successfully!");
       setShowAlert(true);
-
 
       form.reset();
       setImageFile(null);
@@ -426,7 +423,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
         <CardContent>
           <div className="bg-white p-8 rounded-lg">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
                 {/* General Details */}
                 <div className="border-b pb-8 mb-8 border-gray-600">
                   <h2 className="text-2xl font-bold mb-6 text-gray-800">
@@ -455,7 +455,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                         <FormItem>
                           <FormLabel>Device Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Air Quality Sensor" {...field} />
+                            <Input
+                              placeholder="e.g., Air Quality Sensor"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -471,7 +474,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                         <FormItem>
                           <FormLabel>Serial Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter serial number" {...field} />
+                            <Input
+                              placeholder="Enter serial number"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -494,19 +500,40 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Temperature Sensor">Temperature Sensor</SelectItem>
-                              <SelectItem value="Pressure Sensor">Pressure Sensor</SelectItem>
-                              <SelectItem value="Proximity Sensor">Proximity Sensor</SelectItem>
-                              <SelectItem value="Motion Sensor">Motion Sensor</SelectItem>
-                              <SelectItem value="Light Sensor">Light Sensor</SelectItem>
-                              <SelectItem value="Sound Sensor">Sound Sensor</SelectItem>
-                              <SelectItem value="Gas Sensor">Gas Sensor</SelectItem>
-                              <SelectItem value="Humidity Sensor">Humidity Sensor</SelectItem>
-                              <SelectItem value="Touch Sensor">Touch Sensor</SelectItem>
-                              <SelectItem value="Magnetic Sensor">Magnetic Sensor</SelectItem>
-                              <SelectItem value="Image Sensor">Image Sensor</SelectItem>
+                              <SelectItem value="Temperature Sensor">
+                                Temperature Sensor
+                              </SelectItem>
+                              <SelectItem value="Pressure Sensor">
+                                Pressure Sensor
+                              </SelectItem>
+                              <SelectItem value="Proximity Sensor">
+                                Proximity Sensor
+                              </SelectItem>
+                              <SelectItem value="Motion Sensor">
+                                Motion Sensor
+                              </SelectItem>
+                              <SelectItem value="Light Sensor">
+                                Light Sensor
+                              </SelectItem>
+                              <SelectItem value="Sound Sensor">
+                                Sound Sensor
+                              </SelectItem>
+                              <SelectItem value="Gas Sensor">
+                                Gas Sensor
+                              </SelectItem>
+                              <SelectItem value="Humidity Sensor">
+                                Humidity Sensor
+                              </SelectItem>
+                              <SelectItem value="Touch Sensor">
+                                Touch Sensor
+                              </SelectItem>
+                              <SelectItem value="Magnetic Sensor">
+                                Magnetic Sensor
+                              </SelectItem>
+                              <SelectItem value="Image Sensor">
+                                Image Sensor
+                              </SelectItem>
                               <SelectItem value="Other">Other</SelectItem>
-
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -523,7 +550,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                         <FormItem className="mb-6">
                           <FormLabel>Location</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Building A - Floor 3" {...field} />
+                            <Input
+                              placeholder="e.g., Building A - Floor 3"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -534,7 +564,11 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                     <FormItem className="mb-6">
                       <FormLabel>Upload Image</FormLabel>
                       <FormControl>
-                        <Input type="file" accept="image/*" onChange={handleImageChange} />
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
                       </FormControl>
                       {imagePreview && (
                         <img
@@ -553,7 +587,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input placeholder="Optional short description..." {...field} />
+                          <Input
+                            placeholder="Optional short description..."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -624,7 +661,9 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
       <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className={alertSuccess ? "text-green-600" : "text-red-600"}>
+            <AlertDialogTitle
+              className={alertSuccess ? "text-green-600" : "text-red-600"}
+            >
               {alertSuccess ? "Success" : "Error"}
             </AlertDialogTitle>
             <AlertDialogDescription>{alertMessage}</AlertDialogDescription>
@@ -636,8 +675,6 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }
-

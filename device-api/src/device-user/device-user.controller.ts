@@ -1,6 +1,4 @@
-
-
- import {
+import {
   Controller,
   Post,
   Body,
@@ -12,7 +10,9 @@
   UseInterceptors,
   BadRequestException,
   HttpException,
- HttpStatus,Param,Put
+  HttpStatus,
+  Param,
+  Put,
 } from '@nestjs/common';
 import { DeviceUserService } from './device-user.service';
 import { CreateDeviceUserDto } from './dto/create-device-user.dto';
@@ -23,7 +23,7 @@ import * as path from 'path';
 
 @Controller('device-user')
 export class DeviceUserController {
-    constructor(private readonly deviceUserService: DeviceUserService) {}
+  constructor(private readonly deviceUserService: DeviceUserService) {}
 
   @Post('register')
   @UseInterceptors(
@@ -45,8 +45,8 @@ export class DeviceUserController {
     if (file) {
       createDto.deviceImage = `/uploads/devices/${file.filename}`;
     }
-console.log('Received email:', createDto.email);
-console.log('Full DTO:', createDto);
+    console.log('Received email:', createDto.email);
+    console.log('Full DTO:', createDto);
 
     const result = await this.deviceUserService.registerDevice(createDto);
     return {
@@ -79,7 +79,10 @@ console.log('Full DTO:', createDto);
       throw new BadRequestException('email and deviceId are required');
     }
 
-    const result = await this.deviceUserService.getDeviceForUser(email, deviceId);
+    const result = await this.deviceUserService.getDeviceForUser(
+      email,
+      deviceId,
+    );
     return {
       success: true,
       data: result,
@@ -96,7 +99,8 @@ console.log('Full DTO:', createDto);
     }
 
     try {
-      const statistics = await this.deviceUserService.getDeviceStatistics(email);
+      const statistics =
+        await this.deviceUserService.getDeviceStatistics(email);
       return {
         success: true,
         message: `Device statistics retrieved successfully for ${email}`,
@@ -132,7 +136,8 @@ console.log('Full DTO:', createDto);
   async updateDeviceUser(
     @Query('email') email: string,
     @Query('deviceId') deviceId: string,
-    @Body() updateData: Partial<CreateDeviceUserDto> & { removedeviceImage?: string },
+    @Body()
+    updateData: Partial<CreateDeviceUserDto> & { removedeviceImage?: string },
     @UploadedFile() deviceImage?: Express.Multer.File,
   ) {
     if (!email || !deviceId) {
@@ -155,7 +160,6 @@ console.log('Full DTO:', createDto);
       data: updated,
     };
   }
-
 
   // === Test Routes ===
 
@@ -220,7 +224,7 @@ console.log('Full DTO:', createDto);
       };
     }
   }
-  // ==Location== 
+  // ==Location==
 
   // Get locations for  user
   @Get('locations')
@@ -229,8 +233,9 @@ console.log('Full DTO:', createDto);
       if (!email) {
         throw new BadRequestException('userId is required');
       }
-      
-      const locations = await this.deviceUserService.findDeviceLocationsForUser(email);
+
+      const locations =
+        await this.deviceUserService.findDeviceLocationsForUser(email);
       return locations;
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -243,40 +248,40 @@ console.log('Full DTO:', createDto);
     }
   }
 
- //  Update device location
-@Put(':id/location')
-async updateDeviceLocation(
-  @Param('id') deviceId: string,
-  @Body() updateData: { location: string },
-  @Query('email') email: string
-) {
-  try {
-    if (!email) {
-      throw new BadRequestException('email is required');
-    }
+  //  Update device location
+  @Put(':id/location')
+  async updateDeviceLocation(
+    @Param('id') deviceId: string,
+    @Body() updateData: { location: string },
+    @Query('email') email: string,
+  ) {
+    try {
+      if (!email) {
+        throw new BadRequestException('email is required');
+      }
 
-    const updatedDevice = await this.deviceUserService.updateDeviceLocation(
-      deviceId,
-      updateData,
-      email
-    );
+      const updatedDevice = await this.deviceUserService.updateDeviceLocation(
+        deviceId,
+        updateData,
+        email,
+      );
 
-    return {
-      success: true,
-      message: 'Device location updated successfully',
-      data: updatedDevice,
-    };
-  } catch (error) {
-    if (error instanceof HttpException || error instanceof BadRequestException) {
-      throw error;
+      return {
+        success: true,
+        message: 'Device location updated successfully',
+        data: updatedDevice,
+      };
+    } catch (error) {
+      if (
+        error instanceof HttpException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new HttpException(
+        'Failed to update device location',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    throw new HttpException(
-      'Failed to update device location',
-      HttpStatus.INTERNAL_SERVER_ERROR
-    );
   }
 }
-
-
-}
-

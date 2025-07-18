@@ -3,6 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceModule } from './device/device.module';
 import { DeviceUserModule } from './device-user/device-user.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { UsersModule } from './users/users.module';
+import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
   imports: [
@@ -12,7 +15,10 @@ import { DeviceUserModule } from './device-user/device-user.module';
     }),
     MongooseModule.forRoot(process.env.MONGO_URI), // MongoDB connection
     DeviceModule,
-    DeviceUserModule
+    DeviceUserModule,
+    NotificationsModule,
+    UsersModule,
+    FirebaseModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,3 @@
-
 // // schemas/device-user.schema.ts
 // import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 // import { Document } from 'mongoose';
@@ -20,7 +19,6 @@
 //   @Prop()
 //   deviceImage: string;
 
-  
 //   @Prop()
 //   location: string;
 
@@ -39,7 +37,6 @@
 
 // export type DeviceUserDocument = DeviceUser & Document;
 // export const DeviceUserSchema = SchemaFactory.createForClass(DeviceUser);
-
 
 // schemas/device-user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -62,7 +59,6 @@ export class DeviceUser {
   @Prop()
   deviceImage: string;
 
-  
   @Prop()
   location: string;
 

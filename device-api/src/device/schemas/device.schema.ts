@@ -13,7 +13,7 @@ export class DeviceData {
 
   @Prop({ type: Number })
   humidityValue: number;
-  
+
   @Prop({ default: true })
   isActive: boolean;
 
@@ -25,6 +25,9 @@ export class DeviceData {
 
   @Prop()
   topic: string;
+
+  @Prop() // Add userId to link to User
+  userId: string;
 }
 
 export const DeviceDataSchema = SchemaFactory.createForClass(DeviceData);

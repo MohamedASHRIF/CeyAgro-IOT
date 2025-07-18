@@ -1,4 +1,3 @@
-
 // "use client";
 // import React, { useEffect, useState } from "react";
 // import Link from "next/link";
@@ -336,7 +335,7 @@ export const columns: ColumnDef<Device>[] = [
     cell: ({ row }) => (
       <Link
         href={`/devices/${row.original.id}`}
-       // target="_blank"
+        // target="_blank"
         rel="noopener noreferrer"
         className="hover:underline text-black hover:text-[hsl(172.5,_66%,_50.4%)] font-medium"
       >
@@ -380,8 +379,11 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
   const [loading, setLoading] = useState(true);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
@@ -391,7 +393,11 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     if (!userEmail) return;
 
     setLoading(true);
-    fetch(`http://localhost:3002/device-user/devices?email=${encodeURIComponent(userEmail)}`)
+    fetch(
+      `http://localhost:3001/device-user/devices?email=${encodeURIComponent(
+        userEmail
+      )}`
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
@@ -438,7 +444,8 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     onPaginationChange: setPagination,
   });
 
-  if (loading)  return (
+  if (loading)
+    return (
       <div
         className="flex items-center justify-center h-screen"
         role="status"
@@ -448,28 +455,36 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
         <span className="sr-only">Loading...</span>
       </div>
     );
-  ;
-
   return (
     <div className="w-full p-4">
       <div className="flex flex-col sm:flex-row items-center gap-4 py-4">
         <Input
           placeholder="Filter by device ID"
           value={(table.getColumn("id")?.getFilterValue() as string) ?? ""}
-          onChange={(e) => table.getColumn("id")?.setFilterValue(e.target.value)}
+          onChange={(e) =>
+            table.getColumn("id")?.setFilterValue(e.target.value)
+          }
           className="max-w-sm bg-white"
         />
         <Input
           placeholder="Filter by device name"
-          value={(table.getColumn("deviceName")?.getFilterValue() as string) ?? ""}
-          onChange={(e) => table.getColumn("deviceName")?.setFilterValue(e.target.value)}
+          value={
+            (table.getColumn("deviceName")?.getFilterValue() as string) ?? ""
+          }
+          onChange={(e) =>
+            table.getColumn("deviceName")?.setFilterValue(e.target.value)
+          }
           className="max-w-sm bg-white"
         />
         <Select
           onValueChange={(value) => {
-            table.getColumn("status")?.setFilterValue(value === "all" ? undefined : value);
+            table
+              .getColumn("status")
+              ?.setFilterValue(value === "all" ? undefined : value);
           }}
-          value={(table.getColumn("status")?.getFilterValue() as string) || "all"}
+          value={
+            (table.getColumn("status")?.getFilterValue() as string) || "all"
+          }
         >
           <SelectTrigger className="w-[180px] bg-white">
             <SelectValue placeholder="Filter by status" />
@@ -518,7 +533,10 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -529,15 +547,24 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id} className="hover:bg-gray-100">
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="text-center p-2 w-1/3">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <TableCell
+                        key={cell.id}
+                        className="text-center p-2 w-1/3"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
                     No devices found matching your filters.
                   </TableCell>
                 </TableRow>
@@ -549,7 +576,8 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
 
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="text-sm text-muted-foreground">
-          Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} devices
+          Showing {table.getRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} devices
         </div>
         <div className="space-x-2">
           <Button
@@ -575,9 +603,3 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     </div>
   );
 }
-
-
-
-
-
-

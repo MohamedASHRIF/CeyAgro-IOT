@@ -370,8 +370,6 @@
 
 // export default DevicePage;
 
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -386,7 +384,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Pencil, BarChart, X, Upload } from "lucide-react";
@@ -442,7 +440,9 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
   const email = userEmail;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const [userDeviceData, setUserDeviceData] = useState<CombinedDevice | null>(null);
+  const [userDeviceData, setUserDeviceData] = useState<CombinedDevice | null>(
+    null
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -455,14 +455,15 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     defaultValues: {} as CombinedDevice,
   });
 
-
   useEffect(() => {
     if (!deviceId || !email) return;
 
     const fetchDeviceData = async () => {
       try {
         const res = await fetch(
-          `http://localhost:3002/device-user/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
+          `http://localhost:3002/device-user/device?email=${encodeURIComponent(
+            email
+          )}&deviceId=${encodeURIComponent(deviceId)}`
         );
 
         if (!res.ok) throw new Error("Failed to fetch device data");
@@ -485,10 +486,11 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
       } catch (error: any) {
         console.error("Error fetching device data:", error);
         setAlertSuccess(false);
-        setAlertMessage(error.message || "Failed to load device data from server");
+        setAlertMessage(
+          error.message || "Failed to load device data from server"
+        );
         setShowAlert(true);
       }
-
     };
 
     fetchDeviceData();
@@ -510,8 +512,11 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
 
       // Append form fields (excluding deviceImage from values)
       Object.entries(values).forEach(([key, value]) => {
-        if (key !== 'deviceImage' && value !== undefined && value !== null) {
-          formData.append(key, typeof value === "boolean" ? String(value) : value);
+        if (key !== "deviceImage" && value !== undefined && value !== null) {
+          formData.append(
+            key,
+            typeof value === "boolean" ? String(value) : value
+          );
         }
       });
 
@@ -526,7 +531,9 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
       }
 
       const res = await fetch(
-        `http://localhost:3002/device-user/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+        `http://localhost:3002/device-user/update?email=${encodeURIComponent(
+          email
+        )}&deviceId=${encodeURIComponent(deviceId)}`,
         {
           method: "PATCH",
           body: formData,
@@ -545,7 +552,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
       const updatedDevice = {
         ...userDeviceData!,
         ...values,
-        deviceImage: json.data.deviceImage // Use the image path from the response
+        deviceImage: json.data.deviceImage, // Use the image path from the response
       };
 
       setUserDeviceData(updatedDevice);
@@ -556,7 +563,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
       setAlertSuccess(true);
       setAlertMessage("Device updated successfully!");
       setShowAlert(true);
-
     } catch (error: any) {
       console.error("Error saving device:", error);
       setAlertSuccess(false);
@@ -566,9 +572,14 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
   };
   const handleDeleteDevice = async () => {
     try {
-      const res = await fetch(`http://localhost:3002/device-user/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `http://localhost:3002/device-user/unregister?email=${encodeURIComponent(
+          email
+        )}&deviceId=${encodeURIComponent(deviceId)}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       const data = await res.json();
 
@@ -595,7 +606,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         setAlertSuccess(false);
         setAlertMessage("Please select a valid image file.");
         setShowAlert(true);
@@ -628,7 +639,9 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     setPreviewImage(null);
 
     // Clear the file input
-    const fileInput = document.getElementById("deviceImage") as HTMLInputElement;
+    const fileInput = document.getElementById(
+      "deviceImage"
+    ) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
     }
@@ -660,27 +673,33 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     return fallback;
   };
 
-
   if (!userDeviceData)
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center px-4">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">No device to display</h2>
-        <p className="text-gray-600">Your device has been deleted or not available.</p>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          No device to display
+        </h2>
+        <p className="text-gray-600">
+          Your device has been deleted or not available.
+        </p>
 
         <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-green-600">Success</AlertDialogTitle>
+              <AlertDialogTitle className="text-green-600">
+                Success
+              </AlertDialogTitle>
               <AlertDialogDescription>{alertMessage}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="bg-black text-white text-md">Close</AlertDialogCancel>
+              <AlertDialogCancel className="bg-black text-white text-md">
+                Close
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
     );
-
 
   return (
     <div className="container mx-auto p-4">
@@ -717,16 +736,18 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                 </label>
 
                 {/* Remove button */}
-                {isEditing && (previewImage || userDeviceData.deviceImage) && !imageToRemove && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors cursor-pointer"
-                    title="Remove image"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+                {isEditing &&
+                  (previewImage || userDeviceData.deviceImage) &&
+                  !imageToRemove && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors cursor-pointer"
+                      title="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
               </div>
 
               <div className="flex flex-col items-center w-full mt-6 px-2">
@@ -734,14 +755,16 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                   {userDeviceData.deviceName}
                 </h2>
                 <div
-                  className={`mt-2 inline-flex items-center gap-3 px-3 py-1 rounded-full font-semibold ${userDeviceData.isActive
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                    }`}
+                  className={`mt-2 inline-flex items-center gap-3 px-3 py-1 rounded-full font-semibold ${
+                    userDeviceData.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
                 >
                   <span
-                    className={`h-4 w-4 rounded-full ${userDeviceData.isActive ? "bg-green-600" : "bg-red-600"
-                      }`}
+                    className={`h-4 w-4 rounded-full ${
+                      userDeviceData.isActive ? "bg-green-600" : "bg-red-600"
+                    }`}
                   />
                   <span>{userDeviceData.isActive ? "Active" : "Inactive"}</span>
                 </div>
@@ -775,8 +798,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                     <X className="h-4 w-4" />
                     Delete
                   </Button>
-
-
                 </div>
               </div>
             </div>
@@ -785,32 +806,44 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             <div className="w-full md:w-2/3">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <Form {...form}>
-                  <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)}>
+                  <form
+                    className="space-y-4"
+                    onSubmit={form.handleSubmit(handleSave)}
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField name="deviceId" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Device ID</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField name="deviceName" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Device Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={!isEditing} />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField name="serialNumber" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Serial Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled />
-                          </FormControl>
-                        </FormItem>
-                      )} />
+                      <FormField
+                        name="deviceId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Device ID</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        name="deviceName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Device Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={!isEditing} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        name="serialNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Serial Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={form.control}
                         name="deviceType"
@@ -818,26 +851,50 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                           <FormItem className="w-full">
                             <FormLabel>Type</FormLabel>
                             {isEditing ? (
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select type" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="temperature Sensor">Temperature Sensor</SelectItem>
-                                  <SelectItem value="pressure Sensor">Pressure Sensor</SelectItem>
-                                  <SelectItem value="proximity Sensor">Proximity Sensor</SelectItem>
-                                  <SelectItem value="motion Sensor">Motion Sensor</SelectItem>
-                                  <SelectItem value="light Sensor">Light Sensor</SelectItem>
-                                  <SelectItem value="sound Sensor">Sound Sensor</SelectItem>
-                                  <SelectItem value="gas Sensor">Gas Sensor</SelectItem>
-                                  <SelectItem value="humidity Sensor">Humidity Sensor</SelectItem>
-                                  <SelectItem value="touch Sensor">Touch Sensor</SelectItem>
-                                  <SelectItem value="magnetic Sensor">Magnetic Sensor</SelectItem>
-                                  <SelectItem value="image Sensor">Image Sensor</SelectItem>
+                                  <SelectItem value="temperature Sensor">
+                                    Temperature Sensor
+                                  </SelectItem>
+                                  <SelectItem value="pressure Sensor">
+                                    Pressure Sensor
+                                  </SelectItem>
+                                  <SelectItem value="proximity Sensor">
+                                    Proximity Sensor
+                                  </SelectItem>
+                                  <SelectItem value="motion Sensor">
+                                    Motion Sensor
+                                  </SelectItem>
+                                  <SelectItem value="light Sensor">
+                                    Light Sensor
+                                  </SelectItem>
+                                  <SelectItem value="sound Sensor">
+                                    Sound Sensor
+                                  </SelectItem>
+                                  <SelectItem value="gas Sensor">
+                                    Gas Sensor
+                                  </SelectItem>
+                                  <SelectItem value="humidity Sensor">
+                                    Humidity Sensor
+                                  </SelectItem>
+                                  <SelectItem value="touch Sensor">
+                                    Touch Sensor
+                                  </SelectItem>
+                                  <SelectItem value="magnetic Sensor">
+                                    Magnetic Sensor
+                                  </SelectItem>
+                                  <SelectItem value="image Sensor">
+                                    Image Sensor
+                                  </SelectItem>
                                   <SelectItem value="other">Other</SelectItem>
-
                                 </SelectContent>
                               </Select>
                             ) : (
@@ -850,23 +907,28 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                         )}
                       />
 
-
-                      <FormField name="measurementParameter" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Measurement Parameter</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={!isEditing} />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField name="measurementUnit" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Measurement Unit</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={!isEditing} />
-                          </FormControl>
-                        </FormItem>
-                      )} />
+                      <FormField
+                        name="measurementParameter"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Measurement Parameter</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={!isEditing} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        name="measurementUnit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Measurement Unit</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={!isEditing} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                       {/* <FormField name="minThreshold" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Min Threshold</FormLabel>
@@ -885,23 +947,33 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                       )} />*/}
                     </div>
 
-                    <FormField name="location" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled={!isEditing} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
+                    <FormField
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditing} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormField name="description" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={4} disabled={!isEditing} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
+                    <FormField
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              rows={4}
+                              disabled={!isEditing}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
                     {isEditing && (
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -948,7 +1020,8 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Your device will be permanently deleted.
+              This action cannot be undone. Your device will be permanently
+              deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -962,7 +1035,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 };
