@@ -12,6 +12,7 @@ import {
   Legend,
 } from "chart.js";
 import axios from "axios";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 // Register Chart.js components for rendering line charts
 ChartJS.register(
@@ -26,12 +27,15 @@ ChartJS.register(
 
 
 export function RealTimeChart({
-  deviceId,
+  device,
   metric,
+  currentTime,
 }: {
-  deviceId: string | null;
+  device: string | null;
   metric: "temperature" | "humidity";
+  currentTime: Date;
 }) {
+  const { user } = useUser();
   // State for chart data (labels and dataset for the line chart)
   const [chartData, setChartData] = useState({
     labels: [] as string[],
@@ -56,14 +60,13 @@ export function RealTimeChart({
   // Tracks the last timestamp to avoid duplicate updates
   // Relevant: Ensures new data is only added if timestamp changes
   const [lastTimestamp, setLastTimestamp] = useState<string | null>(null);
-
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+  const [lastValue, setLastValue] = useState<number | null>(null);
 
   // Fetches the latest data from the API
   const fetchLatestData = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE}/analytics/realtime/${deviceId}?metric=${metric}`
+        `${process.env.NEXT_PUBLIC_API_URL}/analytics/realtime/${device}?metric=${metric}&email=${encodeURIComponent(user?.email || "")}`
       );
       const data = response.data;
       console.log("RealTimeChart API response:", data);
@@ -78,6 +81,7 @@ export function RealTimeChart({
       // Extract timestamp and value, defaulting if missing
       const timestamp = data.timestamp || new Date().toISOString();
       const value = data.value ?? 0;
+      setLastValue(value);
 
       // Treat value: 0 as no data, which may hide valid zero values
       if (value === 0 && data.timestamp) {
@@ -119,11 +123,11 @@ export function RealTimeChart({
 
   
   useEffect(() => {
-    console.log("RealTimeChart props:", { deviceId, metric });
+    console.log("RealTimeChart props:", { device, metric });
 
     // Validate props to prevent invalid API calls
-    if (!deviceId || !metric) {
-      setError("Invalid deviceId or metric");
+    if (!device || !metric) {
+      setError("Invalid device or metric");
       return;
     }
 
@@ -134,7 +138,7 @@ export function RealTimeChart({
     const interval = setInterval(async () => {
       try {
         const response = await axios.get(
-          `${API_BASE}/analytics/realtime/${deviceId}?metric=${metric}`
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/realtime/${device}?metric=${metric}&email=${encodeURIComponent(user?.email || "")}`
         );
         const data = response.data;
         console.log("RealTimeChart polling response:", data);
@@ -147,6 +151,7 @@ export function RealTimeChart({
         // Extract timestamp and value
         const timestamp = data.timestamp || new Date().toISOString();
         const value = data.value ?? 0;
+        setLastValue(value);
 
         // Skip zero values with timestamp
         if (value === 0 && data.timestamp) {
@@ -183,7 +188,29 @@ export function RealTimeChart({
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
-  }, [deviceId, metric]);
+  }, [device, metric, user]);
+
+  // Add a timer to update the chart with currentTime, even if no new data
+  useEffect(() => {
+    if (lastValue !== null && currentTime) {
+      setChartData((prev) => {
+        const currentLabel = currentTime.toLocaleTimeString();
+        const lastLabel = prev.labels[prev.labels.length - 1];
+        if (lastLabel !== currentLabel) {
+          return {
+            labels: [...prev.labels, currentLabel].slice(-20),
+            datasets: [
+              {
+                ...prev.datasets[0],
+                data: [...prev.datasets[0].data, lastValue].slice(-20),
+              },
+            ],
+          };
+        }
+        return prev;
+      });
+    }
+  }, [currentTime, lastValue]);
 
   // Render error or no-data message if applicable
   if (error || noData) {
@@ -191,7 +218,7 @@ export function RealTimeChart({
       <div>
         <h2>
           Real-Time {metric.charAt(0).toUpperCase() + metric.slice(1)} for{" "}
-          {deviceId || "Device"}
+          {device || "Device"}
         </h2>
         <p className="text-red-500">
           {error || "No data available for this device and metric"}
