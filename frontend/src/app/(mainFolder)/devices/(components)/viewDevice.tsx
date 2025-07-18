@@ -414,8 +414,8 @@ type DeviceData = {
   deviceName: string;
   serialNumber: string;
   deviceType: string;
-  measurementParameter: string;
-  measurementUnit: string;
+  // measurementParameter: string;
+  // measurementUnit: string;
   // minThreshold: string;
   // maxThreshold: string;
   location: string;
@@ -690,7 +690,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         <CardHeader>
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8 min-h-[400px]">
             <div className="flex flex-col items-center justify-center w-full md:w-1/3 h-full">
-              <div className="relative">
+              <div className="relative mt-6">
                 <label
                   htmlFor="deviceImage"
                   className="relative w-48 h-48 rounded-md overflow-hidden border-2 border-white cursor-pointer group block"
@@ -731,7 +731,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                 )}
               </div>
 
-              <div className="flex flex-col items-center w-full mt-6 px-2">
+              <div className="flex flex-col items-center w-full mt-2 px-2">
                 <h2 className="text-2xl font-bold text-black">
                   {userDeviceData.deviceName}
                 </h2>
@@ -748,45 +748,53 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                   <span>{userDeviceData.isActive ? "Active" : "Inactive"}</span>
                 </div>
 
-                <div className="flex flex-row md:flex-col gap-2 mt-10 w-full md:w-auto justify-center items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleEditToggle}
-                    className="text-black bg-white cursor-pointer flex items-center gap-2"
-                    disabled={isEditing}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit Device
-                  </Button>
+             <div className="flex flex-row md:flex-col items-center justify-center gap-4 mt-6 w-full">
+  {/* Top Row: Edit + Visualize (always inline) */}
+  <div className="flex flex-row gap-2 justify-center items-center">
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleEditToggle}
+      className="text-black bg-white cursor-pointer flex items-center gap-2"
+      disabled={isEditing}
+    >
+      <Pencil className="h-4 w-4" />
+      Edit Device
+    </Button>
 
-                  <Link href="/device-visualization">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-black bg-white cursor-pointer flex items-center gap-2"
-                    >
-                      <BarChart className="h-4 w-4" />
-                      Visualize
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => setShowDeleteDialog(true)}
-                  >
-                    <X className="h-4 w-4" />
-                    Delete
-                  </Button>
+    <Link href="/device-visualization">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-black bg-white cursor-pointer flex items-center gap-2"
+      >
+        <BarChart className="h-4 w-4" />
+        Visualize
+      </Button>
+    </Link>
+  </div>
+
+  {/* Bottom Row: Delete (inline on small, stacked on md+ and centered) */}
+  <div className="md:mt-2">
+    <Button
+      variant="destructive"
+      size="sm"
+      className="flex items-center gap-2"
+      onClick={() => setShowDeleteDialog(true)}
+    >
+      <X className="h-4 w-4" />
+      Delete
+    </Button>
+  </div>
+</div>
 
 
-                </div>
+
               </div>
             </div>
 
             {/* Device Form */}
-            <div className="w-full md:w-2/3">
+<div className="w-full md:w-2/3 mt-6">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <Form {...form}>
                   <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)}>
@@ -815,6 +823,24 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                           </FormControl>
                         </FormItem>
                       )} />
+                      <FormField name="location" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditing} />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+
+                      <FormField name="description" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={8} disabled={!isEditing} className="w-full sm:w-[400px] mx-auto" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      {/* 
                       <FormField
                         control={form.control}
                         name="deviceType"
@@ -852,10 +878,10 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
+                      />*/}
 
 
-                      <FormField name="measurementParameter" render={({ field }) => (
+                      {/* <FormField name="measurementParameter" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Measurement Parameter</FormLabel>
                           <FormControl>
@@ -871,7 +897,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                           </FormControl>
                         </FormItem>
                       )} />
-                      {/* <FormField name="minThreshold" render={({ field }) => (
+                       <FormField name="minThreshold" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Min Threshold</FormLabel>
                           <FormControl>
@@ -889,23 +915,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                       )} />*/}
                     </div>
 
-                    <FormField name="location" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled={!isEditing} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-
-                    <FormField name="description" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={4} disabled={!isEditing} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
 
                     {isEditing && (
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
