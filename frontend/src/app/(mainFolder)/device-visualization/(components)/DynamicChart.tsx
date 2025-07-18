@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -11,20 +11,22 @@ import {
   Legend,
 } from "chart.js";
 import axios from "axios";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 // Register Chart.js components for rendering bar charts
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 
 export function DynamicChart({
-  deviceId,
+  device,
   metric,
   timeRange,
 }: {
-  deviceId: string | null;
+  device: string | null;
   metric: "temperature" | "humidity";
   timeRange: "lastHour" | "lastDay";
 }) {
+  const { user } = useUser();
   // State for chart data (labels and dataset for the bar chart, showing min, max, avg)
   const [chartData, setChartData] = useState({
     labels: ["Min", "Max", "Avg"],
@@ -44,20 +46,19 @@ export function DynamicChart({
 
  
   useEffect(() => {
-    console.log("DynamicChart props:", { deviceId, metric, timeRange });
+    console.log("DynamicChart props:", { device, metric, timeRange });
 
     // Validate props to prevent invalid API calls
-    if (!deviceId || !metric || !timeRange) {
-      setError("Invalid deviceId, metric, or time range");
+    if (!device || !metric || !timeRange) {
+      setError("Invalid device, metric, or time range");
       return;
     }
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
    
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE}/analytics/stats/${deviceId}?metric=${metric}&timeRange=${timeRange}`
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/stats/${device}?metric=${metric}&timeRange=${timeRange}&email=${encodeURIComponent(user?.email || "")}`
         );
         const data = response.data;
         console.log("DynamicChart API response:", data);
@@ -98,7 +99,12 @@ export function DynamicChart({
     };
 
     fetchData();
-  }, [deviceId, metric, timeRange]);
+  }, [device, metric, timeRange, user]);
+
+  useLayoutEffect(() => {
+    // Force a re-render when chartData changes
+    console.log('useLayoutEffect: chartData updated', chartData);
+  }, [chartData]);
 
   // Render error or no-data message if applicable
   if (error || noData) {
@@ -115,9 +121,12 @@ export function DynamicChart({
   const maxValue = Math.max(...chartData.datasets[0].data, 0);
 
   // Render the bar chart using Chart.js
+  // Log final chartData before rendering
+  console.log('Final chartData (DynamicChart):', chartData);
   return (
-    <div className="chart-container w-full h-[300px]">
+    <div className="chart-container w-full h-[300px] min-h-[300px]" style={{ minHeight: 300 }}>
       <Bar
+        key={JSON.stringify(chartData)}
         data={chartData}
         options={{
           responsive: true,
@@ -125,8 +134,8 @@ export function DynamicChart({
           scales: {
             y: {
               title: { display: true, text: metric.charAt(0).toUpperCase() + metric.slice(1) },
-              min: minValue - (maxValue - minValue) * 0.1,
-              max: maxValue + (maxValue - minValue) * 0.1,
+              min: Math.min(...chartData.datasets[0].data, 0) - (Math.max(...chartData.datasets[0].data, 0) - Math.min(...chartData.datasets[0].data, 0)) * 0.1,
+              max: Math.max(...chartData.datasets[0].data, 0) + (Math.max(...chartData.datasets[0].data, 0) - Math.min(...chartData.datasets[0].data, 0)) * 0.1,
             },
           },
           plugins: {
