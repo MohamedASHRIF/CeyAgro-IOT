@@ -70,81 +70,113 @@ export class AnalyticsService {
     }
   }
 
-    async generateAndUploadReport(
-    queryDto: AnalyticsQueryDto,
-    email?: string,
-  ): Promise<{ downloadUrl: string; expiresIn: number; recordCount: number }> {
-    let data;
+async generateAndUploadReport(
+  queryDto: AnalyticsQueryDto,
+  email?: string,
+): Promise<{ downloadUrl: string; expiresIn: number; recordCount: number }> {
+  let data;
+  let deviceId = queryDto.deviceId;
 
-    if (email) {
-      const userDeviceIds = await this.getDeviceIdsForUser(email);
-      data = await this.getFilteredDataForUser(queryDto, userDeviceIds);
-    } else {
-      data = await this.getFilteredData(queryDto);
+  // Fetch data based on email and deviceId
+  if (email) {
+    const userDeviceIds = await this.getDeviceIdsForUser(email);
+    if (!userDeviceIds.length) {
+      throw new NotFoundException('No devices found for the user');
     }
-
-    if (data.length === 0) {
-      throw new NotFoundException('No data found for the given criteria');
+    if (deviceId && !userDeviceIds.includes(deviceId)) {
+      throw new NotFoundException(`Device ID ${deviceId} not associated with user`);
     }
+    data = await this.getFilteredDataForUser(queryDto, userDeviceIds);
+  } else {
+    data = await this.getFilteredData(queryDto);
+  }
 
-    if (data[0].date) {
-      data.sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-      );
-    }
+  if (data.length === 0) {
+    throw new NotFoundException('No data found for the given criteria');
+  }
 
-    let fieldsToInclude = queryDto.fields;
-    if (!fieldsToInclude || fieldsToInclude.length === 0) {
-      fieldsToInclude = ['temperatureValue', 'humidityValue', 'date', 'deviceId'];
-    }
+  if (data[0].date) {
+    data.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+  }
 
-    let deviceName = 'Device Report';
-    if (queryDto.deviceId) {
-      // Fetch device name from DeviceUser
-      const deviceUser = await this.deviceUserModel.findOne({ deviceId: queryDto.deviceId });
-      if (deviceUser && deviceUser.deviceName) {
-        deviceName = deviceUser.deviceName;
+  let fieldsToInclude = queryDto.fields;
+  if (!fieldsToInclude || fieldsToInclude.length === 0) {
+    fieldsToInclude = ['temperatureValue', 'humidityValue', 'date', 'deviceId'];
+  }
+
+  let deviceName = 'Device Report'; // Default fallback
+  if (deviceId && email) {
+    // Fetch device name for the specific deviceId and email to ensure user ownership
+    const deviceUser = await this.deviceUserModel
+      .findOne({ deviceId, email }) // Ensure device belongs to the user
+      .select('deviceName')
+      .lean();
+    if (deviceUser && deviceUser.deviceName) {
+      deviceName = deviceUser.deviceName.trim();
+      if (!deviceName) {
+        console.warn(`Empty deviceName after trimming for deviceId: ${deviceId}, email: ${email}`);
+        deviceName = `Device ${deviceId}`;
       }
-    } else if (email) {
-      // If multiple devices, use a generic name
+    } else {
+      console.warn(`No device found for deviceId: ${deviceId}, email: ${email}`);
+      throw new NotFoundException(`Device ID ${deviceId} not found for user`);
+    }
+  } else if (email) {
+    // For multiple devices, use a generic name
+    const userDevices = await this.deviceUserModel
+      .find({ email })
+      .select('deviceName')
+      .lean();
+    deviceName =
+      userDevices.length === 1 && userDevices[0].deviceName
+        ? userDevices[0].deviceName.trim()
+        : 'Multiple Devices';
+    if (!deviceName) {
+      console.warn(`Empty deviceName for user devices, email: ${email}`);
       deviceName = 'Multiple Devices';
     }
-
-    const excelBuffer = await this.excelService.generateExcel(
-      data,
-      deviceName,
-      fieldsToInclude,
-    );
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const deviceInfo = queryDto.deviceId
-      ? `-${queryDto.deviceId.replace(/\s+/g, '-')}`
-      : '';
-    const dateInfo = queryDto.date ? `-${queryDto.date}` : '';
-    const filename = `device-report${deviceInfo}${dateInfo}-${timestamp}.xlsx`;
-    const s3Key = `analytics/${filename}`;
-
-    try {
-      await this.s3Service.uploadFile(
-        excelBuffer,
-        s3Key,
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      );
-    } catch (error) {
-      console.error('Failed to upload to S3:', error);
-      throw new InternalServerErrorException(
-        'Failed to upload report to storage',
-      );
-    }
-
-    const expiresIn = 1800;
-    const downloadUrl = this.s3Service.getSignedUrl(s3Key, expiresIn);
-    return {
-      downloadUrl,
-      expiresIn,
-      recordCount: data.length,
-    };
   }
+
+  console.log(`Generating report for deviceName: ${deviceName}, deviceId: ${deviceId}, email: ${email}`);
+
+  const excelBuffer = await this.excelService.generateExcel(
+    data,
+    deviceName,
+    fieldsToInclude,
+  );
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const deviceInfo = deviceId ? `-${deviceId.replace(/\s+/g, '-')}` : '';
+  const dateInfo = queryDto.date ? `-${queryDto.date}` : '';
+  const filename = `device-report${deviceInfo}${dateInfo}-${timestamp}.xlsx`;
+  const s3Key = `analytics/${filename}`;
+
+  try {
+    await this.s3Service.uploadFile(
+      excelBuffer,
+      s3Key,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+  } catch (error) {
+    console.error('Failed to upload to S3:', error);
+    throw new InternalServerErrorException('Failed to upload report to storage');
+  }
+
+  const expiresIn = 1800;
+  const downloadUrl = this.s3Service.getSignedUrl(s3Key, expiresIn);
+  return {
+    downloadUrl,
+    expiresIn,
+    recordCount: data.length,
+  };
+}
+
+
+
+
+
 
 
  async getReadingsByDeviceAndDate(
