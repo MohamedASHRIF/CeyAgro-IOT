@@ -1,5 +1,7 @@
-import { Button } from "@/components/ui/button";
+"use client";
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,20 +21,29 @@ const DatePicker = dynamic(
 
 import "react-datepicker/dist/react-datepicker.css";
 
+interface Device {
+  deviceId: string;
+  deviceName: string;
+}
+
 interface ReportFormProps {
   deviceName: string;
   setDeviceName: (value: string) => void;
+  deviceId: string;
+  setDeviceId: (value: string) => void;
   startDate: Date | undefined;
   setStartDate: (date: Date | undefined) => void;
   endDate: Date | undefined;
   setEndDate: (date: Date | undefined) => void;
-  deviceNames: string[];
+  deviceNames: Device[];
   onClear: () => void;
 }
 
 export function ReportForm({
   deviceName,
   setDeviceName,
+  deviceId,
+  setDeviceId,
   startDate,
   setStartDate,
   endDate,
@@ -40,6 +51,13 @@ export function ReportForm({
   deviceNames,
   onClear,
 }: ReportFormProps) {
+  useEffect(() => {
+    if (deviceNames.length > 0 && !deviceName) {
+      setDeviceName(deviceNames[0].deviceName);
+      setDeviceId(deviceNames[0].deviceId);
+    }
+  }, [deviceNames, deviceName, setDeviceName, setDeviceId]);
+
   return (
     <div className="flex flex-row flex-nowrap gap-2 md:gap-4 mb-4 items-center max-w-[90vw] overflow-x-auto">
       {/* Device selection dropdown */}
@@ -47,14 +65,21 @@ export function ReportForm({
         <label className="block font-bold text-xs md:text-sm mb-1 px-2 md:px-4">
           Select Device
         </label>
-        <Select value={deviceName} onValueChange={setDeviceName}>
+        <Select
+          value={deviceName}
+          onValueChange={(value) => {
+            const selectedDevice = deviceNames.find((d) => d.deviceName === value);
+            setDeviceName(value);
+            setDeviceId(selectedDevice ? selectedDevice.deviceId : "");
+          }}
+        >
           <SelectTrigger className="w-full h-10">
             <SelectValue placeholder="Select Device" />
           </SelectTrigger>
           <SelectContent>
-            {deviceNames.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
+            {deviceNames.map((device) => (
+              <SelectItem key={device.deviceId} value={device.deviceName}>
+                {device.deviceName}
               </SelectItem>
             ))}
           </SelectContent>
@@ -75,7 +100,9 @@ export function ReportForm({
               startDate={startDate}
               endDate={endDate}
               placeholderText="Start Date"
-              customInput={<Input placeholder="Start Date" className="w-full h-10" />}
+              customInput={
+                <Input placeholder="Start Date" className="w-full h-10" />
+              }
               className="w-full"
             />
           </div>
@@ -88,7 +115,9 @@ export function ReportForm({
               endDate={endDate}
               minDate={startDate ?? undefined}
               placeholderText="End Date"
-              customInput={<Input placeholder="End Date" className="w-full h-10" />}
+              customInput={
+                <Input placeholder="End Date" className="w-full h-10" />
+              }
               className="w-full"
             />
           </div>
