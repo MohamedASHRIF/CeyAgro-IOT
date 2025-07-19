@@ -25,7 +25,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
+// import { AuthModule } from './auth/auth.module';
 import { AwsModule } from 'aws/aws.module';
 import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
@@ -41,7 +41,7 @@ import { AppService } from './app.service';
 
     MongooseModule.forRoot('mongodb+srv://wecode49:vSATmEPbpD7LNAQE@cluster0.4cf5g7r.mongodb.net/users_db?retryWrites=true&w=majority&appName=Cluster0'),
 
-    AuthModule,
+    // AuthModule,
     AwsModule,
     UserModule, 
   ],

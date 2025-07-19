@@ -52,9 +52,11 @@ export function ReportForm({
   onClear,
 }: ReportFormProps) {
   useEffect(() => {
-    if (deviceNames.length > 0 && !deviceName) {
-      setDeviceName(deviceNames[0].deviceName);
-      setDeviceId(deviceNames[0].deviceId);
+    if (deviceNames.length > 0 && (!deviceName || !deviceNames.some(d => d.deviceName === deviceName))) {
+      const firstDevice = deviceNames[0];
+      setDeviceName(firstDevice.deviceName);
+      setDeviceId(firstDevice.deviceId);
+      console.log('ReportForm: Set default device:', firstDevice);
     }
   }, [deviceNames, deviceName, setDeviceName, setDeviceId]);
 
@@ -69,8 +71,13 @@ export function ReportForm({
           value={deviceName}
           onValueChange={(value) => {
             const selectedDevice = deviceNames.find((d) => d.deviceName === value);
-            setDeviceName(value);
-            setDeviceId(selectedDevice ? selectedDevice.deviceId : "");
+            if (selectedDevice) {
+              setDeviceName(selectedDevice.deviceName);
+              setDeviceId(selectedDevice.deviceId);
+              console.log('ReportForm: Selected device:', selectedDevice);
+            } else {
+              console.warn('ReportForm: No device found for deviceName:', value);
+            }
           }}
         >
           <SelectTrigger className="w-full h-10">

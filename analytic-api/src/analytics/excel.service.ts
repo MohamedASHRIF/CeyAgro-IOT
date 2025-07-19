@@ -64,6 +64,3 @@ export class ExcelService {
     return await workbook.xlsx.writeBuffer() as Buffer;
   }
 }
-
-
-

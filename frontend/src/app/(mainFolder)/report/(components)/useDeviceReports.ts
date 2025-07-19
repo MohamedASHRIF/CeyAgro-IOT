@@ -71,19 +71,33 @@ export function useDeviceReports(userEmail: string) {
     }
   }, [downloadHistory, isMounted, userEmail]);
 
-<<<<<<< Updated upstream
   useEffect(() => {
     const fetchDeviceNames = async () => {
       try {
-        console.log('Fetching user device names for email:', userEmail);
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/device-names`, {
+        console.log('Fetching user device list for email:', userEmail);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/user-device-list`, {
           params: { email: userEmail },
         });
         if (response.data.success) {
-          const names = response.data.data || [];
-          setDeviceNames(names);
-          if (names.length > 0 && !deviceName) {
-            setDeviceName(names[0]); // Auto-select first device
+          const devices = (response.data.data || []).map((device: Device) => ({
+            deviceId: device.deviceId?.trim(),
+            deviceName: device.deviceName?.trim(),
+          })).filter((device: Device) => device.deviceId && device.deviceName); // Filter out invalid devices
+          if (devices.length === 0) {
+            console.warn('No valid devices found for user:', userEmail);
+            setError('No devices found for your account');
+            toast.error('Error', { description: 'No devices found for your account' });
+            setDeviceNames([]);
+            setDeviceName('');
+            setDeviceId('');
+          } else {
+            setDeviceNames(devices);
+            if (!deviceName || !devices.some((d: Device) => d.deviceName === deviceName)) {
+              const firstDevice = devices[0];
+              setDeviceName(firstDevice.deviceName);
+              setDeviceId(firstDevice.deviceId);
+              console.log('Selected first device:', firstDevice);
+            }
           }
         } else {
           setError(response.data.message || 'Failed to fetch user devices');
@@ -94,9 +108,11 @@ export function useDeviceReports(userEmail: string) {
         const message = axios.isAxiosError(error)
           ? error.response?.data?.message || error.message
           : 'Failed to fetch user devices';
-        console.error('Error fetching device names:', message);
+        console.error('Error fetching device list:', message);
         setError(message);
         setDeviceNames([]);
+        setDeviceName('');
+        setDeviceId('');
         toast.error('Error', { description: message });
       }
     };
@@ -104,58 +120,6 @@ export function useDeviceReports(userEmail: string) {
       fetchDeviceNames();
     }
   }, [isMounted, userEmail]);
-=======
->>>>>>> Stashed changes
-
-  useEffect(() => {
-  const fetchDeviceNames = async () => {
-    try {
-      console.log('Fetching user device list for email:', userEmail);
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/user-device-list`, {
-        params: { email: userEmail },
-      });
-      if (response.data.success) {
-        const devices = (response.data.data || []).map((device: Device) => ({
-          deviceId: device.deviceId,
-          deviceName: device.deviceName.trim(), // Trim deviceName
-        }));
-        if (devices.length === 0) {
-          console.warn('No devices found for user:', userEmail);
-          setError('No devices found for your account');
-          toast.error('Error', { description: 'No devices found for your account' });
-        } else {
-          setDeviceNames(devices);
-          if (!deviceName && devices.length > 0) {
-            const firstDevice = devices[0];
-            if (!firstDevice.deviceName || !firstDevice.deviceId) {
-              console.warn('Invalid device data:', firstDevice);
-              setError('Invalid device data returned from server');
-              toast.error('Error', { description: 'Invalid device data returned from server' });
-            } else {
-              setDeviceName(firstDevice.deviceName);
-              setDeviceId(firstDevice.deviceId);
-            }
-          }
-        }
-      } else {
-        setError(response.data.message || 'Failed to fetch user devices');
-        setDeviceNames([]);
-        toast.error('Error', { description: response.data.message || 'Failed to fetch user devices' });
-      }
-    } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.message || error.message
-        : 'Failed to fetch user devices';
-      console.error('Error fetching device list:', message);
-      setError(message);
-      setDeviceNames([]);
-      toast.error('Error', { description: message });
-    }
-  };
-  if (isMounted && userEmail) {
-    fetchDeviceNames();
-  }
-}, [isMounted, userEmail]);
 
   useEffect(() => {
     if (isMounted && deviceId && startDate && endDate && userEmail) {
@@ -169,6 +133,7 @@ export function useDeviceReports(userEmail: string) {
     try {
       console.log('Fetching device data with params:', {
         deviceId,
+        deviceName,
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
         email: userEmail,
@@ -187,7 +152,7 @@ export function useDeviceReports(userEmail: string) {
           ...item,
           temperatureValue: item.temperatureValue != null ? String(item.temperatureValue) : undefined,
           humidityValue: item.humidityValue != null ? String(item.humidityValue) : undefined,
-          name: item.name || deviceName, // Use backend-provided name or fallback to selected deviceName
+          name: deviceName, // Use the selected deviceName from state
         }));
         setDeviceData(transformedData);
         if (transformedData.length === 0) {
@@ -228,6 +193,13 @@ export function useDeviceReports(userEmail: string) {
     setGeneratingReport(true);
     setError('');
     try {
+      console.log('Generating report with params:', {
+        deviceId,
+        deviceName,
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        email: userEmail,
+      });
       const response = await axios.post<ReportResponse>(
         `${process.env.NEXT_PUBLIC_API_URL}/analytics/export`,
         null,
@@ -369,8 +341,8 @@ export function useDeviceReports(userEmail: string) {
   };
 
   const handleClearForm = () => {
-    setDeviceName('');
-    setDeviceId('');
+    setDeviceName(deviceNames[0]?.deviceName || '');
+    setDeviceId(deviceNames[0]?.deviceId || '');
     setStartDate(undefined);
     setEndDate(undefined);
     setDeviceData([]);
