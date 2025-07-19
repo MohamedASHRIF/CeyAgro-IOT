@@ -15,8 +15,9 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
-export function CorrelationChart({ device, startDate, endDate }: {
+export function CorrelationChart({ device, deviceName, startDate, endDate }: {
   device: string | null;
+  deviceName: string | null;
   startDate: string;
   endDate: string;
 }) {
@@ -55,7 +56,7 @@ export function CorrelationChart({ device, startDate, endDate }: {
   }, [device, startDate, endDate, user]);
 
   if (error || noData) {
-    return <div><h2>Correlation</h2><p className="text-red-500">{error || "No correlation data available"}</p></div>;
+    return <div><h2>Correlation for {deviceName || device || "Device"}</h2><p className="text-red-500">{error || "No correlation data available"}</p></div>;
   }
 
   return (

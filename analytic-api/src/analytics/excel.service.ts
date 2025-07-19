@@ -3,11 +3,8 @@ import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class ExcelService {
-  async generateExcel(data: any[], fields?: string[] | null): Promise<Buffer> {
+  async generateExcel(data: any[], deviceName: string, fields?: string[] | null): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
-    // Extract device name and location from the first data item, with fallbacks
-    const deviceName = data.length > 0 ? data[0].name || 'Device Report' : 'No Data';
-    const location = data.length > 0 ? data[0].location || 'Unknown Location' : 'Unknown Location';
     // Sanitize device name for worksheet naming (Excel restricts to 31 chars, no special chars)
     const sanitizedDeviceName = (deviceName || 'Unknown Device').trim().replace(/[\\/*[\]?:]/g, '_').substring(0, 31);
     const worksheet = workbook.addWorksheet(sanitizedDeviceName);
@@ -18,13 +15,6 @@ export class ExcelService {
     titleCell.value = `Device Report: ${(deviceName || 'Unknown Device').trim()}`;
     titleCell.font = { bold: true, size: 16 };
     titleCell.alignment = { horizontal: 'center' };
-
-    // // Title: Location in row 2
-    // worksheet.mergeCells('A2:C2');
-    // const locationCell = worksheet.getCell('A2');
-    // locationCell.value = `Location: ${location}`;
-    // locationCell.font = { bold: true, size: 14 };
-    // locationCell.alignment = { horizontal: 'center' };
 
     // Headers in row 4
     const headers = ['Temperature Value', 'Humidity Value', 'Date'];

@@ -1,24 +1,23 @@
-import { IsString, IsOptional, IsDateString, IsArray, IsBoolean } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+// 
+import { IsOptional, IsString, IsNumber, IsDateString, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class AnalyticsQueryDto {
-
   @IsOptional()
-  @IsString()
-  readonly deviceId: string;
+  @IsString({ message: 'deviceId must be a string' })
+  readonly deviceId?: string;
 
   @IsOptional()
   @IsString()
   readonly name?: string;
 
+  @IsOptional()
+  @IsNumber()
+  readonly temperatureValue?: number;
 
   @IsOptional()
-  @IsString()
-  readonly temperatureValue?: string;
-
-  @IsOptional()
-  @IsString()
-  readonly humidityValue?: string;
+  @IsNumber()
+  readonly humidityValue?: number;
 
   @IsOptional()
   @IsDateString()
@@ -37,5 +36,4 @@ export class AnalyticsQueryDto {
   @IsString({ each: true })
   @Type(() => String)
   readonly fields?: string[];
-
 }

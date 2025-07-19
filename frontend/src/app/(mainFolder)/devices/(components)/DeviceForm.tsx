@@ -284,7 +284,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState } from "react";
 import Link from "next/link";
-
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -318,14 +318,10 @@ const formSchema = z.object({
   deviceId: z.string().min(1, { message: "Device ID is required." }),
   deviceName: z.string().min(2, { message: "Device name is required." }),
   serialNumber: z.string().optional(),
-  deviceType: z.string().min(1, { message: "Select a device type." }),
   location: z.string().min(1, { message: "Location is required." }),
   description: z.string().optional(),
-  measurementParameter: z.string().min(1, { message: "Required field." }),
-  measurementUnit: z.string().min(1, {
-    message: "Measurement unit is required.",
-  }),
 });
+
 
 type DeviceFormValues = z.infer<typeof formSchema>;
 type AddDeviceFormProps = {
@@ -345,12 +341,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
       deviceId: "",
       deviceName: "",
       serialNumber: "",
-      deviceType: "",
       location: "",
       description: "",
-      measurementParameter: "",
-      measurementUnit: "",
     },
+
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -377,11 +371,11 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
       formData.append("deviceId", values.deviceId);
       formData.append("deviceName", values.deviceName);
       formData.append("serialNumber", values.serialNumber || "");
-      formData.append("deviceType", values.deviceType);
+      // formData.append("deviceType", values.deviceType);
       formData.append("location", values.location);
       formData.append("description", values.description || "");
-      formData.append("measurementParameter", values.measurementParameter);
-      formData.append("measurementUnit", values.measurementUnit);
+      // formData.append("measurementParameter", values.measurementParameter);
+      // formData.append("measurementUnit", values.measurementUnit);
 
       if (imageFile) {
         formData.append("deviceImage", imageFile);
@@ -478,7 +472,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                       )}
                     />
 
-                    <FormField
+                    {/*  <FormField
                       control={form.control}
                       name="deviceType"
                       render={({ field }) => (
@@ -512,10 +506,10 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
+                    /> 
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">*/}
                     <FormField
                       control={form.control}
                       name="location"
@@ -529,22 +523,22 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                         </FormItem>
                       )}
                     />
-
-                    {/* Image Upload and Preview */}
-                    <FormItem className="mb-6">
-                      <FormLabel>Upload Image</FormLabel>
-                      <FormControl>
-                        <Input type="file" accept="image/*" onChange={handleImageChange} />
-                      </FormControl>
-                      {imagePreview && (
-                        <img
-                          src={imagePreview}
-                          alt="Device Preview"
-                          className="mt-4 max-h-48 object-contain rounded-md border"
-                        />
-                      )}
-                    </FormItem>
                   </div>
+                  {/* Image Upload and Preview */}
+                  <FormItem className="mb-6">
+                    <FormLabel>Upload Image</FormLabel>
+                    <FormControl>
+                      <Input type="file" accept="image/*" onChange={handleImageChange} />
+                    </FormControl>
+                    {imagePreview && (
+                      <img
+                        src={imagePreview}
+                        alt="Device Preview"
+                        className="mt-4 max-h-48 object-contain rounded-md border"
+                      />
+                    )}
+                  </FormItem>
+
 
                   <FormField
                     control={form.control}
@@ -553,15 +547,20 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input placeholder="Optional short description..." {...field} />
+                          <Textarea
+                            placeholder="Additional details of the device if any (e.g. device type, measurement details, threshold range, etc.)"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                 </div>
 
-                {/* Measurement Details */}
+                {/* Measurement Details 
                 <div className="border-b pb-8 mb-8 border-gray-600">
                   <h2 className="text-2xl font-bold mb-6 text-gray-800">
                     Measurement Details
@@ -596,7 +595,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                       )}
                     />
                   </div>
-                </div>
+                </div> */}
 
                 {/* Submit/Cancel Buttons */}
                 <div className="flex gap-4">

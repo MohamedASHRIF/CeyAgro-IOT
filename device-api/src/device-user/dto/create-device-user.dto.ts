@@ -81,13 +81,15 @@ export class CreateDeviceUserDto {
   @IsString()
   location?: string;
 
-  @IsOptional()
-  @IsString()
-  deviceType?: string;
+  
 
   @IsOptional()
   @IsString()
   serialNumber?: string;
+
+/*  @IsOptional()
+  @IsString()
+  deviceType?: string;
 
   @IsOptional()
   @IsString()
@@ -95,6 +97,6 @@ export class CreateDeviceUserDto {
 
   @IsOptional()
   @IsString()
-  measurementParameter?: string;
+  measurementParameter?: string;*/
 }
 

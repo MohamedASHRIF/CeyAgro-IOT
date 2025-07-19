@@ -10,12 +10,16 @@ import { ComparisonChart } from "./(components)/ComparisonChart";
 import { CorrelationChart } from "./(components)/CorrelationChart";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
+// import { PredictionChart } from "./(components)/PredictionChart";
+// import { ForecastChart } from "./(components)/ForecastChart";
+import ForecastAreaChart from "./(components)/ForecastAreaChart";
 
 
 export default function VisualizationPage() {
   const { user, isLoading } = useUser();
-  const [devices, setDevices] = useState<string[]>([]);
+  const [devices, setDevices] = useState<{ deviceId: string; deviceName: string }[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [selectedDeviceName, setSelectedDeviceName] = useState<string | null>(null);
   const [metrics] = useState<string[]>(["temperature", "humidity"]);
   const [selectedMetric, setSelectedMetric] = useState<"temperature" | "humidity" | null>(null);
   const [timeRange, setTimeRange] = useState<"lastHour" | "lastDay">("lastHour");
@@ -32,7 +36,7 @@ export default function VisualizationPage() {
     if (!user || !user.email) return;
     setIsLoadingDevices(true);
     axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/user-devices`, {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/user-device-list`, {
         params: { email: user.email },
       })
       .then((response) => {
@@ -42,7 +46,8 @@ export default function VisualizationPage() {
           return;
         }
         setDevices(response.data.data);
-        setSelectedDevice(response.data.data[0]);
+        setSelectedDevice(response.data.data[0].deviceId);
+        setSelectedDeviceName(response.data.data[0].deviceName);
         setSelectedMetric("temperature");
         setIsLoadingDevices(false);
       })
@@ -68,6 +73,11 @@ export default function VisualizationPage() {
   if (selectedDevice && selectedMetric) {
     console.log('Rendering HistoryChart', { device: selectedDevice, metric: selectedMetric, timeRange });
     console.log('Rendering DynamicChart', { device: selectedDevice, metric: selectedMetric, timeRange });
+  }
+
+  // Debug: log device IDs for comparison chart
+  if (devices.length >= 2 && devices[0] && devices[1]) {
+    console.log('ComparisonChart deviceA:', devices[0].deviceId, 'deviceB:', devices[1].deviceId);
   }
 
   if (isLoading) {
@@ -98,14 +108,18 @@ export default function VisualizationPage() {
     <div className="dashboard-container p-6">
       {/* Top controls */}
       <div className="flex gap-4 mb-6">
-        <Select value={selectedDevice || ""} onValueChange={setSelectedDevice}>
+        <Select value={selectedDevice || ""} onValueChange={(val) => {
+          setSelectedDevice(val);
+          const found = devices.find((d) => d.deviceId === val);
+          setSelectedDeviceName(found ? found.deviceName : null);
+        }}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select Device" />
           </SelectTrigger>
           <SelectContent>
             {devices.map((device) => (
-              <SelectItem key={device} value={device}>
-                {device}
+              <SelectItem key={device.deviceId} value={device.deviceId}>
+                {device.deviceName}
               </SelectItem>
             ))}
           </SelectContent>
@@ -145,6 +159,7 @@ export default function VisualizationPage() {
               <RealTimeChart
                 key={`realtime-${selectedDevice}-${selectedMetric}`}
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 currentTime={currentTime}
               />
@@ -157,6 +172,7 @@ export default function VisualizationPage() {
               <HistoryChart
                 key={`history-${selectedDevice}-${selectedMetric}-${timeRange}`}
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 timeRange={timeRange}
               />
@@ -169,31 +185,49 @@ export default function VisualizationPage() {
               <DynamicChart
                 key={`dynamic-${selectedDevice}-${selectedMetric}-${timeRange}`}
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 timeRange={timeRange}
               />
             </CardContent>
           </Card>
-          {/* Anomaly Detection */}
+          {/* Correlation */}
           <Card className="mb-6">
-            <CardHeader><CardTitle>Anomaly Detection</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Correlation (Temp vs. Humidity)</CardTitle></CardHeader>
             <CardContent>
-              <AnomalyChart
+              <CorrelationChart
                 device={selectedDevice}
-                metric={selectedMetric}
+                deviceName={selectedDeviceName}
                 startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                 endDate={new Date().toISOString()}
               />
             </CardContent>
           </Card>
-          {/* Comparison */}
+          {/* Forecast (moved here, replacing Prediction) */}
+          <Card className="mb-6">
+            <CardHeader><CardTitle>Forecast</CardTitle></CardHeader>
+            <CardContent>
+              {user && user.email && (
+                <ForecastAreaChart
+                  device={selectedDevice}
+                  deviceName={selectedDeviceName}
+                  metric={selectedMetric}
+                  email={user.email}
+                  futureWindow={24}
+                />
+              )}
+            </CardContent>
+          </Card>
+          {/* Device Comparison */}
           <Card className="mb-6">
             <CardHeader><CardTitle>Device Comparison</CardTitle></CardHeader>
             <CardContent>
-              {devices.length >= 2 ? (
+              {devices.length >= 2 && devices[0] && devices[1] ? (
                 <ComparisonChart
-                  deviceA={devices[0]}
-                  deviceB={devices[1]}
+                  deviceA={devices[0].deviceId}
+                  deviceAName={devices[0].deviceName}
+                  deviceB={devices[1].deviceId}
+                  deviceBName={devices[1].deviceName}
                   metric={selectedMetric}
                   startDateA={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                   endDateA={new Date().toISOString()}
@@ -205,22 +239,17 @@ export default function VisualizationPage() {
               )}
             </CardContent>
           </Card>
-          {/* Correlation */}
+          {/* Anomaly Detection */}
           <Card className="mb-6">
-            <CardHeader><CardTitle>Correlation (Temp vs. Humidity)</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Anomaly Detection</CardTitle></CardHeader>
             <CardContent>
-              <CorrelationChart
+              <AnomalyChart
                 device={selectedDevice}
+                deviceName={selectedDeviceName}
+                metric={selectedMetric}
                 startDate={new Date(Date.now() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()}
                 endDate={new Date().toISOString()}
               />
-            </CardContent>
-          </Card>
-          {/* Forecasting (placeholder) */}
-          <Card className="mb-6">
-            <CardHeader><CardTitle>Forecast</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-gray-400 text-center">Coming soon</div>
             </CardContent>
           </Card>
         </div>

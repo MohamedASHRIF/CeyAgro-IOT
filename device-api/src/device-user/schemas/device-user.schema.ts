@@ -66,17 +66,20 @@ export class DeviceUser {
   @Prop()
   location: string;
 
-  @Prop()
-  deviceType: string;
+ 
 
   @Prop()
   serialNumber: string;
 
+  /*
+   @Prop()
+  deviceType: string;
+  
   @Prop()
   measurementUnit: string;
 
   @Prop()
-  measurementParameter: string;
+  measurementParameter: string;*/
 }
 
 export type DeviceUserDocument = DeviceUser & Document;

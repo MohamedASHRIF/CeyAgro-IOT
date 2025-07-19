@@ -376,7 +376,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -414,8 +414,8 @@ type DeviceData = {
   deviceName: string;
   serialNumber: string;
   deviceType: string;
-  measurementParameter: string;
-  measurementUnit: string;
+  // measurementParameter: string;
+  // measurementUnit: string;
   // minThreshold: string;
   // maxThreshold: string;
   location: string;
@@ -436,9 +436,10 @@ type UserDevice = {
 
 type CombinedDevice = DeviceData & Partial<UserDevice>;
 
+const API_BASE = "http://localhost:3002/device-user";
+
 const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
-  //const deviceId = "d111";
-  // const email = "hasini20020116@gmail.com";
+
   const email = userEmail;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -462,7 +463,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const fetchDeviceData = async () => {
       try {
         const res = await fetch(
-          `http://localhost:3002/device-user/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
+          `${API_BASE}/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
         );
 
         if (!res.ok) throw new Error("Failed to fetch device data");
@@ -526,7 +527,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
       }
 
       const res = await fetch(
-        `http://localhost:3002/device-user/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+        `${API_BASE}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
         {
           method: "PATCH",
           body: formData,
@@ -566,7 +567,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
   };
   const handleDeleteDevice = async () => {
     try {
-      const res = await fetch(`http://localhost:3002/device-user/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`, {
+      const res = await fetch(`${API_BASE}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`, {
         method: 'DELETE',
       });
 
@@ -667,7 +668,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">No device to display</h2>
         <p className="text-gray-600">Your device has been deleted or not available.</p>
 
-        <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
+        {/*   <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="text-green-600">Success</AlertDialogTitle>
@@ -677,7 +678,8 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
               <AlertDialogCancel className="bg-black text-white text-md">Close</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog>
+        </AlertDialog>*/}
+
       </div>
     );
 
@@ -688,7 +690,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         <CardHeader>
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8 min-h-[400px]">
             <div className="flex flex-col items-center justify-center w-full md:w-1/3 h-full">
-              <div className="relative">
+              <div className="relative mt-6">
                 <label
                   htmlFor="deviceImage"
                   className="relative w-48 h-48 rounded-md overflow-hidden border-2 border-white cursor-pointer group block"
@@ -729,7 +731,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                 )}
               </div>
 
-              <div className="flex flex-col items-center w-full mt-6 px-2">
+              <div className="flex flex-col items-center w-full mt-2 px-2">
                 <h2 className="text-2xl font-bold text-black">
                   {userDeviceData.deviceName}
                 </h2>
@@ -746,43 +748,53 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                   <span>{userDeviceData.isActive ? "Active" : "Inactive"}</span>
                 </div>
 
-                <div className="flex flex-row md:flex-col gap-2 mt-10 w-full md:w-auto justify-center items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleEditToggle}
-                    className="text-black bg-white cursor-pointer flex items-center gap-2"
-                    disabled={isEditing}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit Device
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-black bg-white cursor-pointer flex items-center gap-2"
-                    onClick={() => alert("Visualize Device Clicked")}
-                  >
-                    <BarChart className="h-4 w-4" />
-                    Visualize
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => setShowDeleteDialog(true)}
-                  >
-                    <X className="h-4 w-4" />
-                    Delete
-                  </Button>
+             <div className="flex flex-row md:flex-col items-center justify-center gap-4 mt-6 w-full">
+  {/* Top Row: Edit + Visualize (always inline) */}
+  <div className="flex flex-row gap-2 justify-center items-center">
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleEditToggle}
+      className="text-black bg-white cursor-pointer flex items-center gap-2"
+      disabled={isEditing}
+    >
+      <Pencil className="h-4 w-4" />
+      Edit Device
+    </Button>
+
+    <Link href="/device-visualization">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-black bg-white cursor-pointer flex items-center gap-2"
+      >
+        <BarChart className="h-4 w-4" />
+        Visualize
+      </Button>
+    </Link>
+  </div>
+
+  {/* Bottom Row: Delete (inline on small, stacked on md+ and centered) */}
+  <div className="md:mt-2">
+    <Button
+      variant="destructive"
+      size="sm"
+      className="flex items-center gap-2"
+      onClick={() => setShowDeleteDialog(true)}
+    >
+      <X className="h-4 w-4" />
+      Delete
+    </Button>
+  </div>
+</div>
 
 
-                </div>
+
               </div>
             </div>
 
             {/* Device Form */}
-            <div className="w-full md:w-2/3">
+<div className="w-full md:w-2/3 mt-6">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <Form {...form}>
                   <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)}>
@@ -811,6 +823,24 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                           </FormControl>
                         </FormItem>
                       )} />
+                      <FormField name="location" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditing} />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+
+                      <FormField name="description" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={8} disabled={!isEditing} className="w-full sm:w-[400px] mx-auto" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      {/* 
                       <FormField
                         control={form.control}
                         name="deviceType"
@@ -848,10 +878,10 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
+                      />*/}
 
 
-                      <FormField name="measurementParameter" render={({ field }) => (
+                      {/* <FormField name="measurementParameter" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Measurement Parameter</FormLabel>
                           <FormControl>
@@ -867,7 +897,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                           </FormControl>
                         </FormItem>
                       )} />
-                      {/* <FormField name="minThreshold" render={({ field }) => (
+                       <FormField name="minThreshold" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Min Threshold</FormLabel>
                           <FormControl>
@@ -885,23 +915,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                       )} />*/}
                     </div>
 
-                    <FormField name="location" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled={!isEditing} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-
-                    <FormField name="description" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={4} disabled={!isEditing} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
 
                     {isEditing && (
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">

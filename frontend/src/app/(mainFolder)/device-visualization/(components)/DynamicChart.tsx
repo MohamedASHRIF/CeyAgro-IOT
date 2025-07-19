@@ -19,10 +19,12 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export function DynamicChart({
   device,
+  deviceName,
   metric,
   timeRange,
 }: {
   device: string | null;
+  deviceName: string | null;
   metric: "temperature" | "humidity";
   timeRange: "lastHour" | "lastDay";
 }) {
@@ -110,7 +112,7 @@ export function DynamicChart({
   if (error || noData) {
     return (
       <div>
-        <h2>Statistics for {metric.charAt(0).toUpperCase() + metric.slice(1)} ({timeRange})</h2>
+        <h2>Statistics for {metric.charAt(0).toUpperCase() + metric.slice(1)} ({timeRange}) - {deviceName || device || "Device"}</h2>
         <p className="text-red-500">{error || "No data available for this device and metric"}</p>
       </div>
     );
