@@ -15,21 +15,22 @@ interface DeviceData {
   temperatureValue?: string;
   humidityValue?: string;
   date: string;
-  location?: string;
+  deviceId: string;
 }
 
 interface DeviceDataTableProps {
   data: DeviceData[];
   loading: boolean;
   error: string;
+  deviceName: string;
 }
 
 export function DeviceDataTable({
   data,
   loading,
   error,
+  deviceName,
 }: DeviceDataTableProps) {
-  // Display error message if present
   if (error) {
     return (
       <Alert variant="destructive" className="mb-4">
@@ -38,7 +39,6 @@ export function DeviceDataTable({
     );
   }
 
-  // Show loading spinner during data fetch
   if (loading) {
     return (
       <div className="flex justify-center py-4">
@@ -47,16 +47,12 @@ export function DeviceDataTable({
     );
   }
 
-  // Extract device name and location from the first data item, with fallbacks
-  const deviceName = data.length > 0 ? data[0].name || "Unknown Device" : "No Data";
-  // const location = data.length > 0 ? data[0].location || "Unknown Location" : "Unknown Location";
+  const displayDeviceName = deviceName || (data.length > 0 ? data[0].name || "Unknown Device" : "No Data");
 
-  // Render heading and data table
   return (
     <div className="rounded-md border">
-      {/* Heading with device name and location */}
       <h2 className="text-2xl font-bold text-center mb-4">
-        Device: {deviceName}
+        Device: {displayDeviceName}
       </h2>
 
       <Table>

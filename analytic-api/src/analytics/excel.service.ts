@@ -9,13 +9,13 @@ export class ExcelService {
     const deviceName = data.length > 0 ? data[0].name || 'Device Report' : 'No Data';
     const location = data.length > 0 ? data[0].location || 'Unknown Location' : 'Unknown Location';
     // Sanitize device name for worksheet naming (Excel restricts to 31 chars, no special chars)
-    const safeDeviceName = deviceName.replace(/[\\/*[\]?:]/g, '_').substring(0, 31);
-    const worksheet = workbook.addWorksheet(safeDeviceName);
+    const sanitizedDeviceName = (deviceName || 'Unknown Device').trim().replace(/[\\/*[\]?:]/g, '_').substring(0, 31);
+    const worksheet = workbook.addWorksheet(sanitizedDeviceName);
 
     // Title: Device name in row 1
     worksheet.mergeCells('A1:C1');
     const titleCell = worksheet.getCell('A1');
-    titleCell.value = `Device Report: ${deviceName} `;
+    titleCell.value = `Device Report: ${(deviceName || 'Unknown Device').trim()}`;
     titleCell.font = { bold: true, size: 16 };
     titleCell.alignment = { horizontal: 'center' };
 
@@ -74,10 +74,6 @@ export class ExcelService {
     return await workbook.xlsx.writeBuffer() as Buffer;
   }
 }
-
-
-
-
 
 
 
