@@ -1,5 +1,3 @@
-
-
 // import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 // import { InjectModel } from '@nestjs/mongoose';
 // import { Model } from 'mongoose';
@@ -23,8 +21,8 @@
 //       console.log('=== REGISTER DEVICE START ===');
 //       console.log('Input data:', createDto);
 
-//       const deviceExists = await this.deviceDataModel.findOne({ 
-//         deviceId: createDto.deviceId 
+//       const deviceExists = await this.deviceDataModel.findOne({
+//         deviceId: createDto.deviceId
 //       });
 
 //       if (!deviceExists) {
@@ -204,7 +202,6 @@
 //   };
 // }
 
-
 //   async unregisterDevice(email: string, deviceId: string): Promise<void> {
 //     const result = await this.deviceUserModel.deleteOne({ email, deviceId });
 
@@ -262,7 +259,6 @@
 //     return await deviceUser.save();
 //   }
 
-
 //   async getAllUserDevices() {
 //     return await this.deviceUserModel.find({}).lean();
 //   }
@@ -315,12 +311,11 @@
 //       };
 //     }
 //   }
-  
 
 //  //location part - anjana
 //   async findDeviceLocationsForUser(email: string) {
 //     const userDevices = await this.deviceUserModel.find({email }).select('deviceId location deviceName');
-    
+
 //     if (userDevices.length === 0) {
 //       return {
 //         success: true,
@@ -346,10 +341,10 @@
 // async updateDeviceLocation(
 //   deviceId: string,
 //   updateData: { location: string },
-//   email: string 
+//   email: string
 // ): Promise<DeviceUser | null> {
 //   try {
-    
+
 //     const updatedDevice = await this.deviceUserModel.findOneAndUpdate(
 //       { deviceId, email },
 //       { location: updateData.location },
@@ -367,10 +362,7 @@
 //   }
 // }
 
-
 // }
-
-
 
 // import {
 //   Injectable,
@@ -771,17 +763,22 @@
 //   }
 // }
 
-
-
-
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+//device-user.service.ts
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as uuid from 'uuid';
 import { DeviceUser, DeviceUserDocument } from './schemas/device-user.schema';
-import { DeviceData, DeviceDataDocument } from 'src/device/schemas/device.schema';
+import {
+  DeviceData,
+  DeviceDataDocument,
+} from 'src/device/schemas/device.schema';
 import { CreateDeviceUserDto } from './dto/create-device-user.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Notification as NotificationInterface } from '../notifications/interfaces/notification.interface';
@@ -830,7 +827,10 @@ export class DeviceUserService {
         );
       }
 
-      this.logger.log('Device found in devicedatas:', JSON.stringify(deviceExists));
+      this.logger.log(
+        'Device found in devicedatas:',
+        JSON.stringify(deviceExists),
+      );
 
       // Check if device is already registered to user
       const alreadyRegistered = await this.deviceUserModel.findOne({
@@ -839,7 +839,9 @@ export class DeviceUserService {
       });
 
       if (alreadyRegistered) {
-        this.logger.warn(`Device already registered: ${createDto.deviceId} for user ${createDto.email}`);
+        this.logger.warn(
+          `Device already registered: ${createDto.deviceId} for user ${createDto.email}`,
+        );
         throw new BadRequestException(
           `Device '${createDto.deviceId}' is already registered to user`,
         );
@@ -849,7 +851,10 @@ export class DeviceUserService {
       const deviceUser = new this.deviceUserModel(createDto);
       const savedDevice = await deviceUser.save();
 
-      this.logger.log('Device registered successfully:', JSON.stringify(savedDevice));
+      this.logger.log(
+        'Device registered successfully:',
+        JSON.stringify(savedDevice),
+      );
 
       // Send notification to the user
       const notification: NotificationInterface = {
@@ -865,7 +870,9 @@ export class DeviceUserService {
           `Creating notification for user ${createDto.email}: ${notification.id}`,
         );
         await this.notificationsService.createNotification(notification);
-        this.logger.log(`Notification created successfully for user ${createDto.email}`);
+        this.logger.log(
+          `Notification created successfully for user ${createDto.email}`,
+        );
       } catch (notificationError) {
         this.logger.error(
           `Failed to create notification for user ${createDto.email}:`,
