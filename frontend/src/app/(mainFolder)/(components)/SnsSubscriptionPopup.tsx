@@ -251,7 +251,7 @@ export default function SnsSubscriptionPopup() {
             }
           } catch (error) {
             console.error("Error fetching user data:", error);
-            setErrorMessage("Failed to fetch user data. Please try again.");
+            // setErrorMessage("Failed to fetch user data. Please try again.");
           }
         })
         .catch((error) => {
@@ -260,9 +260,9 @@ export default function SnsSubscriptionPopup() {
             status: error.response?.status,
             data: error.response?.data,
           });
-          setErrorMessage(
-            "Failed to connect to the server. Please ensure the backend is running and try again."
-          );
+          // setErrorMessage(
+          // "Failed to connect to the server. Please ensure the backend is running and try again."
+          // );
         });
     }
   }, [user]);
