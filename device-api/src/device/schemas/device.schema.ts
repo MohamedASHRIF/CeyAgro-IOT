@@ -10,7 +10,7 @@
 
 //   @Prop({ type: Number })
 //   humidityValue: number;
-  
+
 //   @Prop({ default: true })
 //   isActive: boolean;
 
@@ -25,8 +25,6 @@
 // }
 
 // export const DeviceDataSchema = SchemaFactory.createForClass(DeviceData);
-
-
 
 // device/schemas/device.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -53,9 +51,6 @@ export class DeviceData {
 
   @Prop()
   topic: string;
-
-  @Prop({ required: true, default: 'user123' }) // Ensure userId is set
-  userId: string;
 }
 
 export const DeviceDataSchema = SchemaFactory.createForClass(DeviceData);
