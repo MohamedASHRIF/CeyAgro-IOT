@@ -10,7 +10,7 @@ export class ExcelService {
     const worksheet = workbook.addWorksheet(sanitizedDeviceName);
 
     // Title: Device name in row 1
-    worksheet.mergeCells('A1:C1');
+    worksheet.mergeCells('A1:' + String.fromCharCode(65 + (fields?.length || 3) - 1) + '1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = `Device Report: ${(deviceName || 'Unknown Device').trim()}`;
     titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
@@ -21,10 +21,6 @@ export class ExcelService {
       fgColor: { argb: 'FF4A90E2' }, // Blue background for title
     };
 
-<<<<<<< Updated upstream
-    // Headers in row 4
-    const headers = ['Temperature Value', 'Humidity Value', 'Date'];
-=======
     // Device ID in row 2 (assuming deviceId is available in the first data item)
     const deviceId = data[0]?.deviceId || 'N/A';
     worksheet.mergeCells('A2:' + String.fromCharCode(65 + (fields?.length || 3) - 1) + '2');
@@ -56,7 +52,6 @@ export class ExcelService {
       headers = ['Temperature Value', 'Humidity Value', 'Date'];
       fieldKeys = ['temperatureValue', 'humidityValue', 'date'];
     }
->>>>>>> Stashed changes
     worksheet.getRow(4).values = headers;
     headers.forEach((_, index) => {
       const cell = worksheet.getCell(`${String.fromCharCode(65 + index)}4`);
@@ -78,19 +73,23 @@ export class ExcelService {
     // Data starting in row 5 with alternating row colors
     data.forEach((item, index) => {
       const row = worksheet.getRow(index + 5);
-      row.getCell(1).value = item.temperatureValue || '-';
-      row.getCell(2).value = item.humidityValue || '-';
-      row.getCell(3).value = item.date
-        ? new Date(item.date).toLocaleString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true,
-          })
-        : '-';
+      fieldKeys.forEach((key, colIdx) => {
+        if (key === 'date') {
+          row.getCell(colIdx + 1).value = item.date
+            ? new Date(item.date).toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+              })
+            : '-';
+        } else {
+          row.getCell(colIdx + 1).value = item[key] !== undefined ? item[key] : '-';
+        }
+      });
       row.eachCell((cell) => {
         cell.border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -108,15 +107,9 @@ export class ExcelService {
     });
 
     // Column widths
-<<<<<<< Updated upstream
-    worksheet.getColumn('A').width = 20;
-    worksheet.getColumn('B').width = 20;
-    worksheet.getColumn('C').width = 25;
-=======
     for (let i = 0; i < headers.length; i++) {
       worksheet.getColumn(i + 1).width = 20;
     }
->>>>>>> Stashed changes
 
     // Set row heights for better appearance
     worksheet.getRow(1).height = 30;
