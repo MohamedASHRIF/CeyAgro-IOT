@@ -17,10 +17,11 @@ interface DeviceStatistics {
   loading: boolean;
   error: string | null;
 }
-
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL
 export function SectionCards() {
   const { user, isLoading } = useUser();
-
+   
   const [statistics, setStatistics] = useState<DeviceStatistics>({
     total: 0,
     active: 0,
@@ -28,13 +29,13 @@ export function SectionCards() {
     loading: true,
     error: null,
   });
-
+    
   const fetchDeviceStatistics = async (email: string) => {
     try {
       setStatistics((prev) => ({ ...prev, loading: true, error: null }));
 
       const response = await fetch(
-        `http://localhost:3002/device-user/statistics?email=${encodeURIComponent(email)}`
+        `${BACKEND_URL}/device-user/statistics?email=${encodeURIComponent(email)}`
       );
 
       const result = await response.json();

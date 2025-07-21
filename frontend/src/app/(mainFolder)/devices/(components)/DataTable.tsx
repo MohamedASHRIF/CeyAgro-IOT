@@ -336,7 +336,7 @@ export const columns: ColumnDef<Device>[] = [
     cell: ({ row }) => (
       <Link
         href={`/devices/${row.original.id}`}
-       // target="_blank"
+        // target="_blank"
         rel="noopener noreferrer"
         className="hover:underline text-black hover:text-[hsl(172.5,_66%,_50.4%)] font-medium"
       >
@@ -359,9 +359,8 @@ export const columns: ColumnDef<Device>[] = [
         <div className="flex justify-center items-center gap-2 text-center">
           <span className="flex items-center gap-2">
             <span
-              className={`h-2 w-2 rounded-full ${
-                isActive ? "bg-green-500" : "bg-red-500"
-              }`}
+              className={`h-2 w-2 rounded-full ${isActive ? "bg-green-500" : "bg-red-500"
+                }`}
             />
             {status}
           </span>
@@ -374,6 +373,7 @@ export const columns: ColumnDef<Device>[] = [
     },
   },
 ];
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export function DeviceTable({ userEmail }: { userEmail: string }) {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -391,7 +391,7 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     if (!userEmail) return;
 
     setLoading(true);
-    fetch(`http://localhost:3002/device-user/devices?email=${encodeURIComponent(userEmail)}`)
+    fetch(`${BACKEND_URL}/device-user/devices?email=${encodeURIComponent(userEmail)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {
@@ -438,16 +438,16 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     onPaginationChange: setPagination,
   });
 
-  if (loading)  return (
-      <div
-        className="flex items-center justify-center h-screen"
-        role="status"
-        aria-label="Loading"
-      >
-        <div className="w-12 h-12 border-4 border-teal-400 border-t-transparent rounded-full animate-spin" />
-        <span className="sr-only">Loading...</span>
-      </div>
-    );
+  if (loading) return (
+    <div
+      className="flex items-center justify-center h-screen"
+      role="status"
+      aria-label="Loading"
+    >
+      <div className="w-12 h-12 border-4 border-teal-400 border-t-transparent rounded-full animate-spin" />
+      <span className="sr-only">Loading...</span>
+    </div>
+  );
   ;
 
   return (

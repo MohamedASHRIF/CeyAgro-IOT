@@ -66,7 +66,7 @@ type DevicePageProps = {
     userEmail: string;
 };
 
-const API_BASE = "http://localhost:3002/device-user";
+ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const DEVICE_TYPE_OPTIONS = [
     "Temperature",
@@ -111,7 +111,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         if (!deviceId || !email) return;
         try {
             const res = await fetch(
-                `${API_BASE}/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
+                `${BACKEND_URL}/device-user/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
             );
 
             if (!res.ok) throw new Error("Failed to fetch device data");
@@ -226,7 +226,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             }
 
             const res = await fetch(
-                `${API_BASE}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${BACKEND_URL}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "PATCH",
                     body: formData,
@@ -259,7 +259,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const handleDeleteDevice = async () => {
         try {
             const res = await fetch(
-                `${API_BASE}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${BACKEND_URL}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "DELETE",
                 }
@@ -334,7 +334,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
 
         if (previewImage) {
             if (previewImage.startsWith("data:")) return previewImage;
-            if (previewImage.startsWith("/uploads")) return `http://localhost:3002${previewImage}`;
+            if (previewImage.startsWith("/uploads")) return `${BACKEND_URL}${previewImage}`;
             return previewImage;
         }
 

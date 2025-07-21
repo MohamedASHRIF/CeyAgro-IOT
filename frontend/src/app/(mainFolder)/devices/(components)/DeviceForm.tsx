@@ -53,7 +53,7 @@ type DeviceFormValues = z.infer<typeof formSchema>;
 type AddDeviceFormProps = {
     email: string;
 };
-
+//const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export function AddDeviceForm({ email }: AddDeviceFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -131,7 +131,8 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                 formData.append(`deviceTypes[${index}][maxValue]`, typeObj.maxValue.toString());
             });
 
-            const res = await fetch("http://localhost:3002/device-user/register", {
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+            const res = await fetch(`${BACKEND_URL}/device-user/register`, {
                 method: "POST",
                 body: formData,
             });
