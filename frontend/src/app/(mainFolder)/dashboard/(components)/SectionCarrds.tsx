@@ -29,9 +29,6 @@ export function SectionCards() {
     error: null,
   });
 
-  // For fade-in effect
-  const [visibleCards, setVisibleCards] = useState([false, false, false]);
-
   const fetchDeviceStatistics = async (email: string) => {
     try {
       setStatistics((prev) => ({ ...prev, loading: true, error: null }));
@@ -73,37 +70,6 @@ export function SectionCards() {
     }
   }, [isLoading, user]);
 
-  // Auto-refresh every 60 seconds (60000 ms)
-  useEffect(() => {
-    if (!user?.email) return;
-
-    const interval = setInterval(() => {
-      fetchDeviceStatistics(user.email!);
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [user]);
-
-  // Fade-in effect for cards
-  useEffect(() => {
-    if (!statistics.loading && !statistics.error) {
-      setVisibleCards([false, false, false]);
-      const timers: NodeJS.Timeout[] = [];
-      [0, 1, 2].forEach((idx) => {
-        timers.push(
-          setTimeout(() => {
-            setVisibleCards((prev) => {
-              const next = [...prev];
-              next[idx] = true;
-              return next;
-            });
-          }, idx * 200) // 200ms stagger
-        );
-      });
-      return () => timers.forEach(clearTimeout);
-    }
-  }, [statistics.loading, statistics.error]);
-
   // Spinner while loading
   if (statistics.loading) {
     return (
@@ -120,7 +86,7 @@ export function SectionCards() {
   if (statistics.error) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 5xl:grid-cols-4 gap-4 px-4 lg:px-6 p-20">
-        <Card className="bg-red-50 border-red-200 rounded-4xl pt-2 gap-2 col-span-full opacity-100 transition-opacity duration-500">
+        <Card className="bg-red-50 border-red-200 rounded-4xl pt-2 gap-2 col-span-full">
           <CardHeader className="text-center">
             <CardTitle className="text-red-600">Error Loading Statistics</CardTitle>
             <CardDescription className="text-red-500">
@@ -144,7 +110,7 @@ export function SectionCards() {
     {
       label: "Total Devices",
       value: statistics.total,
-      bg: "bg-[#FFD9666E]",
+      bg: "bg-[#FFD966]",
       desc: "Total number of devices registered",
     },
     {
@@ -156,19 +122,17 @@ export function SectionCards() {
     {
       label: "Inactive Devices",
       value: statistics.inactive,
-      bg: "bg-[#FF97978A]",
+      bg: "bg-[#FF9797]",
       desc: "Number of Currently Inactive devices",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 5xl:grid-cols-4 gap-4 px-4 lg:px-6 p-20">
-      {cards.map((card, idx) => (
+      {cards.map((card) => (
         <Card
           key={card.label}
-          className={`${card.bg} transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2 transition-opacity duration-500 ${
-            visibleCards[idx] ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`${card.bg} transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl rounded-4xl pt-2 gap-2`}
         >
           <CardHeader className="relative flex flex-col justify-center items-center text-center">
             <CardDescription className="text-2xl text-3xl">{card.label}</CardDescription>
@@ -183,7 +147,7 @@ export function SectionCards() {
       ))}
 
       {/* Refresh indicator */}
-      <div className="col-span-full flex justify-center mt-4 opacity-100 transition-opacity duration-500">
+      <div className="col-span-full flex justify-center mt-4">
         <button
           onClick={() => user?.email && fetchDeviceStatistics(user.email)}
           className="text-sm text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2"

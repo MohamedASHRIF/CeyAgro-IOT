@@ -14,7 +14,7 @@ export default function CommonLayout({
         <DashboardSidebar />
         <SidebarInset>
           <DashboardHeader />
-          <main className="flex-1 bg-gray-100">{children}</main>
+          <main className="flex-1">{children}</main>
           <Footer />
         </SidebarInset>
       </SidebarProvider>
