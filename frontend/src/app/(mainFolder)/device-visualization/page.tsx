@@ -26,6 +26,7 @@ export default function VisualizationPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingDevices, setIsLoadingDevices] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [metricLimits, setMetricLimits] = useState<{ min: number; max: number } | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -64,6 +65,7 @@ export default function VisualizationPage() {
     if (!selectedDevice || !user?.email) {
       setMetrics([]);
       setSelectedMetric(null);
+      setMetricLimits(null);
       return;
     }
     axios
@@ -74,19 +76,48 @@ export default function VisualizationPage() {
         if (response.data.success && Array.isArray(response.data.data)) {
           const types = response.data.data.map((t: any) => t.type);
           setMetrics(types);
-          // Auto-select first metric if available, and use lowercase for value
           setSelectedMetric(types[0] ? types[0].toLowerCase() : null);
+          // Find min/max for the first metric
+          if (types[0]) {
+            const found = response.data.data.find((t: any) => t.type.toLowerCase() === types[0].toLowerCase());
+            setMetricLimits(found ? { min: found.minValue, max: found.maxValue } : null);
+          } else {
+            setMetricLimits(null);
+          }
         } else {
           setMetrics([]);
           setSelectedMetric(null);
+          setMetricLimits(null);
         }
       })
       .catch((error) => {
         console.error("Error fetching device types:", error);
         setMetrics([]);
         setSelectedMetric(null);
+        setMetricLimits(null);
       });
   }, [selectedDevice, user]);
+
+  // Fetch min/max when metric changes
+  useEffect(() => {
+    if (!selectedDevice || !user?.email || !selectedMetric) {
+      setMetricLimits(null);
+      return;
+    }
+    axios
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/device-types`, {
+        params: { deviceId: selectedDevice, email: user.email },
+      })
+      .then((response) => {
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const found = response.data.data.find((t: any) => t.type.toLowerCase() === selectedMetric.toLowerCase());
+          setMetricLimits(found ? { min: found.minValue, max: found.maxValue } : null);
+        } else {
+          setMetricLimits(null);
+        }
+      })
+      .catch(() => setMetricLimits(null));
+  }, [selectedMetric, selectedDevice, user]);
 
   // Handler for device selection changes
   const handleDeviceChange = (val: string) => {
@@ -195,6 +226,8 @@ export default function VisualizationPage() {
                 deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 currentTime={currentTime}
+                min={metricLimits?.min}
+                max={metricLimits?.max}
               />
             </CardContent>
           </Card>
@@ -208,6 +241,8 @@ export default function VisualizationPage() {
                 deviceName={selectedDeviceName}
                 metric={selectedMetric}
                 timeRange={timeRange}
+                min={metricLimits?.min}
+                max={metricLimits?.max}
               />
             </CardContent>
           </Card>
