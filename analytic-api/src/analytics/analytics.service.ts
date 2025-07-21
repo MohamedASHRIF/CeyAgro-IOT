@@ -103,7 +103,27 @@ async generateAndUploadReport(
 
   let fieldsToInclude = queryDto.fields;
   if (!fieldsToInclude || fieldsToInclude.length === 0) {
-    fieldsToInclude = ['temperatureValue', 'humidityValue', 'date', 'deviceId'];
+    // Dynamically determine fields from deviceTypes
+    fieldsToInclude = ['date', 'deviceId'];
+    if (deviceId && email) {
+      const deviceUser = await this.deviceUserModel
+        .findOne({ deviceId, email })
+        .select('deviceTypes')
+        .lean();
+      if (deviceUser && Array.isArray(deviceUser.deviceTypes)) {
+        const typeFields = deviceUser.deviceTypes.map((t: any) => {
+          let key = t.type.charAt(0).toLowerCase() + t.type.slice(1);
+          if (!key.endsWith('Value')) key += 'Value';
+          return key;
+        });
+        fieldsToInclude = [...typeFields, 'date', 'deviceId'];
+      } else {
+        // fallback to temperature/humidity
+        fieldsToInclude = ['temperatureValue', 'humidityValue', 'date', 'deviceId'];
+      }
+    } else {
+      fieldsToInclude = ['temperatureValue', 'humidityValue', 'date', 'deviceId'];
+    }
   }
 
   let deviceName = 'Device Report'; // Default fallback
@@ -366,13 +386,13 @@ async generateAndUploadReport(
 
   // Visualization Methods
 // Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
-async getRealtimeStats(deviceId: string, metric: 'temperature' | 'humidity') {
+async getRealtimeStats(deviceId: string, metric: string) {
   console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
   try {
     const latest = await this.deviceModel
       .findOne({ deviceId })
       .sort({ date: -1, _id: -1 })
-      .select('deviceId temperatureValue humidityValue date');
+      .select('-__v');
     console.log('SERVICE DEBUG: getRealtimeStats latest', latest);
     if (!latest) {
       console.log('SERVICE DEBUG: No data found for device');
@@ -383,10 +403,13 @@ async getRealtimeStats(deviceId: string, metric: 'temperature' | 'humidity') {
         timestamp: new Date().toISOString(),
       };
     }
+    // Defensively lowercase the metric
+    const safeMetric = (metric || '').toLowerCase();
+    const valueKey = safeMetric.endsWith('value') ? safeMetric : safeMetric + 'Value';
     return {
       deviceId: latest.deviceId,
       metric,
-      value: metric === 'temperature' ? latest.temperatureValue ?? 0 : latest.humidityValue ?? 0,
+      value: latest[valueKey] ?? 0,
       timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
     };
   } catch (err) {

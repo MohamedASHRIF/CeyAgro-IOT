@@ -74,8 +74,8 @@ export default function VisualizationPage() {
         if (response.data.success && Array.isArray(response.data.data)) {
           const types = response.data.data.map((t: any) => t.type);
           setMetrics(types);
-          // Auto-select first metric if available
-          setSelectedMetric(types[0] || null);
+          // Auto-select first metric if available, and use lowercase for value
+          setSelectedMetric(types[0] ? types[0].toLowerCase() : null);
         } else {
           setMetrics([]);
           setSelectedMetric(null);
@@ -163,7 +163,7 @@ export default function VisualizationPage() {
           </SelectTrigger>
           <SelectContent>
             {metrics.map((metric) => (
-              <SelectItem key={metric} value={metric}>
+              <SelectItem key={metric} value={metric.toLowerCase()}>
                 {metric.charAt(0).toUpperCase() + metric.slice(1)}
               </SelectItem>
             ))}

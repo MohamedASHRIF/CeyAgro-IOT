@@ -7,10 +7,13 @@ import { DownloadHistoryTable } from "./(components)/DownloadHistoryTable";
 import { useDeviceReports } from "./(components)/useDeviceReports";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function DeviceReports() {
   const { user, isLoading } = useUser();
   const userEmail = user?.email || "";
+  const [fields, setFields] = useState<string[]>([]); // dynamic fields for table
   const {
     deviceName,
     setDeviceName,
@@ -42,6 +45,30 @@ export default function DeviceReports() {
     showExpiredDialog,
     setShowExpiredDialog,
   } = useDeviceReports(userEmail);
+
+  // Fetch device types for the selected device
+  useEffect(() => {
+    if (!deviceId || !userEmail) {
+      setFields([]);
+      return;
+    }
+    axios
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/device-types`, {
+        params: { deviceId, email: userEmail },
+      })
+      .then((response) => {
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const types = response.data.data.map((t: any) => {
+            const key = t.type.charAt(0).toLowerCase() + t.type.slice(1);
+            return key.endsWith('Value') ? key : key + 'Value';
+          });
+          setFields(types);
+        } else {
+          setFields([]);
+        }
+      })
+      .catch(() => setFields([]));
+  }, [deviceId, userEmail]);
 
   if (!isMounted || isLoading) {
     return (
@@ -77,6 +104,7 @@ export default function DeviceReports() {
             loading={loading}
             error={error}
             deviceName={deviceName}
+            fields={fields}
           />
 
           {/* Button to generate or download the report */}
