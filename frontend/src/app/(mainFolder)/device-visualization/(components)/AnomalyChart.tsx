@@ -56,37 +56,24 @@ export function AnomalyChart({ device, deviceName, metric, startDate, endDate }:
           `${process.env.NEXT_PUBLIC_API_URL}/analytics/anomaly/${device}?metric=${metric}&startDate=${startDate}&endDate=${endDate}&email=${encodeURIComponent(user?.email || "")}`
         );
         const apiData = response.data;
+        console.log('Anomaly data:', apiData);
         if (!apiData || !apiData.anomalies) {
           setNoData(true);
           return;
         }
-        // All points (normal + anomalies)
-        const allPoints = apiData.allPoints || apiData.anomalies.concat([]); // fallback if backend doesn't provide allPoints
-        // If backend doesn't provide allPoints, use anomalies only
-        const allTimestamps = allPoints.map((a: any) => a.timestamp);
+        // Prepare {x, y} for anomalies only
+        const anomalyXY = apiData.anomalies.map((a: any) => ({ x: new Date(a.timestamp), y: a.value }));
         setChartData({
-          labels: allPoints.map((a: any) => a.timestamp ? new Date(a.timestamp).toLocaleString() : "Unknown"),
           datasets: [
             {
-              label: "All Values",
-              data: allPoints.map((a: any) => a.value),
-              borderColor: "rgba(75,192,192,1)",
-              backgroundColor: "rgba(75,192,192,0.1)",
-              pointRadius: 2,
-              showLine: true,
-              fill: false,
-            },
-            {
               label: "Anomalies",
-              data: allPoints.map((a: any) => {
-                const isAnomaly = apiData.anomalies.some((an: any) => an.timestamp === a.timestamp && an.value === a.value);
-                return isAnomaly ? a.value : null;
-              }),
-              borderColor: "rgba(255,99,132,1)",
-              backgroundColor: "rgba(255,99,132,0.2)",
-              pointRadius: 6,
+              data: anomalyXY,
+              borderColor: "red",
+              backgroundColor: "red",
+              pointRadius: 10,
               showLine: false,
-              fill: false,
+              type: 'scatter',
+              parsing: true,
             },
           ],
         });
@@ -106,7 +93,17 @@ export function AnomalyChart({ device, deviceName, metric, startDate, endDate }:
 
   return (
     <div className="chart-container w-full h-[300px]">
-      <Line data={chartData} options={{ responsive: true, plugins: { legend: { display: true } } }} />
+      <Line
+        data={chartData}
+        options={{
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: {
+            x: { type: 'time', time: { unit: 'hour' }, title: { display: true, text: 'Time' } },
+            y: { beginAtZero: false, min: 0, max: 100, title: { display: true, text: metric.charAt(0).toUpperCase() + metric.slice(1) } },
+          },
+        }}
+      />
     </div>
   );
 } 
