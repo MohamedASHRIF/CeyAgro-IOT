@@ -4,4 +4,5 @@ export interface Notification {
   message: string;
   userId: string;
   timestamp: string;
+  read: boolean;
 }

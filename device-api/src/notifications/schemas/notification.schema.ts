@@ -42,6 +42,9 @@ export class Notification {
 
   @Prop({ required: true })
   timestamp: string;
+
+  @Prop({ default: false })
+  read: boolean; // New field to track read status
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
