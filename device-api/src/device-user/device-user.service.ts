@@ -863,6 +863,7 @@ export class DeviceUserService {
         message: `Device "${createDto.deviceName}" (ID: ${createDto.deviceId}) has been successfully registered to your account.`,
         userId: createDto.email, // Use email as userId
         timestamp: new Date().toISOString(),
+        read: false,
       };
 
       try {
