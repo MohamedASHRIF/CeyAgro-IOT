@@ -1,3 +1,4 @@
+//notification.controller.ts
 import { Controller, Get, Delete, Param } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { Notification } from './interfaces/notification.interface';

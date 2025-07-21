@@ -1,102 +1,57 @@
-/*
 import {
   IsEmail,
   IsString,
-  IsOptional
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class CreateDeviceUserDto {
-  @IsEmail()
-  email: string;
-
+class DeviceTypeDto {
   @IsString()
-  deviceId: string;
+  type: string;
 
-  @IsString()
-  deviceName: string;
+  @IsNumber()
+  minValue: number;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  deviceImage?: string;
-
-  @IsOptional()
-  @IsString()
-  removedeviceImage?: string;
-
-  @IsOptional()
-  @IsString()
-  location?: string;
-
-  @IsOptional()
-  @IsString()
-  deviceType?: string;
-
-  @IsOptional()
-  @IsString()
-  serialNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  measurementUnit?: string;
-
-  @IsOptional()
-  @IsString()
-  measurementParameter?: string;
-}*/
-
-
-import {
-  IsEmail,
-  IsString,
-  IsOptional
-} from 'class-validator';
-
-export class CreateDeviceUserDto {
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  deviceId: string;
-
-  @IsString()
-  deviceName: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  deviceImage?: string;
-
-  @IsOptional()
-  @IsString()
-  removedeviceImage?: string;
-
-  @IsOptional()
-  @IsString()
-  location?: string;
-
-  
-
-  @IsOptional()
-  @IsString()
-  serialNumber?: string;
-
-/*  @IsOptional()
-  @IsString()
-  deviceType?: string;
-
-  @IsOptional()
-  @IsString()
-  measurementUnit?: string;
-
-  @IsOptional()
-  @IsString()
-  measurementParameter?: string;*/
+  @IsNumber()
+  maxValue: number;
 }
 
+export class CreateDeviceUserDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  deviceId: string;
+
+  @IsString()
+  deviceName: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  deviceImage?: string;
+
+  @IsOptional()
+  @IsString()
+  removedeviceImage?: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @IsOptional()
+  @IsString()
+  serialNumber?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeviceTypeDto)
+  deviceTypes?: DeviceTypeDto[];
+}

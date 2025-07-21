@@ -188,15 +188,6 @@
 //   );
 // };
 
-
-
-
-
-
-
-
-
-
 // "use client";
 // import { useState, useEffect, useRef } from "react";
 // import { NotificationBox } from "./NotificationBox";
@@ -394,7 +385,6 @@
 //     </div>
 //   );
 // };
-
 
 // // components/NotificationList.tsx
 // "use client";
@@ -595,8 +585,6 @@
 //     </div>
 //   );
 // };
-
-
 
 // // components/NotificationList.tsx
 // "use client";
@@ -803,16 +791,6 @@
 //     </div>
 //   );
 // };
-
-
-
-
-
-
-
-
-
-
 
 // // components/NotificationList.tsx
 // "use client";
@@ -1041,14 +1019,6 @@
 //     </div>
 //   );
 // };
-
-
-
-
-
-
-
-
 
 // "use client";
 // import { useState, useEffect, useRef, useCallback } from "react";
@@ -1286,26 +1256,397 @@
 //   );
 // };
 
+// //NotificationList.tsx
+// "use client";
+// import { useState, useEffect, useRef, useCallback } from "react";
+// import { useUser } from "@auth0/nextjs-auth0/client";
+// import { NotificationBox } from "./NotificationBox";
+// import io, { Socket } from "socket.io-client";
+// import {
+//   messaging,
+//   requestNotificationPermission,
+//   onMessageListener,
+// } from "../../../../lib/firebase";
 
+// interface Notification {
+//   id: string;
+//   title: string;
+//   message: string;
+//   userId: string;
+//   timestamp: string;
+// }
 
+// export const NotificationList: React.FC = () => {
+//   const [notifications, setNotifications] = useState<Notification[]>([]);
+//   const [fcmToken, setFcmToken] = useState<string | null>(null);
+//   const [isConnected, setIsConnected] = useState(false);
+//   const [connectionStatus, setConnectionStatus] = useState<
+//     "connecting" | "connected" | "disconnected"
+//   >("disconnected");
+//   const socketRef = useRef<Socket | null>(null);
 
+//   const vapidKey =
+//     "BPLGOtyyZvSjlT06sF_GUfdSjgV-AI8RNIuZtskSDKcl0i4vN-zatt1x5RJImPTF66qhnje13S1LgxjLlbT1kUg";
+//   const backendUrl =
+//     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002";
 
+//   const { user, isLoading: isAuthLoading } = useUser();
 
+//   const isValidEmail = (email: string): boolean => {
+//     if (!email || typeof email !== "string") return false;
+//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//     return emailRegex.test(email);
+//   };
 
+//   const isValidFcmToken = (token: string): boolean => {
+//     return typeof token === "string" && token.length > 100;
+//   };
 
+//   const fetchNotifications = useCallback(
+//     async (userId: string) => {
+//       if (!isValidEmail(userId)) {
+//         console.error("Invalid email format for userId:", userId);
+//         return;
+//       }
+//       try {
+//         console.log("Fetching notifications for user:", userId);
+//         const response = await fetch(
+//           `${backendUrl}/notifications/${encodeURIComponent(userId)}`
+//         );
+//         if (!response.ok) {
+//           throw new Error(
+//             `HTTP error! status: ${response.status} ${response.statusText}`
+//           );
+//         }
+//         const data = await response.json();
+//         console.log("Notifications fetched:", data);
+//         setNotifications(data);
+//       } catch (error) {
+//         console.error("Error fetching notifications:", error);
+//       }
+//     },
+//     [backendUrl]
+//   );
 
+//   const sendFcmTokenToBackend = useCallback(
+//     async (token: string, userId: string, retries = 3): Promise<boolean> => {
+//       if (!isValidEmail(userId)) {
+//         console.error("Invalid email format for userId:", userId);
+//         return false;
+//       }
+//       if (!isValidFcmToken(token)) {
+//         console.error("Invalid FCM token format:", token);
+//         return false;
+//       }
+//       for (let attempt = 1; attempt <= retries; attempt++) {
+//         try {
+//           console.log(
+//             `Sending FCM token to backend for user ${userId} (attempt ${attempt})`
+//           );
+//           const response = await fetch(
+//             `${backendUrl}/users/${encodeURIComponent(userId)}/fcm-token`,
+//             {
+//               method: "POST",
+//               headers: { "Content-Type": "application/json" },
+//               body: JSON.stringify({ fcmToken: token }),
+//             }
+//           );
+//           if (!response.ok) {
+//             const errorText = await response.text();
+//             throw new Error(
+//               `Failed to send FCM token: ${response.status} ${response.statusText} - ${errorText}`
+//             );
+//           }
+//           const result = await response.json();
+//           console.log("Backend response:", result);
+//           setFcmToken(token);
+//           return true;
+//         } catch (error) {
+//           console.error(`Error sending FCM token (attempt ${attempt}):`, error);
+//           if (attempt < retries) {
+//             await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+//           } else {
+//             console.error("Max retries reached. Failed to send FCM token");
+//             return false;
+//           }
+//         }
+//       }
+//       return false;
+//     },
+//     [backendUrl]
+//   );
 
+//   const initializeNotifications = useCallback(
+//     async (userId: string) => {
+//       if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+//         console.error("Service Worker not supported or not running in browser");
+//         return;
+//       }
 
+//       try {
+//         console.log("Registering service worker...");
+//         const registration = await navigator.serviceWorker.register(
+//           "/firebase-messaging-sw.js",
+//           { scope: "/" }
+//         );
+//         console.log("Service Worker registered:", registration);
+
+//         const token = await requestNotificationPermission(vapidKey);
+//         if (token) {
+//           const success = await sendFcmTokenToBackend(token, userId);
+//           if (success) {
+//             console.log(
+//               "FCM token successfully sent to backend for user:",
+//               userId
+//             );
+//           } else {
+//             console.error(
+//               "Failed to send FCM token to backend for user:",
+//               userId
+//             );
+//           }
+//         } else {
+//           console.warn("No FCM token generated");
+//         }
+//       } catch (error) {
+//         console.error(
+//           "Service Worker registration or token generation failed:",
+//           error
+//         );
+//       }
+//     },
+//     [sendFcmTokenToBackend]
+//   );
+
+//   const initializeWebSocket = useCallback(
+//     (userId: string) => {
+//       if (socketRef.current) {
+//         console.log("WebSocket already exists, cleaning up...");
+//         socketRef.current.disconnect();
+//       }
+
+//       console.log(
+//         "Establishing WebSocket connection to:",
+//         `${backendUrl}/notifications`
+//       );
+//       setConnectionStatus("connecting");
+
+//       // Connect to the notifications namespace
+//       const socket = io(`${backendUrl}/notifications`, {
+//         transports: ["websocket", "polling"],
+//         timeout: 10000,
+//         forceNew: true,
+//       });
+
+//       socketRef.current = socket;
+
+//       socket.on("connect", () => {
+//         console.log("WebSocket connected:", socket.id);
+//         setIsConnected(true);
+//         setConnectionStatus("connected");
+
+//         // Join user room
+//         console.log("Joining room for user:", userId);
+//         socket.emit("join", userId);
+//       });
+
+//       socket.on("joined", (data: { userId: string; socketId: string }) => {
+//         console.log("Successfully joined room:", data);
+//       });
+
+//       socket.on("notification", (notification: Notification) => {
+//         console.log("Received WebSocket notification:", notification);
+//         if (notification.userId === userId) {
+//           setNotifications((prev) => {
+//             // Check if notification already exists
+//             const exists = prev.some((n) => n.id === notification.id);
+//             if (exists) {
+//               console.log("Duplicate notification ignored:", notification.id);
+//               return prev;
+//             }
+//             console.log("Adding new notification to state:", notification.id);
+//             return [notification, ...prev];
+//           });
+//         }
+//       });
+
+//       socket.on("notificationDeleted", (id: string) => {
+//         console.log("Received notificationDeleted:", id);
+//         setNotifications((prev) => {
+//           const filtered = prev.filter(
+//             (notification) => notification.id !== id
+//           );
+//           console.log(
+//             `Removed notification ${id} from state. Before: ${prev.length}, After: ${filtered.length}`
+//           );
+//           return filtered;
+//         });
+//       });
+
+//       socket.on("disconnect", (reason) => {
+//         console.log("WebSocket disconnected:", reason);
+//         setIsConnected(false);
+//         setConnectionStatus("disconnected");
+//       });
+
+//       socket.on("connect_error", (error) => {
+//         console.error("WebSocket connection error:", error);
+//         setIsConnected(false);
+//         setConnectionStatus("disconnected");
+//       });
+
+//       socket.on("error", (error) => {
+//         console.error("WebSocket error:", error);
+//       });
+
+//       return socket;
+//     },
+//     [backendUrl]
+//   );
+
+//   useEffect(() => {
+//     if (isAuthLoading) {
+//       console.log("Waiting for user authentication...");
+//       return;
+//     }
+
+//     if (!user?.email || !isValidEmail(user.email)) {
+//       console.error("User not authenticated or invalid email:", user?.email);
+//       return;
+//     }
+
+//     const userId = user.email;
+//     console.log("Authenticated user:", userId);
+
+//     // Fetch initial notifications
+//     fetchNotifications(userId);
+
+//     // Initialize FCM
+//     initializeNotifications(userId);
+
+//     // Initialize WebSocket
+//     const socket = initializeWebSocket(userId);
+
+//     // Handle foreground FCM notifications
+//     onMessageListener()
+//       .then((payload: any) => {
+//         console.log("Foreground FCM notification received:", payload);
+//         const notification: Notification = {
+//           id: Date.now().toString(), // Temporary ID for FCM notifications
+//           title: payload.notification?.title || "New Notification",
+//           message: payload.notification?.body || "You have a new notification.",
+//           userId,
+//           timestamp: new Date().toISOString(),
+//         };
+//         setNotifications((prev) => {
+//           if (
+//             prev.some(
+//               (n) =>
+//                 n.message === notification.message &&
+//                 n.title === notification.title
+//             )
+//           ) {
+//             return prev;
+//           }
+//           return [notification, ...prev];
+//         });
+//       })
+//       .catch((error) => {
+//         console.error("Error setting up FCM foreground listener:", error);
+//       });
+
+//     // Handle service worker messages for token refresh
+//     const handleServiceWorkerMessage = (event: MessageEvent) => {
+//       if (event.data && event.data.type === "TOKEN_REFRESH") {
+//         console.log("Received TOKEN_REFRESH from service worker:", event.data);
+//         if (event.data.token && isValidFcmToken(event.data.token)) {
+//           sendFcmTokenToBackend(event.data.token, userId);
+//         }
+//       }
+//     };
+//     navigator.serviceWorker.addEventListener(
+//       "message",
+//       handleServiceWorkerMessage
+//     );
+
+//     return () => {
+//       console.log("Cleaning up WebSocket connection and listeners");
+//       if (socketRef.current) {
+//         socketRef.current.emit("leave", userId);
+//         socketRef.current.disconnect();
+//         socketRef.current = null;
+//       }
+//       navigator.serviceWorker.removeEventListener(
+//         "message",
+//         handleServiceWorkerMessage
+//       );
+//       setIsConnected(false);
+//       setConnectionStatus("disconnected");
+//     };
+//   }, [
+//     user,
+//     isAuthLoading,
+//     fetchNotifications,
+//     initializeNotifications,
+//     initializeWebSocket,
+//     sendFcmTokenToBackend,
+//   ]);
+
+//   // Show connection status for debugging
+//   const renderConnectionStatus = () => {
+//     const statusColor = {
+//       connecting: "text-yellow-500",
+//       connected: "text-green-500",
+//       disconnected: "text-red-500",
+//     };
+
+//     return (
+//       <div className={`text-xs ${statusColor[connectionStatus]} mb-2`}>
+//         {/* WebSocket: {connectionStatus} */}
+//       </div>
+//     );
+//   };
+
+//   return (
+//     <div className="space-y-4">
+//       {/* Connection status - remove in production */}
+//       {process.env.NODE_ENV === "development" && renderConnectionStatus()}
+
+//       {isAuthLoading ? (
+//         <div className="text-center p-4">
+//           <p>Loading user authentication...</p>
+//         </div>
+//       ) : !user?.email ? (
+//         <div className="text-center p-4">
+//           <p>Please log in to view notifications.</p>
+//         </div>
+//       ) : notifications.length === 0 ? (
+//         <div className="text-center p-4">
+//           <h3 className="text-lg font-medium">No Notifications</h3>
+//           <p className="text-sm text-gray-500">
+//             You have no unread notifications at the moment.
+//           </p>
+//         </div>
+//       ) : (
+//         notifications.map((notification) => (
+//           <NotificationBox
+//             key={notification.id}
+//             notification={notification}
+//             onDelete={(id) => {
+//               // Optimistically remove from UI
+//               setNotifications((prev) => prev.filter((n) => n.id !== id));
+//             }}
+//           />
+//         ))
+//       )}
+//     </div>
+//   );
+// };
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { NotificationBox } from "./NotificationBox";
 import io, { Socket } from "socket.io-client";
-import {
-  messaging,
-  requestNotificationPermission,
-  onMessageListener,
-} from "../../../../lib/firebase";
 
 interface Notification {
   id: string;
@@ -1317,192 +1658,144 @@ interface Notification {
 
 export const NotificationList: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connecting" | "connected" | "disconnected"
+  >("disconnected");
   const socketRef = useRef<Socket | null>(null);
-  
-  const vapidKey = "BPLGOtyyZvSjlT06sF_GUfdSjgV-AI8RNIuZtskSDKcl0i4vN-zatt1x5RJImPTF66qhnje13S1LgxjLlbT1kUg";
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002";
+
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002";
 
   const { user, isLoading: isAuthLoading } = useUser();
 
   const isValidEmail = (email: string): boolean => {
-    if (!email || typeof email !== 'string') return false;
+    if (!email || typeof email !== "string") return false;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const isValidFcmToken = (token: string): boolean => {
-    return typeof token === "string" && token.length > 100;
-  };
-
-  const fetchNotifications = useCallback(async (userId: string) => {
-    if (!isValidEmail(userId)) {
-      console.error("Invalid email format for userId:", userId);
-      return;
-    }
-    try {
-      console.log("Fetching notifications for user:", userId);
-      const response = await fetch(`${backendUrl}/notifications/${encodeURIComponent(userId)}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
+  const fetchNotifications = useCallback(
+    async (userId: string) => {
+      if (!isValidEmail(userId)) {
+        console.error("Invalid email format for userId:", userId);
+        return;
       }
-      const data = await response.json();
-      console.log("Notifications fetched:", data);
-      setNotifications(data);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  }, [backendUrl]);
-
-  const sendFcmTokenToBackend = useCallback(async (token: string, userId: string, retries = 3): Promise<boolean> => {
-    if (!isValidEmail(userId)) {
-      console.error("Invalid email format for userId:", userId);
-      return false;
-    }
-    if (!isValidFcmToken(token)) {
-      console.error("Invalid FCM token format:", token);
-      return false;
-    }
-    for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        console.log(`Sending FCM token to backend for user ${userId} (attempt ${attempt})`);
-        const response = await fetch(`${backendUrl}/users/${encodeURIComponent(userId)}/fcm-token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fcmToken: token }),
-        });
+        console.log("Fetching notifications for user:", userId);
+        const response = await fetch(
+          `${backendUrl}/notifications/${encodeURIComponent(userId)}`
+        );
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to send FCM token: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(
+            `HTTP error! status: ${response.status} ${response.statusText}`
+          );
         }
-        const result = await response.json();
-        console.log("Backend response:", result);
-        setFcmToken(token);
-        return true;
+        const data = await response.json();
+        console.log("Notifications fetched:", data);
+        setNotifications(data);
       } catch (error) {
-        console.error(`Error sending FCM token (attempt ${attempt}):`, error);
-        if (attempt < retries) {
-          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
-        } else {
-          console.error("Max retries reached. Failed to send FCM token");
-          return false;
-        }
+        console.error("Error fetching notifications:", error);
       }
-    }
-    return false;
-  }, [backendUrl]);
+    },
+    [backendUrl]
+  );
 
-  const initializeNotifications = useCallback(async (userId: string) => {
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-      console.error("Service Worker not supported or not running in browser");
-      return;
-    }
-
-    try {
-      console.log("Registering service worker...");
-      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
-      console.log("Service Worker registered:", registration);
-
-      const token = await requestNotificationPermission(vapidKey);
-      if (token) {
-        const success = await sendFcmTokenToBackend(token, userId);
-        if (success) {
-          console.log("FCM token successfully sent to backend for user:", userId);
-        } else {
-          console.error("Failed to send FCM token to backend for user:", userId);
-        }
-      } else {
-        console.warn("No FCM token generated");
+  const initializeWebSocket = useCallback(
+    (userId: string) => {
+      if (socketRef.current) {
+        console.log("WebSocket already exists, cleaning up...");
+        socketRef.current.disconnect();
       }
-    } catch (error) {
-      console.error("Service Worker registration or token generation failed:", error);
-    }
-  }, [sendFcmTokenToBackend]);
 
-  const initializeWebSocket = useCallback((userId: string) => {
-    if (socketRef.current) {
-      console.log("WebSocket already exists, cleaning up...");
-      socketRef.current.disconnect();
-    }
+      console.log(
+        "Establishing WebSocket connection to:",
+        `${backendUrl}/notifications`
+      );
+      setConnectionStatus("connecting");
 
-    console.log("Establishing WebSocket connection to:", `${backendUrl}/notifications`);
-    setConnectionStatus('connecting');
-    
-    // Connect to the notifications namespace
-    const socket = io(`${backendUrl}/notifications`, {
-      transports: ['websocket', 'polling'],
-      timeout: 10000,
-      forceNew: true,
-    });
-    
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("WebSocket connected:", socket.id);
-      setIsConnected(true);
-      setConnectionStatus('connected');
-      
-      // Join user room
-      console.log("Joining room for user:", userId);
-      socket.emit("join", userId);
-    });
-
-    socket.on("joined", (data: { userId: string, socketId: string }) => {
-      console.log("Successfully joined room:", data);
-    });
-
-    socket.on("notification", (notification: Notification) => {
-      console.log("Received WebSocket notification:", notification);
-      if (notification.userId === userId) {
-        setNotifications((prev) => {
-          // Check if notification already exists
-          const exists = prev.some((n) => n.id === notification.id);
-          if (exists) {
-            console.log("Duplicate notification ignored:", notification.id);
-            return prev;
-          }
-          console.log("Adding new notification to state:", notification.id);
-          return [notification, ...prev];
-        });
-      }
-    });
-
-    socket.on("notificationDeleted", (id: string) => {
-      console.log("Received notificationDeleted:", id);
-      setNotifications((prev) => {
-        const filtered = prev.filter((notification) => notification.id !== id);
-        console.log(`Removed notification ${id} from state. Before: ${prev.length}, After: ${filtered.length}`);
-        return filtered;
+      const socket = io(`${backendUrl}/notifications`, {
+        transports: ["websocket", "polling"],
+        timeout: 10000,
+        forceNew: true,
       });
-    });
 
-    socket.on("disconnect", (reason) => {
-      console.log("WebSocket disconnected:", reason);
-      setIsConnected(false);
-      setConnectionStatus('disconnected');
-    });
+      socketRef.current = socket;
 
-    socket.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error);
-      setIsConnected(false);
-      setConnectionStatus('disconnected');
-    });
+      socket.on("connect", () => {
+        console.log("WebSocket connected:", socket.id);
+        setIsConnected(true);
+        setConnectionStatus("connected");
 
-    socket.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
+        console.log("Joining room for user:", userId);
+        socket.emit("join", userId);
+      });
 
-    return socket;
-  }, [backendUrl]);
+      socket.on("joined", (data: { userId: string; socketId: string }) => {
+        console.log("Successfully joined room:", data);
+      });
+
+      socket.on("notification", (notification: Notification) => {
+        console.log("Received WebSocket notification:", notification);
+        if (notification.userId === userId) {
+          console.log("Notification matches userId:", userId);
+          setNotifications((prev) => {
+            const exists = prev.some((n) => n.id === notification.id);
+            if (exists) {
+              console.log("Duplicate notification ignored:", notification.id);
+              return prev;
+            }
+            console.log("Adding new notification to state:", notification.id);
+            return [notification, ...prev];
+          });
+        } else {
+          console.log(
+            "Notification ignored, wrong userId:",
+            notification.userId
+          );
+        }
+      });
+
+      socket.on("notificationDeleted", (id: string) => {
+        console.log("Received notificationDeleted:", id);
+        setNotifications((prev) => {
+          const filtered = prev.filter(
+            (notification) => notification.id !== id
+          );
+          console.log(
+            `Removed notification ${id} from state. Before: ${prev.length}, After: ${filtered.length}`
+          );
+          return filtered;
+        });
+      });
+
+      socket.on("disconnect", (reason) => {
+        console.log("WebSocket disconnected:", reason);
+        setIsConnected(false);
+        setConnectionStatus("disconnected");
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("WebSocket connection error:", error);
+        setIsConnected(false);
+        setConnectionStatus("disconnected");
+      });
+
+      socket.on("error", (error) => {
+        console.error("WebSocket error:", error);
+      });
+
+      return socket;
+    },
+    [backendUrl]
+  );
 
   useEffect(() => {
     if (isAuthLoading) {
       console.log("Waiting for user authentication...");
       return;
     }
-    
+
     if (!user?.email || !isValidEmail(user.email)) {
       console.error("User not authenticated or invalid email:", user?.email);
       return;
@@ -1511,79 +1804,23 @@ export const NotificationList: React.FC = () => {
     const userId = user.email;
     console.log("Authenticated user:", userId);
 
-    // Fetch initial notifications
     fetchNotifications(userId);
-    
-    // Initialize FCM
-    initializeNotifications(userId);
-
-    // Initialize WebSocket
     const socket = initializeWebSocket(userId);
 
-    // Handle foreground FCM notifications
-    onMessageListener().then((payload: any) => {
-      console.log("Foreground FCM notification received:", payload);
-      const notification: Notification = {
-        id: Date.now().toString(), // Temporary ID for FCM notifications
-        title: payload.notification?.title || "New Notification",
-        message: payload.notification?.body || "You have a new notification.",
-        userId,
-        timestamp: new Date().toISOString(),
-      };
-      setNotifications((prev) => {
-        if (prev.some((n) => n.message === notification.message && n.title === notification.title)) {
-          return prev;
-        }
-        return [notification, ...prev];
-      });
-    }).catch((error) => {
-      console.error("Error setting up FCM foreground listener:", error);
-    });
-
-    // Handle service worker messages for token refresh
-    const handleServiceWorkerMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === "TOKEN_REFRESH") {
-        console.log("Received TOKEN_REFRESH from service worker:", event.data);
-        if (event.data.token && isValidFcmToken(event.data.token)) {
-          sendFcmTokenToBackend(event.data.token, userId);
-        }
-      }
-    };
-    navigator.serviceWorker.addEventListener("message", handleServiceWorkerMessage);
-
     return () => {
-      console.log("Cleaning up WebSocket connection and listeners");
+      console.log("Cleaning up WebSocket connection");
       if (socketRef.current) {
         socketRef.current.emit("leave", userId);
         socketRef.current.disconnect();
         socketRef.current = null;
       }
-      navigator.serviceWorker.removeEventListener("message", handleServiceWorkerMessage);
       setIsConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
     };
-  }, [user, isAuthLoading, fetchNotifications, initializeNotifications, initializeWebSocket, sendFcmTokenToBackend]);
-
-  // Show connection status for debugging
-  const renderConnectionStatus = () => {
-    const statusColor = {
-      connecting: 'text-yellow-500',
-      connected: 'text-green-500',
-      disconnected: 'text-red-500'
-    };
-
-    return (
-      <div className={`text-xs ${statusColor[connectionStatus]} mb-2`}>
-        {/* WebSocket: {connectionStatus} */}
-      </div>
-    );
-  };
+  }, [isAuthLoading, user, fetchNotifications, initializeWebSocket]);
 
   return (
     <div className="space-y-4">
-      {/* Connection status - remove in production */}
-      {process.env.NODE_ENV === 'development' && renderConnectionStatus()}
-      
       {isAuthLoading ? (
         <div className="text-center p-4">
           <p>Loading user authentication...</p>
@@ -1601,12 +1838,11 @@ export const NotificationList: React.FC = () => {
         </div>
       ) : (
         notifications.map((notification) => (
-          <NotificationBox 
-            key={notification.id} 
-            notification={notification} 
+          <NotificationBox
+            key={notification.id}
+            notification={notification}
             onDelete={(id) => {
-              // Optimistically remove from UI
-              setNotifications(prev => prev.filter(n => n.id !== id));
+              setNotifications((prev) => prev.filter((n) => n.id !== id));
             }}
           />
         ))

@@ -31,11 +31,15 @@ export function RealTimeChart({
   deviceName,
   metric,
   currentTime,
+  min,
+  max,
 }: {
   device: string | null;
   deviceName: string | null;
-  metric: "temperature" | "humidity";
+  metric: string;
   currentTime: Date;
+  min?: number;
+  max?: number;
 }) {
   const { user } = useUser();
   // State for chart data (labels and dataset for the line chart)
@@ -233,10 +237,25 @@ export function RealTimeChart({
   const maxValue = Math.max(...chartData.datasets[0].data, 0);
 
   // Render the line chart using Chart.js
+  // Highlight out-of-range points in red
+  const pointColors = chartData.datasets[0].data.map((v) =>
+    min !== undefined && max !== undefined && (v < min || v > max)
+      ? "red"
+      : chartData.datasets[0].borderColor
+  );
   return (
     <div className="chart-container w-full h-[300px]">
       <Line
-        data={chartData}
+        data={{
+          ...chartData,
+          datasets: [
+            {
+              ...chartData.datasets[0],
+              pointBackgroundColor: pointColors,
+              pointBorderColor: pointColors,
+            },
+          ],
+        }}
         options={{
           responsive: true,
           maintainAspectRatio: false,

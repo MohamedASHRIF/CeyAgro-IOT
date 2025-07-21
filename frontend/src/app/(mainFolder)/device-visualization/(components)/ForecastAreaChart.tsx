@@ -18,15 +18,21 @@ ChartJS.register(LineElement, PointElement, LinearScale, TimeScale, Tooltip, Leg
 
 interface ForecastAreaChartProps {
   device: string;
-  metric: 'temperature' | 'humidity';
+  metric: string;
   email: string;
   futureWindow?: number; // in hours
+  min?: number;
+  max?: number;
 }
 
-const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, email, futureWindow = 24 }) => {
+const windowOptions = [6, 12, 24, 48];
+
+const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, email, futureWindow = 24, min, max }) => {
   const [data, setData] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [windowValue, setWindowValue] = useState(futureWindow);
 
   useEffect(() => {
     if (!device || !metric || !email) return;
@@ -34,7 +40,7 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
     setError(null);
     axios
       .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/forecast/${device}`, {
-        params: { metric, futureWindow, email },
+        params: { metric, futureWindow: windowValue, email },
       })
       .then((res) => {
         setData(res.data);
@@ -44,36 +50,93 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
         setError('Failed to fetch forecast data');
         setLoading(false);
       });
-  }, [device, metric, email, futureWindow]);
+  }, [device, metric, email, windowValue]);
+
+  // Fetch historical data for overlay
+  useEffect(() => {
+    if (!device || !metric || !email) return;
+    const now = new Date();
+    const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    const endDate = now.toISOString();
+    axios
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/history/${device}`, {
+        params: { metric, startDate, endDate, email },
+      })
+      .then((res) => {
+        setHistory(Array.isArray(res.data) ? res.data : res.data.data);
+      })
+      .catch(() => setHistory([]));
+  }, [device, metric, email]);
 
   if (loading) return <div>Loading forecast...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!data || !data.forecast) return <div>No forecast data available.</div>;
 
-  const labels = data.forecast.map((row: any) => {
-    const date = new Date(row.timestamp);
-    return `${date.getHours()}:00`;
-  });
-  const values = data.forecast.map((row: any) => row.forecastValue);
+  // Prepare forecast data
+  console.log('Forecast data:', data.forecast);
+  // Historical overlay
+  console.log('Historical data:', history);
+  const histPoints = history.map((row: any) => ({ x: new Date(row.timestamp), y: row.value }));
+  // Forecast points
+  const forecastPoints = data.forecast.map((row: any) => ({ x: new Date(row.timestamp), y: row.forecastValue }));
+  // Confidence interval area (as two lines: lower and upper)
+  const lowerPoints = data.forecast.map((row: any) => ({ x: new Date(row.timestamp), y: row.lower ?? (row.forecastValue - 2) }));
+  const upperPoints = data.forecast.map((row: any) => ({ x: new Date(row.timestamp), y: row.upper ?? (row.forecastValue + 2) }));
+  // Out-of-range highlighting for forecast
+  const pointColors = forecastPoints.map((pt: any) =>
+    min !== undefined && max !== undefined && (pt.y < min || pt.y > max) ? 'red' : 'rgba(54, 162, 235, 1)'
+  );
 
+  // Chart.js datasets
   const chartData = {
-    labels,
     datasets: [
       {
+        label: 'Historical',
+        data: histPoints,
+        borderColor: 'rgba(99, 99, 99, 0.7)',
+        backgroundColor: 'rgba(99, 99, 99, 0.7)',
+        pointRadius: 2,
+        tension: 0.2,
+        order: 1,
+        spanGaps: true,
+        parsing: true,
+        datalabels: { align: 'end', anchor: 'end' },
+        fill: false,
+      },
+      {
         label: `Forecasted ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
-        data: values,
-        fill: true,
-        backgroundColor: (context: any) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'rgba(54, 162, 235, 0.4)');
-          gradient.addColorStop(1, 'rgba(54, 162, 235, 0.05)');
-          return gradient;
-        },
+        data: forecastPoints,
         borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 2,
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        pointBackgroundColor: pointColors,
+        pointBorderColor: pointColors,
         pointRadius: 3,
         tension: 0.3,
+        order: 2,
+        fill: false,
+      },
+      // Confidence interval as two lines (shaded area between them)
+      {
+        label: 'Lower Bound',
+        data: lowerPoints,
+        borderColor: 'rgba(54, 162, 235, 0.0)',
+        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+        pointRadius: 0,
+        fill: '+1', // fill to next dataset (upper bound)
+        order: 0,
+        tension: 0.3,
+        parsing: true,
+      },
+      {
+        label: 'Upper Bound',
+        data: upperPoints,
+        borderColor: 'rgba(54, 162, 235, 0.0)',
+        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+        pointRadius: 0,
+        fill: false,
+        order: 0,
+        tension: 0.3,
+        parsing: true,
       },
     ],
   };
@@ -81,12 +144,14 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
   const options = {
     responsive: true,
     plugins: {
-      legend: { display: false },
+      legend: { display: true },
       tooltip: { mode: 'index', intersect: false },
     },
     scales: {
       x: {
-        title: { display: true, text: 'Hour' },
+        type: 'time',
+        time: { unit: 'hour', tooltipFormat: 'PPpp' },
+        title: { display: true, text: 'Time' },
       },
       y: {
         title: { display: true, text: metric.charAt(0).toUpperCase() + metric.slice(1) },
@@ -95,8 +160,25 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
     },
   };
 
+  // Model quality metric
+  const modelQuality = data.rmse || data.r2 || data.modelQuality || 'N/A';
+
   return (
     <div style={{ height: 350 }}>
+      <div className="flex items-center gap-2 mb-2">
+        <label htmlFor="forecast-window">Forecast Window:</label>
+        <select
+          id="forecast-window"
+          value={windowValue}
+          onChange={e => setWindowValue(Number(e.target.value))}
+          className="border rounded px-2 py-1"
+        >
+          {windowOptions.map(opt => (
+            <option key={opt} value={opt}>{opt}h</option>
+          ))}
+        </select>
+        <span className="ml-auto text-sm text-gray-500">Model Quality: <b>{modelQuality}</b></span>
+      </div>
       <Line data={chartData} options={options} />
     </div>
   );

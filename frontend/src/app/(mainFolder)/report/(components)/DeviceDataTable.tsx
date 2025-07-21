@@ -12,10 +12,7 @@ import { Loader2 } from "lucide-react";
 interface DeviceData {
   id: string;
   name: string;
-  temperatureValue?: string;
-  humidityValue?: string;
-  date: string;
-  deviceId: string;
+  [key: string]: any;
 }
 
 interface DeviceDataTableProps {
@@ -23,6 +20,7 @@ interface DeviceDataTableProps {
   loading: boolean;
   error: string;
   deviceName: string;
+  fields?: string[]; // dynamic fields
 }
 
 export function DeviceDataTable({
@@ -30,6 +28,7 @@ export function DeviceDataTable({
   loading,
   error,
   deviceName,
+  fields,
 }: DeviceDataTableProps) {
   if (error) {
     return (
@@ -49,6 +48,23 @@ export function DeviceDataTable({
 
   const displayDeviceName = deviceName || (data.length > 0 ? data[0].name || "Unknown Device" : "No Data");
 
+  // Use provided fields or fallback to default
+  const displayFields = fields && fields.length > 0 ? fields : ["temperatureValue", "humidityValue"];
+  // Always include date as the last column
+  const allFields = [...displayFields, "date"];
+
+  // Helper to make headers pretty
+  const getHeader = (field: string) => {
+    if (field === "date") return "Date";
+    if (field === "deviceId") return "Device ID";
+    // Remove trailing 'Value' and capitalize
+    return (
+      field.replace(/Value$/, "").charAt(0).toUpperCase() +
+      field.replace(/Value$/, "").slice(1) +
+      (field.endsWith("Value") ? " Value" : "")
+    );
+  };
+
   return (
     <div className="rounded-md border">
       <h2 className="text-2xl font-bold text-center mb-4">
@@ -58,19 +74,25 @@ export function DeviceDataTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Temperature Value</TableHead>
-            <TableHead>Humidity Value</TableHead>
-            <TableHead>Date</TableHead>
+            {allFields.map((field) => (
+              <TableHead key={field}>{getHeader(field)}</TableHead>
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>{item.temperatureValue || "-"}</TableCell>
-              <TableCell>{item.humidityValue || "-"}</TableCell>
-              <TableCell>
-                {item.date ? new Date(item.date).toLocaleString() : "-"}
-              </TableCell>
+              {allFields.map((field) => (
+                <TableCell key={field}>
+                  {field === "date"
+                    ? item.date
+                      ? new Date(item.date).toLocaleString()
+                      : "-"
+                    : item[field] !== undefined && item[field] !== null
+                    ? item[field]
+                    : "-"}
+                </TableCell>
+              ))}
             </TableRow>
           ))}
         </TableBody>

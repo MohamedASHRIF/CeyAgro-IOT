@@ -275,6 +275,24 @@ async getUserDevices(@Query('email') email: string) {
     }
   }
 
+  @Get('device-types')
+  async getDeviceTypesForDevice(
+    @Query('deviceId') deviceId: string,
+    @Query('email') email: string
+  ) {
+    if (!deviceId || !email) {
+      throw new BadRequestException('deviceId and email are required');
+    }
+    const deviceUser = await this.analyticsService.getDeviceUserByDeviceIdAndEmail(deviceId, email);
+    if (!deviceUser) {
+      throw new NotFoundException('Device not found for user');
+    }
+    return {
+      success: true,
+      data: deviceUser.deviceTypes || []
+    };
+  }
+
 // --- Advanced Analytics Endpoints ---
 // Anomaly Detection
 @Get('anomaly/:deviceId')

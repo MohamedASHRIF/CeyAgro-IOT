@@ -33,8 +33,6 @@
 //   }
 // }
 
-
-
 // // import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket } from '@nestjs/websockets';
 // // import { Server, Socket } from 'socket.io';
 // // import { UsersService } from '../users/users.service';
@@ -88,13 +86,7 @@
 // //   }
 // // }
 
-
-
-
-
-
-
-
+//notification.gateway.ts
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -112,7 +104,9 @@ import { Notification as NotificationInterface } from './interfaces/notification
   },
   namespace: '/notifications', // Add namespace for better organization
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -146,25 +140,28 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     }
 
     console.log(`Client ${client.id} joining room for user: ${userId}`);
-    
+
     // Add to user-socket mapping
     if (!this.userSockets.has(userId)) {
       this.userSockets.set(userId, new Set());
     }
     this.userSockets.get(userId).add(client.id);
-    
+
     // Join room
     client.join(userId);
     client.emit('joined', { userId, socketId: client.id });
-    
-    console.log(`Active connections for user ${userId}:`, this.userSockets.get(userId).size);
+
+    console.log(
+      `Active connections for user ${userId}:`,
+      this.userSockets.get(userId).size,
+    );
   }
 
   @SubscribeMessage('leave')
   handleLeave(client: Socket, userId: string) {
     console.log(`Client ${client.id} leaving room for user: ${userId}`);
     client.leave(userId);
-    
+
     if (this.userSockets.has(userId)) {
       this.userSockets.get(userId).delete(client.id);
       if (this.userSockets.get(userId).size === 0) {
@@ -176,11 +173,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   emitNotification(notification: NotificationInterface) {
     const userId = notification.userId;
     console.log(`Emitting notification to user ${userId}:`, notification);
-    console.log(`Active sockets for user ${userId}:`, this.userSockets.get(userId)?.size || 0);
-    
+    console.log(
+      `Active sockets for user ${userId}:`,
+      this.userSockets.get(userId)?.size || 0,
+    );
+
     // Emit to specific user room
     this.server.to(userId).emit('notification', notification);
-    
+
     // Also emit to all connected sockets for this user (redundant but ensures delivery)
     if (this.userSockets.has(userId)) {
       for (const socketId of this.userSockets.get(userId)) {
@@ -190,12 +190,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   emitNotificationDeleted(notificationId: string, userId?: string) {
-    console.log(`Emitting notificationDeleted: ${notificationId} for user: ${userId}`);
-    
+    console.log(
+      `Emitting notificationDeleted: ${notificationId} for user: ${userId}`,
+    );
+
     if (userId) {
       // Emit to specific user
       this.server.to(userId).emit('notificationDeleted', notificationId);
-      
+
       if (this.userSockets.has(userId)) {
         for (const socketId of this.userSockets.get(userId)) {
           this.server.to(socketId).emit('notificationDeleted', notificationId);
@@ -214,6 +216,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   // Method to check if user is connected
   isUserConnected(userId: string): boolean {
-    return this.userSockets.has(userId) && this.userSockets.get(userId).size > 0;
+    return (
+      this.userSockets.has(userId) && this.userSockets.get(userId).size > 0
+    );
   }
 }

@@ -1,3 +1,4 @@
+//device.controller.ts
 import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { MessagePattern, Payload, Ctx } from '@nestjs/microservices';
@@ -14,7 +15,7 @@ export class DevicesController {
       status: 'ok',
       timestamp: new Date().toISOString(),
       service: 'device-api',
-      version: process.env.npm_package_version || '1.0.0'
+      version: process.env.npm_package_version || '1.0.0',
     };
   }
 
