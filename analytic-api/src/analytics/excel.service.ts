@@ -13,24 +13,69 @@ export class ExcelService {
     worksheet.mergeCells('A1:C1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = `Device Report: ${(deviceName || 'Unknown Device').trim()}`;
-    titleCell.font = { bold: true, size: 16 };
-    titleCell.alignment = { horizontal: 'center' };
+    titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4A90E2' }, // Blue background for title
+    };
 
+<<<<<<< Updated upstream
     // Headers in row 4
     const headers = ['Temperature Value', 'Humidity Value', 'Date'];
+=======
+    // Device ID in row 2 (assuming deviceId is available in the first data item)
+    const deviceId = data[0]?.deviceId || 'N/A';
+    worksheet.mergeCells('A2:' + String.fromCharCode(65 + (fields?.length || 3) - 1) + '2');
+    const deviceIdCell = worksheet.getCell('A2');
+    deviceIdCell.value = `Device ID: ${deviceId}`;
+    deviceIdCell.font = { italic: true, size: 12, color: { argb: 'FF333333' } };
+    deviceIdCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    deviceIdCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE6F0FA' }, // Light blue background
+    };
+
+    // Add some spacing (row 3 is empty)
+    worksheet.getRow(3).height = 10;
+
+    // Dynamic headers in row 4, excluding deviceId
+    let headers: string[] = [];
+    let fieldKeys: string[] = [];
+    if (fields && fields.length > 0) {
+      // Filter out deviceId and map field keys to readable headers
+      fieldKeys = fields.filter(f => f !== 'deviceId');
+      headers = fieldKeys.map(f => {
+        if (f === 'date') return 'Date';
+        // Capitalize and add 'Value' for sensor fields
+        return f.charAt(0).toUpperCase() + f.slice(1) + ' Value';
+      });
+    } else {
+      headers = ['Temperature Value', 'Humidity Value', 'Date'];
+      fieldKeys = ['temperatureValue', 'humidityValue', 'date'];
+    }
+>>>>>>> Stashed changes
     worksheet.getRow(4).values = headers;
     headers.forEach((_, index) => {
       const cell = worksheet.getCell(`${String.fromCharCode(65 + index)}4`);
-      cell.font = { bold: true };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' },
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E88E5' }, // Darker blue for headers
       };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
     });
 
-    // Data starting in row 5
+    // Data starting in row 5 with alternating row colors
     data.forEach((item, index) => {
       const row = worksheet.getRow(index + 5);
       row.getCell(1).value = item.temperatureValue || '-';
@@ -48,18 +93,35 @@ export class ExcelService {
         : '-';
       row.eachCell((cell) => {
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: index % 2 === 0 ? 'FFF5F7FA' : 'FFFFFFFF' }, // Alternating light gray and white rows
         };
       });
     });
 
     // Column widths
+<<<<<<< Updated upstream
     worksheet.getColumn('A').width = 20;
     worksheet.getColumn('B').width = 20;
     worksheet.getColumn('C').width = 25;
+=======
+    for (let i = 0; i < headers.length; i++) {
+      worksheet.getColumn(i + 1).width = 20;
+    }
+>>>>>>> Stashed changes
+
+    // Set row heights for better appearance
+    worksheet.getRow(1).height = 30;
+    worksheet.getRow(2).height = 20;
+    worksheet.getRow(4).height = 25;
 
     return await workbook.xlsx.writeBuffer() as Buffer;
   }
