@@ -464,6 +464,10 @@ async getAvailableMetrics(deviceId: string) {
     return userDevices.map((d) => d.deviceId);
   }
 
+  async getDeviceUserByDeviceIdAndEmail(deviceId: string, email: string) {
+    return this.deviceUserModel.findOne({ deviceId, email }).lean();
+  }
+
   // Fetch readings for multiple deviceIds with filtering
   async getReadingsForDevices(deviceIds: string[], queryDto: AnalyticsQueryDto) {
     const query: any = { deviceId: { $in: deviceIds } };
