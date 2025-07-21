@@ -1,6 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+@Schema()
+export class DeviceType {
+  @Prop({ required: true })
+  type: string;
+
+  @Prop({ required: true, type: Number })
+  minValue: number;
+
+  @Prop({ required: true, type: Number })
+  maxValue: number;
+}
+
+export const DeviceTypeSchema = SchemaFactory.createForClass(DeviceType);
+
 @Schema({ timestamps: true })
 export class DeviceUser {
   @Prop({ required: true })
@@ -22,16 +36,10 @@ export class DeviceUser {
   location: string;
 
   @Prop()
-  deviceType: string;
-
-  @Prop()
   serialNumber: string;
 
-  @Prop()
-  measurementUnit: string;
-
-  @Prop()
-  measurementParameter: string;
+  @Prop({ type: [DeviceTypeSchema], default: [] })
+  deviceTypes: DeviceType[];
 }
 
 export type DeviceUserDocument = DeviceUser & Document;

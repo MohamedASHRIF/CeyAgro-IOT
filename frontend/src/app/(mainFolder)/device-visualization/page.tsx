@@ -20,8 +20,8 @@ export default function VisualizationPage() {
   const [devices, setDevices] = useState<{ deviceId: string; deviceName: string }[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [selectedDeviceName, setSelectedDeviceName] = useState<string | null>(null);
-  const [metrics] = useState<string[]>(["temperature", "humidity"]);
-  const [selectedMetric, setSelectedMetric] = useState<"temperature" | "humidity" | null>(null);
+  const [metrics, setMetrics] = useState<string[]>([]); // Now dynamic
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<"lastHour" | "lastDay">("lastHour");
   const [error, setError] = useState<string | null>(null);
   const [isLoadingDevices, setIsLoadingDevices] = useState(true);
@@ -46,9 +46,10 @@ export default function VisualizationPage() {
           return;
         }
         setDevices(response.data.data);
-        setSelectedDevice(response.data.data[0].deviceId);
-        setSelectedDeviceName(response.data.data[0].deviceName);
-        setSelectedMetric("temperature");
+        // Auto-select first device
+        const firstDevice = response.data.data[0];
+        setSelectedDevice(firstDevice.deviceId);
+        setSelectedDeviceName(firstDevice.deviceName);
         setIsLoadingDevices(false);
       })
       .catch((error) => {
@@ -58,9 +59,45 @@ export default function VisualizationPage() {
       });
   }, [user]);
 
+  // Fetch device types (metrics) when selectedDevice changes
+  useEffect(() => {
+    if (!selectedDevice || !user?.email) {
+      setMetrics([]);
+      setSelectedMetric(null);
+      return;
+    }
+    axios
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/analytics/device-types`, {
+        params: { deviceId: selectedDevice, email: user.email },
+      })
+      .then((response) => {
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const types = response.data.data.map((t: any) => t.type);
+          setMetrics(types);
+          // Auto-select first metric if available, and use lowercase for value
+          setSelectedMetric(types[0] ? types[0].toLowerCase() : null);
+        } else {
+          setMetrics([]);
+          setSelectedMetric(null);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching device types:", error);
+        setMetrics([]);
+        setSelectedMetric(null);
+      });
+  }, [selectedDevice, user]);
+
+  // Handler for device selection changes
+  const handleDeviceChange = (val: string) => {
+    setSelectedDevice(val);
+    const found = devices.find((d) => d.deviceId === val);
+    setSelectedDeviceName(found ? found.deviceName : null);
+  };
+
   // Handler for metric selection changes
   const handleMetricChange = (value: string) => {
-    setSelectedMetric(value as "temperature" | "humidity");
+    setSelectedMetric(value);
   };
 
   // Handler for time range selection changes
@@ -108,11 +145,7 @@ export default function VisualizationPage() {
     <div className="dashboard-container p-6">
       {/* Top controls */}
       <div className="flex gap-4 mb-6">
-        <Select value={selectedDevice || ""} onValueChange={(val) => {
-          setSelectedDevice(val);
-          const found = devices.find((d) => d.deviceId === val);
-          setSelectedDeviceName(found ? found.deviceName : null);
-        }}>
+        <Select value={selectedDevice || ""} onValueChange={handleDeviceChange} disabled={devices.length === 0}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select Device" />
           </SelectTrigger>
@@ -124,13 +157,13 @@ export default function VisualizationPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={selectedMetric || ""} onValueChange={handleMetricChange}>
+        <Select value={selectedMetric || ""} onValueChange={handleMetricChange} disabled={metrics.length === 0}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select Metric" />
           </SelectTrigger>
           <SelectContent>
             {metrics.map((metric) => (
-              <SelectItem key={metric} value={metric}>
+              <SelectItem key={metric} value={metric.toLowerCase()}>
                 {metric.charAt(0).toUpperCase() + metric.slice(1)}
               </SelectItem>
             ))}
