@@ -22,11 +22,15 @@ export function HistoryChart({
   deviceName,
   metric,
   timeRange,
+  min,
+  max,
 }: {
   device: string | null;
   deviceName: string | null;
-  metric: "temperature" | "humidity";
+  metric: string;
   timeRange: "lastHour" | "lastDay";
+  min?: number;
+  max?: number;
 }) {
   const { user } = useUser();
   // State for chart data (labels and dataset for the line chart)
@@ -132,6 +136,12 @@ export function HistoryChart({
   const minValue = Math.min(...chartData.datasets[0].data, 0);
   const maxValue = Math.max(...chartData.datasets[0].data, 0);
 
+  // Highlight out-of-range points in red
+  const pointColors = chartData.datasets[0].data.map((v) =>
+    min !== undefined && max !== undefined && (v < min || v > max)
+      ? "red"
+      : chartData.datasets[0].borderColor
+  );
   // Log final chartData before rendering
   console.log('Final chartData (HistoryChart):', chartData);
   // Render the line chart using Chart.js
@@ -139,7 +149,16 @@ export function HistoryChart({
     <div className="chart-container w-full h-[300px] min-h-[300px]" style={{ minHeight: 300 }}>
       <Line
         key={JSON.stringify(chartData)}
-        data={chartData}
+        data={{
+          ...chartData,
+          datasets: [
+            {
+              ...chartData.datasets[0],
+              pointBackgroundColor: pointColors,
+              pointBorderColor: pointColors,
+            },
+          ],
+        }}
         options={{
           responsive: true,
           maintainAspectRatio: false,
