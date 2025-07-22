@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AnalyticsController } from './analytics/analytics.controller';
+import { AnalyticsService } from './analytics/analytics.service';
 
 @Module({
   imports: [
@@ -17,5 +19,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     }),
     AnalyticsModule,
   ],
+  controllers: [AnalyticsController], // Register the controller here
+  providers: [AnalyticsService]
 })
 export class AppModule {}
