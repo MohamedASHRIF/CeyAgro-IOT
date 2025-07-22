@@ -8,8 +8,9 @@ import * as express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+   app.setGlobalPrefix('device-api');
   //  Connect Kafka microservice
-  // app.connectMicroservice(kafkaConfig);
+   app.connectMicroservice(kafkaConfig);
 
   //image handling
 app.use(

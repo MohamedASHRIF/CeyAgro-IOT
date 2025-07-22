@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const API_BASE = "http://localhost:3001/user";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3001";
 
 // Form validation schema
 const formSchema = z.object({
@@ -141,7 +142,7 @@ export default function ProfilePage() {
           console.log("Fetching profile for email:", email);
 
           const { data } = await axios.get(
-            `${API_BASE}/profile/${encodeURIComponent(email)}`
+            `${BACKEND_URL}/user/profile/${encodeURIComponent(email)}`
           );
 
           console.log("Fetched profile data:", data);
@@ -212,7 +213,7 @@ export default function ProfilePage() {
       console.log("Updating profile with data:", Object.fromEntries(formData.entries()));
 
       const { data } = await axios.patch(
-        `${API_BASE}/profile/${encodeURIComponent(values.email)}`,
+        `${BACKEND_URL}/user/profile/${encodeURIComponent(values.email)}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -333,7 +334,7 @@ export default function ProfilePage() {
                         ? profileData.picture.startsWith("data:")
                           ? profileData.picture
                           : profileData.picture.startsWith("/uploads")
-                            ? `http://localhost:3001${profileData.picture}`
+                            ? `${BACKEND_URL}${profileData.picture}`
                             : "/default.png"
                         : "/default.png"
                     }
