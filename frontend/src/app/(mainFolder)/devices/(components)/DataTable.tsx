@@ -373,7 +373,7 @@ export const columns: ColumnDef<Device>[] = [
     },
   },
 ];
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+ 
 
 export function DeviceTable({ userEmail }: { userEmail: string }) {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -391,7 +391,7 @@ export function DeviceTable({ userEmail }: { userEmail: string }) {
     if (!userEmail) return;
 
     setLoading(true);
-    fetch(`${BACKEND_URL}/device-user/devices?email=${encodeURIComponent(userEmail)}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/devices?email=${encodeURIComponent(userEmail)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data)) {

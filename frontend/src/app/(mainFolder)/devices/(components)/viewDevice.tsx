@@ -66,7 +66,7 @@ type DevicePageProps = {
     userEmail: string;
 };
 
- const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+//  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const DEVICE_TYPE_OPTIONS = [
     "Temperature",
@@ -111,7 +111,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         if (!deviceId || !email) return;
         try {
             const res = await fetch(
-                `${BACKEND_URL}/device-user/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/device?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`
             );
 
             if (!res.ok) throw new Error("Failed to fetch device data");
@@ -226,7 +226,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             }
 
             const res = await fetch(
-                `${BACKEND_URL}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "PATCH",
                     body: formData,
@@ -259,7 +259,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const handleDeleteDevice = async () => {
         try {
             const res = await fetch(
-                `${BACKEND_URL}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "DELETE",
                 }
@@ -334,7 +334,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
 
         if (previewImage) {
             if (previewImage.startsWith("data:")) return previewImage;
-            if (previewImage.startsWith("/uploads")) return `${BACKEND_URL}${previewImage}`;
+            if (previewImage.startsWith("/uploads")) return `${process.env.NEXT_PUBLIC_BACKEND_URL}${previewImage}`;
             return previewImage;
         }
 
