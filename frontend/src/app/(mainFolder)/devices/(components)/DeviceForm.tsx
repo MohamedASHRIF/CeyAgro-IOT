@@ -131,8 +131,8 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                 formData.append(`deviceTypes[${index}][maxValue]`, typeObj.maxValue.toString());
             });
 
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-            const res = await fetch(`${BACKEND_URL}/device-user/register`, {
+            // const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/register`, {
                 method: "POST",
                 body: formData,
             });

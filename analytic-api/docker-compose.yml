@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "3003:3003"
     environment:
       - MONGO_URI=${MONGO_URI}
       - KAFKA_BROKER=kafka:9092
