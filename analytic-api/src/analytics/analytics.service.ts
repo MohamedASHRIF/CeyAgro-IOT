@@ -389,13 +389,18 @@ async generateAndUploadReport(
 async getRealtimeStats(deviceId: string, metric: string) {
   console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
   try {
+    const valueKey = (metric || '').toLowerCase() === 'humidity' ? 'humidityValue' : 'temperatureValue';
+    // Find the most recent document with a valid value for the metric
     const latest = await this.deviceModel
-      .findOne({ deviceId })
+      .findOne({
+        deviceId,
+        [valueKey]: { $exists: true, $ne: null, $type: 'number' }
+      })
       .sort({ date: -1, _id: -1 })
       .select('-__v');
     console.log('SERVICE DEBUG: getRealtimeStats latest', latest);
     if (!latest) {
-      console.log('SERVICE DEBUG: No data found for device');
+      console.log('SERVICE DEBUG: No valid data found for device');
       return {
         deviceId: deviceId,
         metric,
@@ -403,13 +408,10 @@ async getRealtimeStats(deviceId: string, metric: string) {
         timestamp: new Date().toISOString(),
       };
     }
-    // Defensively lowercase the metric
-    const safeMetric = (metric || '').toLowerCase();
-    const valueKey = safeMetric.endsWith('value') ? safeMetric : safeMetric + 'Value';
     return {
       deviceId: latest.deviceId,
       metric,
-      value: latest[valueKey] ?? 0,
+      value: latest[valueKey],
       timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
     };
   } catch (err) {
@@ -419,32 +421,42 @@ async getRealtimeStats(deviceId: string, metric: string) {
 }
 
 // Retrieves historical stats for a device within a specified date range
-async getHistoricalStats(deviceId: string, metric: 'temperature' | 'humidity', startDate: string, endDate: string) {
+async getHistoricalStats(
+  deviceId: string,
+  metric: 'temperature' | 'humidity',
+  startDate: string,
+  endDate: string,
+) {
+  const metricField = metric === 'temperature' ? 'temperatureValue' : 'humidityValue';
+
   const query = {
     deviceId,
     date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+    [metricField]: { $exists: true, $ne: null, $type: 'number' }, // only valid entries
   };
+
   console.log('DEBUG: getHistoricalStats query:', JSON.stringify(query));
+
   try {
     const data = await this.deviceModel
       .find(query)
-      .select('deviceId temperatureValue humidityValue date');
-    console.log('DEBUG: getHistoricalStats results:', data.length);
-    if (!data || data.length === 0) {
-      console.log('SERVICE DEBUG: No historical data found');
-      return [];
-    }
+      .sort({ date: 1 }) // optional: ensure chronological order
+      .select(`deviceId ${metricField} date`);
+
+    console.log('DEBUG: getHistoricalStats valid data count:', data.length);
+
     return data.map(item => ({
       deviceId: item.deviceId,
       metric,
-      value: metric === 'temperature' ? item.temperatureValue ?? 0 : item.humidityValue ?? 0,
-      timestamp: item.date ? item.date.toISOString() : new Date().toISOString(),
+      value: item[metricField], // only valid numbers
+      timestamp: item.date?.toISOString() || new Date().toISOString(),
     }));
   } catch (err) {
     console.error('SERVICE ERROR: getHistoricalStats', err);
     throw err;
   }
 }
+
 
 // Retrieves aggregated stats (min, max, avg) for a device over a time range (lastHour or lastDay)
 async getStats(deviceId: string, metric: 'temperature' | 'humidity', timeRange: string) {
@@ -463,7 +475,8 @@ async getStats(deviceId: string, metric: 'temperature' | 'humidity', timeRange: 
       .select('temperatureValue humidityValue');
     console.log('DEBUG: getStats results:', data.length);
     const values = data
-      .map(item => (metric === 'temperature' ? item.temperatureValue : item.humidityValue));
+      .map(item => (metric === 'temperature' ? item.temperatureValue : item.humidityValue))
+      .filter(v => typeof v === 'number' && !isNaN(v));
     return {
       min: values.length > 0 ? Math.min(...values) : 0,
       max: values.length > 0 ? Math.max(...values) : 0,
@@ -517,7 +530,8 @@ async getAnomalies(deviceId: string, metric: 'temperature' | 'humidity', startDa
   console.log('DEBUG: getAnomalies query:', JSON.stringify(query));
   const data = await this.deviceModel.find(query).select('date temperatureValue humidityValue').lean();
   console.log('DEBUG: getAnomalies results:', data.length);
-  const values = data.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue);
+  const values = data.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue)
+    .filter(v => typeof v === 'number' && !isNaN(v));
   if (values.length === 0) return [];
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   const std = Math.sqrt(values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length);
@@ -535,7 +549,8 @@ async compareDevicesOrPeriods(deviceA: string, deviceB: string, metric: 'tempera
       deviceId,
       date: { $gte: new Date(start), $lte: new Date(end) },
     }).select('temperatureValue humidityValue');
-    const values = data.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue);
+    const values = data.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue)
+      .filter(v => typeof v === 'number' && !isNaN(v));
     return {
       min: values.length > 0 ? Math.min(...values) : 0,
       max: values.length > 0 ? Math.max(...values) : 0,
@@ -552,16 +567,20 @@ async getCorrelation(deviceId: string, startDate: string, endDate: string) {
     deviceId,
     date: { $gte: new Date(startDate), $lte: new Date(endDate) },
   }).select('temperatureValue humidityValue');
-  const temps = data.map(item => item.temperatureValue);
-  const hums = data.map(item => item.humidityValue);
-  if (temps.length === 0 || hums.length === 0) return { correlation: null, points: [] };
-  const meanT = temps.reduce((a, b) => a + b, 0) / temps.length;
-  const meanH = hums.reduce((a, b) => a + b, 0) / hums.length;
-  const numerator = temps.reduce((sum, t, i) => sum + (t - meanT) * (hums[i] - meanH), 0);
-  const denominator = Math.sqrt(temps.reduce((sum, t) => sum + Math.pow(t - meanT, 2), 0) * hums.reduce((sum, h) => sum + Math.pow(h - meanH, 2), 0));
+  const tempsFiltered = data.map(item => item.temperatureValue)
+    .filter(v => typeof v === 'number' && !isNaN(v));
+  const humsFiltered = data.map(item => item.humidityValue)
+    .filter(v => typeof v === 'number' && !isNaN(v));
+  if (tempsFiltered.length === 0 || humsFiltered.length === 0) return { correlation: null, points: [] };
+  const meanT = tempsFiltered.reduce((a, b) => a + b, 0) / tempsFiltered.length;
+  const meanH = humsFiltered.reduce((a, b) => a + b, 0) / humsFiltered.length;
+  const numerator = tempsFiltered.reduce((sum, t, i) => sum + (t - meanT) * (humsFiltered[i] - meanH), 0);
+  const denominator = Math.sqrt(tempsFiltered.reduce((sum, t) => sum + Math.pow(t - meanT, 2), 0) * humsFiltered.reduce((sum, h) => sum + Math.pow(h - meanH, 2), 0));
   const corr = denominator === 0 ? null : numerator / denominator;
   // Return points as {x, y} for scatter plot compatibility
-  const points = data.map(item => ({ x: item.temperatureValue, y: item.humidityValue }));
+  const points = data
+    .filter(item => typeof item.temperatureValue === 'number' && !isNaN(item.temperatureValue) && typeof item.humidityValue === 'number' && !isNaN(item.humidityValue))
+    .map(item => ({ x: item.temperatureValue, y: item.humidityValue }));
   return { correlation: corr, points };
 }
 // Prediction: returns actual and predicted values for a device/metric
@@ -619,7 +638,8 @@ async getForecast(deviceId: string, metric: 'temperature' | 'humidity', futureWi
   }).sort({ date: 1 }).select('date temperatureValue humidityValue');
 
   // Prepare values
-  const values = actualData.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue);
+  const values = actualData.map(item => metric === 'temperature' ? item.temperatureValue : item.humidityValue)
+    .filter(v => typeof v === 'number' && !isNaN(v));
   if (values.length === 0) values.push(0);
 
   // --- Moving Average ---

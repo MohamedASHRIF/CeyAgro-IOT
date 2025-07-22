@@ -20,13 +20,13 @@ export const kafkaConfig: KafkaOptions = {
       requestTimeout: 25000,
     },
     consumer: {
-      groupId: 'device-consumer-group-v2',
+      groupId: 'device-consumer-group-v3', // Changed from v2 to v3
       sessionTimeout: 30000,
       heartbeatInterval: 3000,
       allowAutoTopicCreation: true,
     },
     subscribe: {
-      fromBeginning: true,
+      fromBeginning: false, // Start from the latest message, not the beginning
     },
   },
 };

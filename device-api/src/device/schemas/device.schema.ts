@@ -37,10 +37,10 @@ export class DeviceData {
   @Prop({ required: true })
   deviceId: string;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number , required: true })
   temperatureValue: number;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number , required: true })
   humidityValue: number;
 
   @Prop({ default: true })
@@ -51,6 +51,7 @@ export class DeviceData {
 
   @Prop()
   topic: string;
+ 
 }
 
 export const DeviceDataSchema = SchemaFactory.createForClass(DeviceData);
