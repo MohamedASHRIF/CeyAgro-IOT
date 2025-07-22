@@ -1,10 +1,11 @@
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceModule } from './device/device.module';
 import { DeviceUserModule } from './device-user/device-user.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { NotificationsModule } from './notifications/notifications.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -12,11 +13,21 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    MongooseModule.forRoot(process.env.MONGO_URI), // MongoDB connection
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: process.env.MONGO_URI,
+      }),
+    }),
+    MongooseModule.forRootAsync({
+      connectionName: 'users_db',
+      useFactory: () => ({
+        uri: process.env.USERS_MONGO_URI,
+      }),
+    }),
     DeviceModule,
-    DeviceUserModule
+    DeviceUserModule,
+    NotificationsModule,
+    UsersModule, // Import UsersModule
   ],
-  controllers: [AppController], // Register the controller here
-  providers: [AppService]
 })
 export class AppModule {}
