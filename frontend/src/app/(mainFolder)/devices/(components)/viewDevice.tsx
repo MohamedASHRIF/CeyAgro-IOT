@@ -226,7 +226,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             }
 
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "PATCH",
                     body: formData,
@@ -259,7 +259,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const handleDeleteDevice = async () => {
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "DELETE",
                 }

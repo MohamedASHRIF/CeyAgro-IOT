@@ -16,9 +16,9 @@ export class UpdateUserDto {
   @IsString()
   gender?: string;
 
-  @IsOptional()
+  
   @IsString()
-  @Matches(/^\+94 7\d{8}$/)
+  @Matches(/^\+947\d{8}$/)
   telephone?: string;
 
   @IsOptional()
