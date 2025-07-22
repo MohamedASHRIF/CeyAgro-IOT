@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -40,7 +39,8 @@ const formSchema = z.object({
   email: z.string().email(),
   gender: z.string().optional(),
   nic: z.string().min(10, "NIC must be at least 10 characters").max(12, "NIC must be at most 12 characters").optional().or(z.literal("")),
-  telephone: z.string().regex(/^\+94 7\d{8}$/, "Invalid Sri Lankan phone number format").optional().or(z.literal("")),
+  telephone: z.string()
+    .regex(/^\+947\d{8}$/, "Telephone must be in the format +947xxxxxxxx"),
   address: z.string().optional(),
 });
 
@@ -83,42 +83,31 @@ export default function ProfilePage() {
 
   // Get display name - prioritize actual name over email-derived names
   const getDisplayName = (data: ProfileData): string => {
-    // If name exists and is not empty
     if (data.name && data.name.trim()) {
-      // If name is equal to the full email, show just the email prefix
       if (data.name === data.email) {
         return data.email.split("@")[0];
       }
-      // If name is not just the email prefix, use the actual name
       if (data.name !== data.email.split("@")[0]) {
         return data.name;
       }
     }
-
-    // Fall back to nickname or email prefix
     return data.nickname || data.email.split("@")[0];
   };
 
   // Get the name to display in the form field
   const getFormDisplayName = (data: ProfileData): string => {
-    // If name exists and is not empty
     if (data.name && data.name.trim()) {
-      // If name is equal to the full email, show just the email prefix
       if (data.name === data.email) {
         return data.email.split("@")[0];
       }
-      // Otherwise, use the actual name
       return data.name;
     }
-
-    // Fall back to nickname or email prefix
     return data.nickname || data.email.split("@")[0];
   };
 
   // Handle edit toggle function
   const handleEditToggle = () => {
     if (isEditing) {
-      // If canceling edit, reset form to original values and reset image removal flag
       setImageToRemove(false);
       if (profileData) {
         form.reset({
@@ -139,18 +128,10 @@ export default function ProfilePage() {
       const fetchProfile = async () => {
         try {
           const email = user.email as string;
-          console.log("Fetching profile for email:", email);
-
           const { data } = await axios.get(
             `${BACKEND_URL}/user/profile/${encodeURIComponent(email)}`
           );
-
-          console.log("Fetched profile data:", data);
-
-          // Don't modify the name from the database
           setProfileData(data);
-
-          // Use the processed name values in the form
           const formValues = {
             name: getFormDisplayName(data),
             email: data.email || email,
@@ -159,17 +140,13 @@ export default function ProfilePage() {
             telephone: data.telephone || "",
             address: data.address || "",
           };
-
-          console.log("Setting form values:", formValues);
           form.reset(formValues);
         } catch (err) {
-          console.error("Error fetching profile:", err);
           setAlertSuccess(false);
           setAlertMessage("Failed to load profile.");
           setShowAlert(true);
         }
       };
-
       fetchProfile();
     }
   }, [isLoading, user, form]);
@@ -178,8 +155,6 @@ export default function ProfilePage() {
     setIsUpdating(true);
     try {
       const formData = new FormData();
-
-      // Always send the name field if it exists
       if (values.name && values.name.trim()) {
         formData.append("name", values.name.trim());
       }
@@ -195,43 +170,20 @@ export default function ProfilePage() {
       if (values.address && values.address.trim()) {
         formData.append("address", values.address.trim());
       }
-
-      // Handle image removal
       if (imageToRemove) {
         formData.append("removePicture", "true");
-        console.log("🗑️ Frontend: Sending removePicture flag");
       }
-
       const fileInput = document.getElementById("picture") as HTMLInputElement;
       const newPicture = fileInput?.files?.[0];
-
       if (newPicture) {
         formData.append("picture", newPicture);
-        console.log("📸 Frontend: Sending new picture");
       }
-
-      console.log("Updating profile with data:", Object.fromEntries(formData.entries()));
-
       const { data } = await axios.patch(
         `${BACKEND_URL}/user/profile/${encodeURIComponent(values.email)}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-
-      console.log("Update response:", data);
-
-      // Verify the response contains the updated name
-      if (values.name && values.name.trim() && (!data.name || data.name !== values.name.trim())) {
-        console.warn("Server response doesn't contain updated name:", {
-          sent: values.name.trim(),
-          received: data.name
-        });
-      }
-
-      // Update local state with the response from server
       setProfileData(data);
-
-      // Reset form with updated values from server response
       const updatedFormValues = {
         name: getFormDisplayName(data),
         email: data.email || values.email,
@@ -240,32 +192,20 @@ export default function ProfilePage() {
         telephone: data.telephone || "",
         address: data.address || "",
       };
-
-      console.log("Resetting form with updated values:", updatedFormValues);
       form.reset(updatedFormValues);
-
-      // Reset image removal flag and clear file input
       setImageToRemove(false);
       const fileInputElement = document.getElementById("picture") as HTMLInputElement;
       if (fileInputElement) {
         fileInputElement.value = "";
       }
-
       setAlertSuccess(true);
       setAlertMessage("Profile updated successfully.");
       setShowAlert(true);
       setIsEditing(false);
-
       setTimeout(() => {
         window.location.reload();
       }, 500);
-
     } catch (err) {
-      console.error("Error updating profile:", err);
-      if (axios.isAxiosError(err)) {
-        console.error("Response data:", err.response?.data);
-        console.error("Response status:", err.response?.status);
-      }
       setAlertSuccess(false);
       setAlertMessage("Failed to update profile. Please try again.");
       setShowAlert(true);
@@ -283,7 +223,6 @@ export default function ProfilePage() {
           ...prev,
           picture: reader.result as string,
         }));
-        // Reset the remove flag since we're adding a new image
         setImageToRemove(false);
       };
       reader.readAsDataURL(file);
@@ -291,13 +230,11 @@ export default function ProfilePage() {
   };
 
   const handleRemoveImage = () => {
-    console.log("🗑️ Frontend: Image removal requested");
     setImageToRemove(true);
     setProfileData((prev: any) => ({
       ...prev,
       picture: null,
     }));
-    // Clear the file input
     const fileInput = document.getElementById("picture") as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
@@ -374,7 +311,6 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-bold text-black">
                   {getDisplayName(profileData)}
                 </h2>
-               {/* <p className="text-md text-gray-800">{profileData.email}</p>*/}
                 <Button
                   variant="ghost"
                   size="lg"
@@ -481,9 +417,9 @@ export default function ProfilePage() {
                             <Input
                               {...field}
                               type="tel"
-                              placeholder="+94 7xxxxxxxx"
+                              placeholder="+947xxxxxxxx"
                               disabled={!isEditing}
-                              maxLength={13}
+                              maxLength={12}
                             />
                           </FormControl>
                           <FormMessage />
@@ -549,5 +485,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-

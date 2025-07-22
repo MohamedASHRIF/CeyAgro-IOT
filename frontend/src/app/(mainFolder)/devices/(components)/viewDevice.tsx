@@ -226,7 +226,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             }
 
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/update?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "PATCH",
                     body: formData,
@@ -259,7 +259,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const handleDeleteDevice = async () => {
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
                 {
                     method: "DELETE",
                 }
@@ -327,20 +327,23 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         }
     };
 
-    const getImageSrc = () => {
-        const fallback = "https://placehold.co/200x200?text=No+Image";
+   const getImageSrc = () => {
+    const fallback = "https://placehold.co/200x200?text=No+Image";
 
-        if (imageToRemove) return fallback;
+    if (imageToRemove) return fallback;
 
-        if (previewImage) {
-            if (previewImage.startsWith("data:")) return previewImage;
-            if (previewImage.startsWith("/uploads")) return `${process.env.NEXT_PUBLIC_BACKEND_URL}${previewImage}`;
-            return previewImage;
+    if (previewImage) {
+        if (previewImage.startsWith("data:")) return previewImage;
+        if (previewImage.startsWith("/uploads")) {
+            // Remove /device-api from the end of the backend URL if present
+            const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/device-api$/, "");
+            return `${baseUrl}${previewImage}`;
         }
+        return previewImage;
+    }
 
-        return fallback;
-    };
-
+    return fallback;
+};
     if (!userDeviceData)
         return (
             <div className="flex flex-col items-center justify-center h-screen text-center px-4">

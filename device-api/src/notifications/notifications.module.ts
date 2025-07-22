@@ -1,4 +1,4 @@
-// //notification.module.ts
+// //notifications.module.ts
 // import { Module } from '@nestjs/common';
 // import { MongooseModule } from '@nestjs/mongoose';
 // import { NotificationsService } from './notifications.service';
@@ -8,16 +8,12 @@
 //   Notification,
 //   NotificationSchema,
 // } from './schemas/notification.schema';
-// import { FirebaseModule } from '../firebase/firebase.module';
-// import { UsersModule } from '../users/users.module';
 
 // @Module({
 //   imports: [
 //     MongooseModule.forFeature([
 //       { name: Notification.name, schema: NotificationSchema },
 //     ]),
-//     FirebaseModule,
-//     UsersModule,
 //   ],
 //   controllers: [NotificationsController],
 //   providers: [NotificationsService, NotificationsGateway],
@@ -34,12 +30,14 @@ import {
   Notification,
   NotificationSchema,
 } from './schemas/notification.schema';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Notification.name, schema: NotificationSchema },
     ]),
+    UsersModule, // Import UsersModule to provide User model
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationsGateway],
