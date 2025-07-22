@@ -27,8 +27,6 @@
 //   }
 // }
 
-
-
 // // users/users.service.ts
 // import { Injectable, Logger } from '@nestjs/common';
 // import { InjectModel } from '@nestjs/mongoose';
@@ -85,14 +83,6 @@
 //     }
 //   }
 // }
-
-
-
-
-
-
-
-
 
 // import { Injectable, Logger } from '@nestjs/common';
 // import { InjectModel } from '@nestjs/mongoose';
@@ -176,7 +166,6 @@
 //   }
 // }
 
-
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -199,9 +188,12 @@ export class UsersService {
         this.logger.warn(`User not found: ${userId}`);
         return null;
       }
-      return user.fcmToken || null;
+      // return user.fcmToken || null;
     } catch (error) {
-      this.logger.error(`Error retrieving FCM token for user ${userId}:`, error);
+      this.logger.error(
+        `Error retrieving FCM token for user ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -218,11 +210,7 @@ export class UsersService {
       }
       await this.ensureUserExists(userId);
       const user = await this.userModel
-        .findOneAndUpdate(
-          { userId },
-          { fcmToken },
-          { upsert: true, new: true },
-        )
+        .findOneAndUpdate({ userId }, { fcmToken }, { upsert: true, new: true })
         .exec();
       this.logger.log(`Updated FCM token for user ${userId}: ${fcmToken}`);
     } catch (error) {
