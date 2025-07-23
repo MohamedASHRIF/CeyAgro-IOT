@@ -308,9 +308,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import io, { Socket } from "socket.io-client";
 
-//const API_BASE = "http://localhost:3001/user";
+const API_BASE = "http://localhost:3001";
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3001";
+  process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3002/device-api";
 
 interface Notification {
   id: string;
@@ -489,7 +489,7 @@ export const DashboardHeader = () => {
   useEffect(() => {
     if (!isAuthLoading && user?.email) {
       axios
-        .get(`${BACKEND_URL}/user/profile-short/${encodeURIComponent(user.email)}`)
+        .get(`${API_BASE}/user/profile-short/${encodeURIComponent(user.email)}`)
         .then(({ data }) => {
           console.log("Fetched profile data:", data);
           setProfileData(data);
@@ -570,7 +570,7 @@ export const DashboardHeader = () => {
   src={
     profileData?.picture
       ? profileData.picture.startsWith("/uploads")
-        ? `${BACKEND_URL}${profileData.picture}`
+        ? `${API_BASE}${profileData.picture}`
         : profileData.picture.startsWith("http")
           ? profileData.picture
           : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
