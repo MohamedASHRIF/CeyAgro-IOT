@@ -1,5 +1,180 @@
 
 
+// // // hari eka
+// import { Injectable, NotFoundException } from '@nestjs/common';
+// import { InjectModel } from '@nestjs/mongoose';
+// import { Model } from 'mongoose';
+// import { User } from './schema/user.schema';
+// import { UpdateUserDto } from './dto/user.dto';
+// import * as path from 'path';
+// import * as fs from 'fs';
+// import * as uuid from 'uuid';
+
+// @Injectable()
+// export class UserService {
+//   private uploadsDir: string;
+
+//   constructor(@InjectModel(User.name) private userModel: Model<User>) {
+//     // Fix: Use process.cwd() to get the project root directory
+//     this.uploadsDir = path.join(process.cwd(), 'uploads');
+
+//     console.log(' Uploads directory path:', this.uploadsDir);
+
+//     // Ensure uploads directory exists
+//     if (!fs.existsSync(this.uploadsDir)) {
+//       fs.mkdirSync(this.uploadsDir, { recursive: true });
+//       console.log('✅ Created uploads directory:', this.uploadsDir);
+//     } else {
+//       console.log('✅ Uploads directory already exists:', this.uploadsDir);
+//     }
+//   }
+
+//   // ==================== PROFILE MANAGEMENT METHODS ====================
+
+//   async getProfile(email: string): Promise<Partial<User>> {
+//     const user = await this.userModel
+//       .findOne({ email })
+//       .select('name email nic gender telephone address picture -_id')
+//       .exec();
+//     if (!user) throw new NotFoundException('User not found');
+//     return user;
+//   }
+
+//   async updateProfile(
+//     email: string,
+//     updateUserDto: UpdateUserDto,
+//     picture?: Express.Multer.File,
+//     removePicture?: string,
+//   ): Promise<User> {
+//     const user = await this.userModel.findOne({ email });
+//     if (!user) throw new NotFoundException('User not found');
+
+//     console.log(' Update DTO received:', updateUserDto);
+//     console.log(' Email:', email);
+//     console.log(' Current user name:', user.name);
+//     console.log(' Remove picture flag:', removePicture);
+
+//     // Handle picture removal FIRST
+//     if (removePicture === 'true') {
+//       console.log(' Removing existing picture...');
+
+//       // Delete the old picture file if it exists
+//       if (user.picture && user.picture.startsWith('/uploads/')) {
+//         const fileName = user.picture.replace('/uploads/', '');
+//         const oldFilePath = path.join(this.uploadsDir, fileName);
+//         if (fs.existsSync(oldFilePath)) {
+//           try {
+//             fs.unlinkSync(oldFilePath);
+//             console.log(' Old picture file deleted:', oldFilePath);
+//           } catch (error) {
+//             console.error('❌ Error deleting old picture file:', error);
+//           }
+//         }
+//       }
+
+//       // Clear the picture field
+//       user.picture = null;
+//       console.log('✅ Picture removed from user profile');
+//     }
+
+//     // Handle new picture upload (only if not removing)
+//     if (picture && removePicture !== 'true') {
+//       console.log(' Uploading new picture...');
+//       console.log(' Picture buffer size:', picture.buffer.length);
+//       console.log(' Picture original name:', picture.originalname);
+
+//       // Delete old picture file if it exists
+//       if (user.picture && user.picture.startsWith('/uploads/')) {
+//         const fileName = user.picture.replace('/uploads/', '');
+//         const oldFilePath = path.join(this.uploadsDir, fileName);
+//         if (fs.existsSync(oldFilePath)) {
+//           try {
+//             fs.unlinkSync(oldFilePath);
+//             console.log(' Old picture file replaced:', oldFilePath);
+//           } catch (error) {
+//             console.error('❌ Error deleting old picture file:', error);
+//           }
+//         }
+//       }
+
+//       // Generate unique filename
+//       const fileName = `${uuid.v4()}${path.extname(picture.originalname)}`;
+//       const filePath = path.join(this.uploadsDir, fileName);
+
+//       console.log('💾 Saving picture to:', filePath);
+
+//       try {
+//         // Ensure the uploads directory still exists
+//         if (!fs.existsSync(this.uploadsDir)) {
+//           fs.mkdirSync(this.uploadsDir, { recursive: true });
+//           console.log('✅ Re-created uploads directory:', this.uploadsDir);
+//         }
+
+//         fs.writeFileSync(filePath, picture.buffer);
+//         user.picture = `/uploads/${fileName}`;
+//         console.log('✅ New picture uploaded successfully:', fileName);
+//         console.log('✅ File saved at:', filePath);
+//         console.log('✅ File exists check:', fs.existsSync(filePath));
+
+//         // Log file stats for debugging
+//         const stats = fs.statSync(filePath);
+//         console.log('File size:', stats.size, 'bytes');
+//       } catch (error) {
+//         console.error('❌ Error saving new picture:', error);
+//         console.error('❌ Upload directory:', this.uploadsDir);
+//         console.error('❌ File path:', filePath);
+//         throw new Error(`Failed to save picture: ${error.message}`);
+//       }
+//     }
+
+//     // Update other fields only if provided and not empty
+//     if (updateUserDto.name !== undefined) {
+//       console.log(' Name update requested:', `"${updateUserDto.name}"`);
+//       console.log(' Name after trim:', `"${updateUserDto.name.trim()}"`);
+//       console.log(
+//         ' Is name empty after trim?',
+//         updateUserDto.name.trim() === '',
+//       );
+
+//       if (updateUserDto.name.trim() !== '') {
+//         console.log('✅ Setting new name:', updateUserDto.name);
+//         user.name = updateUserDto.name;
+//       } else if (!user.name) {
+//         console.log(' Setting default name from email');
+//         user.name = user.email.split('@')[0];
+//       } else {
+//         console.log(' Keeping existing name:', user.name);
+//       }
+//     }
+
+//     console.log(' Final name before save:', user.name);
+//     console.log(' Final picture before save:', user.picture);
+
+//     if (updateUserDto.nic !== undefined) user.nic = updateUserDto.nic;
+//     if (updateUserDto.gender !== undefined) user.gender = updateUserDto.gender;
+//     if (updateUserDto.telephone !== undefined)
+//       user.telephone = updateUserDto.telephone;
+//     if (updateUserDto.address !== undefined)
+//       user.address = updateUserDto.address;
+
+//     // Update the updated_at timestamp
+//     user.updated_at = new Date();
+
+//     const savedUser = await user.save();
+//     console.log('✅ User saved with name:', savedUser.name);
+//     console.log('✅ User saved with picture:', savedUser.picture);
+//     return savedUser;
+//   }
+
+//   async getProfileShort(email: string) {
+//     const user = await this.userModel.findOne({ email });
+//     if (!user) throw new NotFoundException('User not found');
+//     return {
+//       name: user.name,
+//       picture: user.picture,
+//     };
+//   }
+
 // // hari eka
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
