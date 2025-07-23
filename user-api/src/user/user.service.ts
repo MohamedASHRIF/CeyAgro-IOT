@@ -285,6 +285,7 @@ async updateProfile(
     };
   }
 
+
   // ==================== AUTH0 & USER MANAGEMENT METHODS ====================
 
   async getUserByEmail(email: string): Promise<User> {
