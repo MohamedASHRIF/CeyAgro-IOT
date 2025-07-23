@@ -91,8 +91,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { expressjwt } from 'express-jwt';
 import * as cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -113,11 +111,11 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // Add static file serving for uploads
-  const uploadsPath = join(process.cwd(), 'uploads');
-  console.log('Serving static files from:', uploadsPath);
+  //const uploadsPath = join(process.cwd(), 'uploads');
+  //console.log('Serving static files from:', uploadsPath);
   
   // Serve uploads folder - this should come BEFORE JWT middleware
-  app.use('/uploads', express.static(uploadsPath, {
+  /*app.use('/uploads', express.static(uploadsPath, {
     maxAge: '1d', // Cache for 1 day
     etag: false,
     setHeaders: (res, path) => {
@@ -132,7 +130,7 @@ async function bootstrap() {
         res.setHeader('Content-Type', 'image/webp');
       }
     }
-  }));
+  }));*/
 
   // JWT middleware with public routes (including uploads)
   app.use(
@@ -156,6 +154,6 @@ async function bootstrap() {
   // Use port 3001 
   await app.listen(3001);
   console.log(`Application is running on: http://localhost:3001`);
-  console.log('Images accessible at: http://localhost:3001/uploads/filename.jpg');
+  //console.log('Images accessible at: http://localhost:3001/uploads/filename.jpg');
 }
 bootstrap();

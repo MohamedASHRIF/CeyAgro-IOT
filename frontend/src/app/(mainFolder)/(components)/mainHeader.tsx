@@ -228,7 +228,7 @@ export const DashboardHeader = () => {
         <SidebarTrigger className="mr-2" />
       </div>
 
-      <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden sm:block">
+<div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
         {profileData && profileData.name ? (
           <span className="text-lg text-foreground font-semibold flex items-center gap-1">
             <Icon
@@ -268,15 +268,19 @@ export const DashboardHeader = () => {
               }
             }}
           >
-            <AvatarImage
-              src={
-                profileData?.picture?.startsWith("/uploads")
-                  ? `${BACKEND_URL}${profileData.picture}`
-                  : "/default.png"
-              }
-              className="border border-muted-foreground rounded-full"
-              alt="User Profile"
-            />
+         <AvatarImage
+  src={
+    profileData?.picture
+      ? profileData.picture.startsWith("/uploads")
+        ? `${BACKEND_URL}${profileData.picture}`
+        : profileData.picture.startsWith("http")
+          ? profileData.picture
+          : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+      : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+  }
+  className="border border-muted-foreground rounded-full"
+  alt="User Profile"
+/>
           </Avatar>
         </Link>
 

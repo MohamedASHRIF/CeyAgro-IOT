@@ -265,19 +265,20 @@ export default function ProfilePage() {
                   htmlFor="picture"
                   className="relative w-40 h-40 rounded-full overflow-hidden cursor-pointer group block"
                 >
-                  <img
-                    src={
-                      profileData.picture && !imageToRemove
-                        ? profileData.picture.startsWith("data:")
-                          ? profileData.picture
-                          : profileData.picture.startsWith("/uploads")
-                            ? `${BACKEND_URL}${profileData.picture}`
-                            : "/default.png"
-                        : "/default.png"
-                    }
-                    alt="Profile Picture"
-                    className="object-cover w-full h-full rounded-full"
-                  />
+                 <img
+  src={
+    profileData.picture && !imageToRemove
+      ? profileData.picture.startsWith("data:") ||
+        profileData.picture.startsWith("http")
+        ? profileData.picture
+        : profileData.picture.startsWith("/uploads")
+          ? `${BACKEND_URL}${profileData.picture}`
+          :  "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+      :  "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+  }
+  alt="Profile Picture"
+  className="object-cover w-full h-full rounded-full"
+/>
 
                   {isEditing && (
                     <div className="absolute inset-0 bg-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
