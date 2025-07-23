@@ -1321,9 +1321,15 @@ export const NotificationList: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const socketRef = useRef<Socket | null>(null);
+<<<<<<< Updated upstream
   
   const vapidKey = "BPLGOtyyZvSjlT06sF_GUfdSjgV-AI8RNIuZtskSDKcl0i4vN-zatt1x5RJImPTF66qhnje13S1LgxjLlbT1kUg";
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002";
+=======
+
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002/device-api";
+>>>>>>> Stashed changes
 
   const { user, isLoading: isAuthLoading } = useUser();
 

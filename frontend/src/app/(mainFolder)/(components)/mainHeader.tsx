@@ -136,7 +136,22 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+<<<<<<< Updated upstream
 const API_BASE = "http://localhost:3001/user";  //define the base api
+=======
+const API_BASE = "http://localhost:3001";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL;
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  userId: string;
+  timestamp: string;
+  read: boolean;
+}
+>>>>>>> Stashed changes
 
 export const DashboardHeader = () => {
   const [time, setTime] = useState(new Date());
@@ -153,6 +168,21 @@ export const DashboardHeader = () => {
     return () => clearInterval(interval);
   }, []);
 
+<<<<<<< Updated upstream
+=======
+  useEffect(() => {
+    if (!isAuthLoading && user?.email) {
+      axios
+        .get(`${API_BASE}/user/profile-short/${encodeURIComponent(user.email)}`)
+        .then(({ data }) => {
+          console.log("Fetched profile data:", data);
+          setProfileData(data);
+        })
+        .catch((err) => console.error("Failed to load profile:", err));
+    }
+  }, [isAuthLoading, user]);
+
+>>>>>>> Stashed changes
   const hour = time.getHours();
   const greeting =
     hour < 12 ? "Good Morning" : hour < 15 ? "Good Afternoon" : "Good Evening";
@@ -235,6 +265,7 @@ export const DashboardHeader = () => {
               }
             }}
           >
+<<<<<<< Updated upstream
             <AvatarImage
               src={
                 profileData?.picture?.startsWith("/uploads")
@@ -244,6 +275,21 @@ export const DashboardHeader = () => {
               className="border border-muted-foreground rounded-full"
               alt="User Profile"
             />
+=======
+         <AvatarImage
+  src={
+    profileData?.picture
+      ? profileData.picture.startsWith("/uploads")
+        ? `${API_BASE}${profileData.picture}`
+        : profileData.picture.startsWith("http")
+          ? profileData.picture
+          : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+      : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+  }
+  className="border border-muted-foreground rounded-full"
+  alt="User Profile"
+/>
+>>>>>>> Stashed changes
           </Avatar>
         </Link>
       </div>
