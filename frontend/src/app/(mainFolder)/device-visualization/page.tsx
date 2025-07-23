@@ -177,7 +177,7 @@ export default function VisualizationPage() {
       {/* Top controls */}
       <div className="flex gap-4 mb-6">
         <Select value={selectedDevice || ""} onValueChange={handleDeviceChange} disabled={devices.length === 0}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[200px] border-2 border-white ">
             <SelectValue placeholder="Select Device" />
           </SelectTrigger>
           <SelectContent>
@@ -189,7 +189,7 @@ export default function VisualizationPage() {
           </SelectContent>
         </Select>
         <Select value={selectedMetric || ""} onValueChange={handleMetricChange} disabled={metrics.length === 0}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[200px] border-2 border-white">
             <SelectValue placeholder="Select Metric" />
           </SelectTrigger>
           <SelectContent>
@@ -201,7 +201,7 @@ export default function VisualizationPage() {
           </SelectContent>
         </Select>
         <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[200px] border-2 border-white">
             <SelectValue placeholder="Select Time Range" />
           </SelectTrigger>
           <SelectContent>
