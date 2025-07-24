@@ -25,7 +25,7 @@ export function DynamicChart({
 }: {
   device: string | null;
   deviceName: string | null;
-  metric: "temperature" | "humidity";
+  metric: string;
   timeRange: "lastHour" | "lastDay";
 }) {
   const { user } = useUser();

@@ -20,7 +20,7 @@ export function ComparisonChart({ deviceA, deviceAName, deviceB, deviceBName, me
   deviceAName: string;
   deviceB: string;
   deviceBName: string;
-  metric: "temperature" | "humidity";
+  metric: string;
   startDateA: string;
   endDateA: string;
   startDateB: string;

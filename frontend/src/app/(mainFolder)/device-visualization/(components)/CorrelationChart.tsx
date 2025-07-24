@@ -15,11 +15,13 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
-export function CorrelationChart({ device, deviceName, startDate, endDate }: {
-  device: string | null;
-  deviceName: string | null;
+export function CorrelationChart({ device, deviceName, startDate, endDate, xType, yType }: {
+  device: string | undefined;
+  deviceName: string | undefined;
   startDate: string;
   endDate: string;
+  xType: string | undefined;
+  yType: string | undefined;
 }) {
   const { user } = useUser();
   const [correlation, setCorrelation] = useState<number | null>(null);
@@ -28,11 +30,11 @@ export function CorrelationChart({ device, deviceName, startDate, endDate }: {
   const [noData, setNoData] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!device || !startDate || !endDate) return;
+    if (!device || !startDate || !endDate || !xType || !yType) return;
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/correlation/${device}?startDate=${startDate}&endDate=${endDate}&email=${encodeURIComponent(user?.email || "")}`
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/correlation/${device}?startDate=${startDate}&endDate=${endDate}&xType=${xType}&yType=${yType}&email=${encodeURIComponent(user?.email || "")}`
         );
         const apiData = response.data;
         if (!apiData || typeof apiData.correlation !== "number") {
@@ -53,21 +55,21 @@ export function CorrelationChart({ device, deviceName, startDate, endDate }: {
       }
     };
     fetchData();
-  }, [device, startDate, endDate, user]);
+  }, [device, startDate, endDate, xType, yType, user]);
 
   if (error || noData) {
-    return <div><h2>Correlation for {deviceName || device || "Device"}</h2><p className="text-red-500">{error || "No correlation data available"}</p></div>;
+    return <div><h2>Correlation for {deviceName ?? device ?? "Device"}</h2><p className="text-red-500">{error || "No correlation data available"}</p></div>;
   }
 
   return (
     <div className="chart-container w-full h-[300px]">
-      <h2 className="mb-2">Correlation (Temp vs. Humidity): {correlation !== null ? correlation.toFixed(2) : "N/A"}</h2>
+      <h2 className="mb-2">Correlation ({xType} vs. {yType}): {correlation !== null ? correlation.toFixed(2) : "N/A"}</h2>
       {scatterData.length > 0 ? (
         <Scatter
           data={{
             datasets: [
               {
-                label: "Temp vs. Humidity",
+                label: `${xType} vs. ${yType}`,
                 data: scatterData.map((pt: any) => ({ x: pt.x, y: pt.y })),
                 backgroundColor: "rgba(54, 162, 235, 0.7)",
               },
@@ -77,8 +79,8 @@ export function CorrelationChart({ device, deviceName, startDate, endDate }: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-              x: { title: { display: true, text: "Temperature" } },
-              y: { title: { display: true, text: "Humidity" } },
+              x: { title: { display: true, text: xType } },
+              y: { title: { display: true, text: yType } },
             },
             plugins: { legend: { display: true } },
           }}
