@@ -11,10 +11,10 @@ import { Notification as NotificationInterface } from './interfaces/notification
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: '*',
     credentials: true,
   },
-  namespace: '/notifications',
+  namespace: '/device-api/notifications',
 })
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect

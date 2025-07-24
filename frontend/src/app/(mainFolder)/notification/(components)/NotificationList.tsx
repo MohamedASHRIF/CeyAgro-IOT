@@ -1875,7 +1875,7 @@ export const NotificationList: React.FC = () => {
   const socketRef = useRef<Socket | null>(null);
 
   const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002";
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002/device-api";
 
   const { user, isLoading: isAuthLoading } = useUser();
 
