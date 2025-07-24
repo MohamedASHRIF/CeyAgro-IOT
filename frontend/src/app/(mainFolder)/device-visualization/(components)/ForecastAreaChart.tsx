@@ -13,12 +13,13 @@ import {
   CategoryScale,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import type { ChartOptions } from 'chart.js';
 
 ChartJS.register(LineElement, PointElement, LinearScale, TimeScale, Tooltip, Legend, Filler, CategoryScale);
 
 interface ForecastAreaChartProps {
-  device: string;
-  metric: string;
+  device: string | undefined;
+  metric: string | undefined;
   email: string;
   futureWindow?: number; // in hours
   min?: number;
@@ -99,12 +100,10 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
         tension: 0.2,
         order: 1,
         spanGaps: true,
-        parsing: true,
-        datalabels: { align: 'end', anchor: 'end' },
         fill: false,
       },
       {
-        label: `Forecasted ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
+        label: `Forecasted ${metric ? metric.charAt(0).toUpperCase() + metric.slice(1) : ''}`,
         data: forecastPoints,
         borderColor: 'rgba(54, 162, 235, 1)',
         backgroundColor: 'rgba(54, 162, 235, 0.1)',
@@ -125,7 +124,6 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
         fill: '+1', // fill to next dataset (upper bound)
         order: 0,
         tension: 0.3,
-        parsing: true,
       },
       {
         label: 'Upper Bound',
@@ -136,12 +134,11 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
         fill: false,
         order: 0,
         tension: 0.3,
-        parsing: true,
       },
     ],
   };
 
-  const options = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     plugins: {
       legend: { display: true },
@@ -154,7 +151,7 @@ const ForecastAreaChart: React.FC<ForecastAreaChartProps> = ({ device, metric, e
         title: { display: true, text: 'Time' },
       },
       y: {
-        title: { display: true, text: metric.charAt(0).toUpperCase() + metric.slice(1) },
+        title: { display: true, text: metric ? metric.charAt(0).toUpperCase() + metric.slice(1) : '' },
         beginAtZero: false,
       },
     },
