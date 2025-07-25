@@ -469,4 +469,12 @@ async updateProfile(
       throw new Error(`Failed to update subscription status: ${error.message}`);
     }
   }
+  // user.service.ts
+
+async getLoginCountByEmail(email: string): Promise<number> {
+  const normalizedEmail = email.toLowerCase();
+  const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
+  if (!user) throw new NotFoundException('User not found');
+  return user.login_count;
+}
 }

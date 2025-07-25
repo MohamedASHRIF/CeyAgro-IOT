@@ -94,5 +94,14 @@ export class UserController {
       picture: profile.picture,
     };
   }
+
+  //login count 
+  // user.controller.ts
+
+@Get('login-count/:email')
+async getLoginCount(@Param('email') email: string) {
+  const count = await this.userService.getLoginCountByEmail(email);
+  return { count };
+}
 }
 

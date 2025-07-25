@@ -15,7 +15,7 @@ import {
     FormMessage
 } from "@/components/ui/form";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Pencil, BarChart, X, Upload } from "lucide-react";
+import { Pencil, BarChart, X } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogFooter,
@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/select";
 
 // Types
-
 type DeviceType = {
     type: string;
     minValue: number;
@@ -48,7 +47,6 @@ type DeviceData = {
     serialNumber: string;
     location: string;
     description: string;
-    deviceImage?: string | null;
     isActive: boolean;
     deviceTypes: DeviceType[];
 };
@@ -56,7 +54,6 @@ type DeviceData = {
 type UserDevice = {
     email: string;
     deviceId: string;
-    deviceImage?: string | null;
 };
 
 type CombinedDevice = DeviceData & Partial<UserDevice>;
@@ -65,8 +62,6 @@ type DevicePageProps = {
     deviceId: string;
     userEmail: string;
 };
-
-//  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const DEVICE_TYPE_OPTIONS = [
     "Temperature",
@@ -91,22 +86,13 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSuccess, setAlertSuccess] = useState(true);
-    const [imageToRemove, setImageToRemove] = useState(false);
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
+
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    const form = useForm<CombinedDevice>({
-        defaultValues: {},
-    });
-
+    const form = useForm<CombinedDevice>({ defaultValues: {} });
     const { control, reset, handleSubmit, setError, clearErrors } = form;
+    const { fields, append, remove } = useFieldArray({ control, name: "deviceTypes" });
 
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "deviceTypes",
-    });
-
-    // Refactored fetchDeviceData so it can be called after update
     const fetchDeviceData = useCallback(async () => {
         if (!deviceId || !email) return;
         try {
@@ -115,7 +101,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
             );
 
             if (!res.ok) throw new Error("Failed to fetch device data");
-
             const json = await res.json();
             if (!json.success) throw new Error("API returned failure");
 
@@ -126,13 +111,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
 
             setUserDeviceData(combined);
             reset(combined);
-
-            // Set initial preview image
-            if (combined.deviceImage) {
-                setPreviewImage(combined.deviceImage);
-            } else {
-                setPreviewImage(null);
-            }
         } catch (error: any) {
             setAlertSuccess(false);
             setAlertMessage(error.message || "Failed to load device data from server");
@@ -148,14 +126,11 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
 
     const handleCancel = () => {
         setIsEditing(false);
-        setImageToRemove(false);
         setSelectedFile(null);
-        setPreviewImage(userDeviceData?.deviceImage || null);
         if (userDeviceData) reset(userDeviceData);
         clearErrors("deviceTypes");
     };
 
-    // Prevent removing the last device type
     const handleRemoveType = (index: number) => {
         if (fields.length > 1) {
             remove(index);
@@ -165,13 +140,11 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         }
     };
 
-    // Prevent submitting if deviceTypes is empty or min/max invalid
     const onSubmit = (values: CombinedDevice) => {
         if (!values.deviceTypes || values.deviceTypes.length === 0) {
             setError("deviceTypes", { type: "manual", message: "At least one device type is required." });
             return;
         }
-        // Validate min/max for each device type
         for (let i = 0; i < values.deviceTypes.length; i++) {
             const { minValue, maxValue } = values.deviceTypes[i];
             if (minValue === maxValue) {
@@ -194,35 +167,18 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const handleSave = async (values: CombinedDevice) => {
         try {
             const formData = new FormData();
-
             Object.entries(values).forEach(([key, value]) => {
-                if (
-                    key !== "deviceImage" &&
-                    key !== "deviceTypes" &&
-                    value !== undefined &&
-                    value !== null
-                ) {
+                if (key !== "deviceTypes" && value !== undefined && value !== null) {
                     formData.append(key, typeof value === "boolean" ? String(value) : String(value));
                 }
             });
 
-            // Handle deviceTypes array
             if (values.deviceTypes && Array.isArray(values.deviceTypes)) {
                 values.deviceTypes.forEach((typeObj, index) => {
                     formData.append(`deviceTypes[${index}][type]`, typeObj.type);
                     formData.append(`deviceTypes[${index}][minValue]`, String(typeObj.minValue));
                     formData.append(`deviceTypes[${index}][maxValue]`, String(typeObj.maxValue));
                 });
-            }
-
-            // Handle image removal
-            if (imageToRemove) {
-                formData.append("removedeviceImage", "true");
-            }
-
-            // Handle new image upload
-            if (selectedFile) {
-                formData.append("deviceImage", selectedFile);
             }
 
             const res = await fetch(
@@ -233,18 +189,13 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                 }
             );
 
-            if (!res.ok) throw new Error("Failed to update device");
-
             const json = await res.json();
-
-            if (!json.success) {
-                throw new Error(json.message || "Update failed");
+            if (!res.ok || !json.success) {
+                throw new Error(json.message || "Failed to update device");
             }
 
-            // Instead of manual state update, just refresh the card
             await fetchDeviceData();
             setIsEditing(false);
-            setImageToRemove(false);
             setSelectedFile(null);
             setAlertSuccess(true);
             setAlertMessage("Device updated successfully!");
@@ -260,13 +211,9 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         try {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/unregister?email=${encodeURIComponent(email)}&deviceId=${encodeURIComponent(deviceId)}`,
-                {
-                    method: "DELETE",
-                }
+                { method: "DELETE" }
             );
-
             const data = await res.json();
-
             if (res.ok) {
                 setUserDeviceData(null);
                 setAlertSuccess(true);
@@ -284,66 +231,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         }
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Validate file type
-            if (!file.type.startsWith("image/")) {
-                setAlertSuccess(false);
-                setAlertMessage("Please select a valid image file.");
-                setShowAlert(true);
-                return;
-            }
-
-            // Validate file size (5MB limit)
-            if (file.size > 5 * 1024 * 1024) {
-                setAlertSuccess(false);
-                setAlertMessage("Image size must be less than 5MB.");
-                setShowAlert(true);
-                return;
-            }
-
-            setSelectedFile(file);
-            setImageToRemove(false);
-
-            // Create preview
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviewImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleRemoveImage = () => {
-        setImageToRemove(true);
-        setSelectedFile(null);
-        setPreviewImage(null);
-
-        // Clear the file input
-        const fileInput = document.getElementById("deviceImage") as HTMLInputElement;
-        if (fileInput) {
-            fileInput.value = "";
-        }
-    };
-
-   const getImageSrc = () => {
-    const fallback = "https://placehold.co/200x200?text=No+Image";
-
-    if (imageToRemove) return fallback;
-
-    if (previewImage) {
-        if (previewImage.startsWith("data:")) return previewImage;
-        if (previewImage.startsWith("/uploads")) {
-            // Remove /device-api from the end of the backend URL if present
-            const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/device-api$/, "");
-            return `${baseUrl}${previewImage}`;
-        }
-        return previewImage;
-    }
-
-    return fallback;
-};
     if (!userDeviceData)
         return (
             <div className="flex flex-col items-center justify-center h-screen text-center px-4">
@@ -356,151 +243,79 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         <div className="container mx-auto p-4">
             <Card className="max-w-3xl mx-auto bg-teal-400">
                 <CardHeader>
-                    <div className="flex flex-col md:flex-row items-center md:items-start gap-8 min-h-[400px]">
-                        <div className="flex flex-col items-center justify-center w-full md:w-1/3 h-full">
-                            <div className="relative mt-6">
-                                <label
-                                    htmlFor="deviceImage"
-                                    className="relative w-48 h-48 rounded-md overflow-hidden border-2 border-white cursor-pointer group block"
-                                >
-                                    <img
-                                        src={getImageSrc()}
-                                        alt="Device Image"
-                                        className="w-full h-full object-cover"
-                                    />
-                                    {isEditing && (
-                                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <div className="text-white text-center">
-                                                <Upload className="w-6 h-6 mx-auto mb-1" />
-                                                <span className="text-sm">Change Image</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <input
-                                        id="deviceImage"
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleImageUpload}
-                                        disabled={!isEditing}
-                                    />
-                                </label>
-                                {isEditing && (previewImage || userDeviceData.deviceImage) && !imageToRemove && (
-                                    <button
-                                        type="button"
-                                        onClick={handleRemoveImage}
-                                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors cursor-pointer"
-                                        title="Remove image"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                )}
+                    <div className="flex flex-col items-center gap-8 w-full">
+                        {/* Device Info Top Section */}
+                        <div className="flex flex-col items-center w-full">
+                            <h2 className="text-3xl font-bold text-black text-center">
+                                {userDeviceData.deviceName}
+                            </h2>
+                            <div className={`mt-4 inline-flex items-center gap-3 px-4 py-2 rounded-full font-semibold ${userDeviceData.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                }`}>
+                                <span className={`h-4 w-4 rounded-full ${userDeviceData.isActive ? "bg-green-600" : "bg-red-600"
+                                    }`} />
+                                <span>{userDeviceData.isActive ? "Active" : "Inactive"}</span>
                             </div>
-                            <div className="flex flex-col items-center w-full mt-2 px-2">
-                                <h2 className="text-2xl font-bold text-black">
-                                    {userDeviceData.deviceName}
-                                </h2>
-                                <div
-                                    className={`mt-2 inline-flex items-center gap-3 px-3 py-1 rounded-full font-semibold ${userDeviceData.isActive
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-red-100 text-red-800"
-                                        }`}
-                                >
-                                    <span
-                                        className={`h-4 w-4 rounded-full ${userDeviceData.isActive ? "bg-green-600" : "bg-red-600"
-                                            }`}
-                                    />
-                                    <span>{userDeviceData.isActive ? "Active" : "Inactive"}</span>
-                                </div>
-                                <div className="flex flex-row md:flex-col items-center justify-center gap-4 mt-6 w-full">
-                                    <div className="flex flex-row gap-2 justify-center items-center">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleEditToggle}
-                                            className="text-black bg-white cursor-pointer flex items-center gap-2"
-                                            disabled={isEditing}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                            Edit Device
-                                        </Button>
-                                        <Link href="/device-visualization">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-black bg-white cursor-pointer flex items-center gap-2"
-                                            >
-                                                <BarChart className="h-4 w-4" />
-                                                Visualize
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                    <div className="md:mt-2">
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            className="flex items-center gap-2"
-                                            onClick={() => setShowDeleteDialog(true)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                            Delete
-                                        </Button>
-                                    </div>
-                                </div>
+                            <div className="flex flex-wrap justify-center gap-4 mt-6 w-full">
+                                <Button onClick={handleEditToggle} disabled={isEditing} className="text-black bg-white">
+                                    <Pencil className="mr-2 h-5 w-5" /> Edit Device
+                                </Button>
+                                <Link href="/device-visualization">
+                                    <Button className="text-black bg-white">
+                                        <BarChart className="mr-2 h-5 w-5" /> Visualize
+                                    </Button>
+                                </Link>
+                                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                                    <X className="mr-2 h-5 w-5" /> Delete
+                                </Button>
                             </div>
                         </div>
-                        {/* Device Form */}
-                        <div className="w-full md:w-2/3 mt-6">
+
+                        {/* Device Form Section */}
+                        <div className="w-full">
                             <div className="bg-white p-6 rounded-lg shadow-md">
                                 <Form {...form}>
-                                    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+                                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <FormField name="deviceId" control={control} render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Device ID</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} disabled />
-                                                    </FormControl>
+                                                    <FormControl><Input {...field} disabled /></FormControl>
                                                 </FormItem>
                                             )} />
                                             <FormField name="deviceName" control={control} render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Device Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} disabled={!isEditing} />
-                                                    </FormControl>
+                                                    <FormControl><Input {...field} disabled={!isEditing} /></FormControl>
                                                 </FormItem>
                                             )} />
                                             <FormField name="serialNumber" control={control} render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Serial Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} disabled />
-                                                    </FormControl>
+                                                    <FormControl><Input {...field} disabled /></FormControl>
                                                 </FormItem>
                                             )} />
                                             <FormField name="location" control={control} render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Location</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} disabled={!isEditing} />
-                                                    </FormControl>
+                                                    <FormControl><Input {...field} disabled={!isEditing} /></FormControl>
                                                 </FormItem>
                                             )} />
-                                            <FormField name="description" control={control} render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Description</FormLabel>
-                                                    <FormControl>
-                                                        <Textarea {...field} rows={8} disabled={!isEditing} className="w-full sm:w-[400px] mx-auto" />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )} />
+                                            <div className="md:col-span-2">
+                                                <FormField name="description" control={control} render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Description</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea {...field} rows={8} disabled={!isEditing} className="w-full" />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )} />
+                                            </div>
+
                                         </div>
-                                        {/* Device Types Section */}
+
+                                        {/* Device Types */}
                                         <div className="border-b pb-8 mb-8 border-gray-600">
-                                            <h2 className="text-xl font-bold mb-4 text-gray-800">
-                                                Device Types & Ranges
-                                            </h2>
+                                            <h2 className="text-xl font-bold mb-4 text-gray-800">Device Types & Ranges</h2>
                                             {fields.map((field, index) => (
                                                 <div key={field.id} className="grid grid-cols-12 gap-2 items-end mb-4">
                                                     <div className="col-span-4">
@@ -513,9 +328,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                                                     <FormControl>
                                                                         {isEditing ? (
                                                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                                                <SelectTrigger className="w-full min-w-[100px]">
-                                                                                    <SelectValue placeholder="Select type" />
-                                                                                </SelectTrigger>
+                                                                                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                                                                                 <SelectContent>
                                                                                     {DEVICE_TYPE_OPTIONS.map((option) => (
                                                                                         <SelectItem key={option} value={option}>{option}</SelectItem>
@@ -523,7 +336,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                                                                 </SelectContent>
                                                                             </Select>
                                                                         ) : (
-                                                                            <Input {...field} disabled className="w-full min-w-[100px]" />
+                                                                            <Input {...field} disabled />
                                                                         )}
                                                                     </FormControl>
                                                                 </FormItem>
@@ -531,34 +344,22 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                                         />
                                                     </div>
                                                     <div className="col-span-3">
-                                                        <FormField
-                                                            control={control}
-                                                            name={`deviceTypes.${index}.minValue`}
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Min Value</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input type="number" {...field} disabled={!isEditing} className="w-full" />
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                        <FormField control={control} name={`deviceTypes.${index}.minValue`} render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Min Value</FormLabel>
+                                                                <FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl>
+                                                            </FormItem>
+                                                        )} />
                                                     </div>
                                                     <div className="col-span-3">
-                                                        <FormField
-                                                            control={control}
-                                                            name={`deviceTypes.${index}.maxValue`}
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Max Value</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input type="number" {...field} disabled={!isEditing} className="w-full" />
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
+                                                        <FormField control={control} name={`deviceTypes.${index}.maxValue`} render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Max Value</FormLabel>
+                                                                <FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl>
+                                                            </FormItem>
+                                                        )} />
                                                     </div>
-                                                    <div className="col-span-2 flex items-end">
+                                                    <div className="col-span-2">
                                                         {isEditing && (
                                                             <Button
                                                                 type="button"
@@ -567,7 +368,6 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                                                 onClick={() => handleRemoveType(index)}
                                                                 className="h-8 w-8"
                                                                 disabled={fields.length === 1}
-                                                                title="Delete"
                                                             >
                                                                 <X className="w-4 h-4" />
                                                             </Button>
@@ -587,24 +387,17 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                                     ➕ Add Device Type
                                                 </Button>
                                             )}
-                                            {/* Show error if no device type */}
                                             {form.formState.errors.deviceTypes && (
                                                 <p className="text-red-600 text-sm mt-2">
                                                     {form.formState.errors.deviceTypes.message as string}
                                                 </p>
                                             )}
                                         </div>
+
                                         {isEditing && (
                                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                                <Button type="submit" className="w-full sm:w-32">
-                                                    Save Changes
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="w-full sm:w-32"
-                                                    onClick={handleCancel}
-                                                >
+                                                <Button type="submit" className="w-full sm:w-32">Save Changes</Button>
+                                                <Button type="button" variant="outline" className="w-full sm:w-32" onClick={handleCancel}>
                                                     Cancel
                                                 </Button>
                                             </div>
@@ -616,23 +409,22 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                     </div>
                 </CardHeader>
             </Card>
+
+            {/* Alert dialogs */}
             <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle
-                            className={alertSuccess ? "text-green-600" : "text-red-600"}
-                        >
+                        <AlertDialogTitle className={alertSuccess ? "text-green-600" : "text-red-600"}>
                             {alertSuccess ? "Success" : "Error"}
                         </AlertDialogTitle>
                         <AlertDialogDescription>{alertMessage}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-black text-white text-md">
-                            Close
-                        </AlertDialogCancel>
+                        <AlertDialogCancel className="bg-black text-white text-md">Close</AlertDialogCancel>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -643,10 +435,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={handleDeleteDevice}
-                        >
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDeleteDevice}>
                             Yes, delete it
                         </AlertDialogAction>
                     </AlertDialogFooter>
