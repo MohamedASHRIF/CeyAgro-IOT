@@ -256,16 +256,16 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                 <span>{userDeviceData.isActive ? "Active" : "Inactive"}</span>
                             </div>
                             <div className="flex flex-wrap justify-center gap-4 mt-6 w-full">
-                                <Button onClick={handleEditToggle} disabled={isEditing} className="text-black bg-white">
-                                    <Pencil className="mr-2 h-5 w-5" /> Edit Device
+                                <Button onClick={handleEditToggle} disabled={isEditing} className="text-black bg-white  hover:bg-gray-300 cursor-pointer">
+                                    <Pencil className=" h-5 w-5" /> Edit Device
                                 </Button>
                                 <Link href="/device-visualization">
-                                    <Button className="text-black bg-white">
-                                        <BarChart className="mr-2 h-5 w-5" /> Visualize
+                                    <Button className="text-black bg-white  hover:bg-gray-300 cursor-pointer">
+                                        <BarChart className=" h-5 w-5" /> Visualize
                                     </Button>
                                 </Link>
-                                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                                    <X className="mr-2 h-5 w-5" /> Delete
+                                <Button variant="destructive" className="cursor-pointer" onClick={() => setShowDeleteDialog(true)}>
+                                    <X className=" h-5 w-5" /> Delete
                                 </Button>
                             </div>
                         </div>
@@ -275,7 +275,10 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                             <div className="bg-white p-6 rounded-lg shadow-md">
                                 <Form {...form}>
                                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                                    <h2 className="text-xl font-bold mb-8 text-gray-800 border-b border-gray-300 pb-4">General Details</h2>
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            
                                             <FormField name="deviceId" control={control} render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Device ID</FormLabel>
@@ -314,8 +317,8 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                         </div>
 
                                         {/* Device Types */}
-                                        <div className="border-b pb-8 mb-8 border-gray-600">
-                                            <h2 className="text-xl font-bold mb-4 text-gray-800">Device Types & Ranges</h2>
+                                        <div>
+                                            <h2 className="text-xl font-bold mb-8 text-gray-800 border-b border-gray-300 pb-4 pt-4">Device Types & Ranges</h2>
                                             {fields.map((field, index) => (
                                                 <div key={field.id} className="grid grid-cols-12 gap-2 items-end mb-4">
                                                     <div className="col-span-4">
