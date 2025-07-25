@@ -55,8 +55,8 @@ type AddDeviceFormProps = {
 };
 //const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export function AddDeviceForm({ email }: AddDeviceFormProps) {
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+  //  const [imageFile, setImageFile] = useState<File | null>(null);
+    //const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSuccess, setAlertSuccess] = useState(false);
@@ -78,7 +78,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
         name: "deviceTypes",
     });
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+   /* const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             setImageFile(file);
@@ -91,7 +91,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
             setImageFile(null);
             setImagePreview(null);
         }
-    };
+    };*/
 
     async function onSubmit(values: DeviceFormValues) {
         // --- Min/Max validation ---
@@ -121,9 +121,9 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
             formData.append("location", values.location);
             formData.append("description", values.description || "");
 
-            if (imageFile) {
+            /*if (imageFile) {
                 formData.append("deviceImage", imageFile);
-            }
+            }*/
 
             values.deviceTypes.forEach((typeObj, index) => {
                 formData.append(`deviceTypes[${index}][type]`, typeObj.type);
@@ -148,11 +148,11 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
             setShowAlert(true);
 
             form.reset();
-            setImageFile(null);
-            setImagePreview(null);
+           // setImageFile(null);
+           // setImagePreview(null);
         } catch (error: any) {
             setAlertSuccess(false);
-            setAlertMessage(`Error: ${error.message}`);
+            setAlertMessage(`${error.message}`);
             setShowAlert(true);
         }
     }
@@ -235,7 +235,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                                         />
                                     </div>
 
-                                    <FormItem className="mb-6">
+                                  {/*  <FormItem className="mb-6">
                                         <FormLabel>Upload Image</FormLabel>
                                         <FormControl>
                                             <Input type="file" accept="image/*" onChange={handleImageChange} />
@@ -247,7 +247,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                                                 className="mt-4 max-h-48 object-contain rounded-md border"
                                             />
                                         )}
-                                    </FormItem>
+                                    </FormItem>*/}
 
                                     <FormField
                                         control={form.control}

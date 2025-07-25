@@ -556,7 +556,7 @@ export const DashboardHeader = () => {
 
         <Link href="/Settings/profileManagement" passHref>
           <Avatar
-            className="h-15 w-15 ml-2 cursor-pointer"
+            className="h-10 w-10 ml-2 cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
               if (window.location.pathname === "/Settings/profileManagement") {

@@ -20,28 +20,29 @@ export function DeviceHeader({ onTabChange, activeTab }: DeviceHeaderProps) {
 
   // On first load, check URL hash and set tab
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash === "all-devices") onTabChange("All Devices");
-    else if (hash === "add-device") onTabChange("Add New Device");
-   
-  }, [onTabChange]);
+  const hash = window.location.hash.replace("#", "");
+  if (hash === "all-devices") onTabChange("All Devices");
+  else if (hash === "add-device") onTabChange("Add New Device");
+  //else if (hash === "device-access") onTabChange("Device Access");
+}, [onTabChange]);
 
   return (
-    <GreenHeader
-      title="Device Management"
-      menuItems={[
-        {
-          name: "All devices",
-          onClick: () => handleTabChange("All Devices", "all-devices"),
-          isActive: activeTab === "All Devices",
-        },
-        {
-          name: "Add New Device",
-          onClick: () => handleTabChange("Add New Device", "add-device"),
-          isActive: activeTab === "Add New Device",
-        },
-       
-      ]}
-    />
+   <GreenHeader
+  title="Device Management"
+  menuItems={[
+    {
+      name: "All Devices",
+      onClick: () => handleTabChange("All Devices", "all-devices"),
+      isActive: activeTab === "All Devices",
+    },
+    {
+      name: "Add New Device",
+      onClick: () => handleTabChange("Add New Device", "add-device"),
+      isActive: activeTab === "Add New Device",
+    },
+   
+  ]}
+/>
+
   );
 }

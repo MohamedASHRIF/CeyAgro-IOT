@@ -60,7 +60,7 @@
 "use client"
 
 import { SectionCards } from "./(components)/SectionCarrds"
-import SnsSubscriptionPopup from "../(components)/SnsSubscriptionPopup"
+import { SnsSubscriptionPopup } from "../(components)/SnsSubscriptionPopup"
 
 export default function DashboardPage() {
   return (
@@ -112,9 +112,9 @@ export default function DashboardPage() {
       {/* ➕ Add Device Text Link */}
       <div className="relative z-10 flex justify-center">
         <span className="text-xl text-black font-bold">
-          Here we go, now add your device{" "}
+          Here we go, manage your devices{" "}
           <a
-            href="/devices/#add-new-device-tab"
+            href="/devices/#add-device"
             className="text-teal-600 underline hover:text-teal-700 font-bold cursor-pointer transition-colors duration-200"
           >
             here
@@ -122,7 +122,7 @@ export default function DashboardPage() {
         </span>
       </div>
 
-      <SnsSubscriptionPopup />
+     <SnsSubscriptionPopup /> 
     </div>
   )
 }

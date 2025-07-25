@@ -186,139 +186,55 @@
 // }
 
 "use client";
-
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
 
-export default function SnsSubscriptionPopup() {
-  const { user } = useUser();
-  const [showPopup, setShowPopup] = useState<boolean>(false);
-  const [popupMessage, setPopupMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const hasSentRequest = useRef(false);
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3001";
 
-  // Reset state on logout
+export const SnsSubscriptionPopup = () => {
+  const { user, isLoading } = useUser();
+  const [showPopup, setShowPopup] = useState(false);
+
   useEffect(() => {
-    if (!user) {
-      hasSentRequest.current = false;
-      setShowPopup(false);
-      setPopupMessage(null);
-      setErrorMessage(null);
-      console.log("User logged out, resetting state");
-    }
-  }, [user]);
+    if (isLoading || !user?.email) return;
 
-  // Check login_count and show popup on first login
-  useEffect(() => {
-    if (user && !hasSentRequest.current) {
-      hasSentRequest.current = true;
-      const normalizedEmail = user.email?.toLowerCase();
+    // Use a unique key per user
+    const popupKey = `first-login-popup-shown-${user.email}`;
 
-      if (!normalizedEmail) {
-        console.error("User email is missing");
-        setErrorMessage("User email is missing. Please try logging in again.");
-        return;
+    // If already shown, don't show again
+    if (localStorage.getItem(popupKey)) return;
+
+    const fetchLoginCount = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/user/login-count/${encodeURIComponent(user?.email ?? "")}`);
+        if (!res.ok) throw new Error("Failed to fetch login count");
+        const data = await res.json();
+        if (data.count === 1) {
+          setShowPopup(true);
+          localStorage.setItem(popupKey, "true"); // Mark as shown
+        }
+      } catch (err) {
+        console.error(err);
       }
+    };
 
-      console.log("Sending login request:", {
-        email: normalizedEmail,
-        name: user.name || user.nickname || "Unknown",
-      });
+    fetchLoginCount();
+  }, [isLoading, user]);
 
-      axios
-        .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`, {
-          email: normalizedEmail,
-          name: user.name || user.nickname || "Unknown",
-        })
-        .then(async (response) => {
-          console.log("Login response:", response.data);
-          try {
-            const userResponse = await axios.get(
-              `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/user/${normalizedEmail}`
-            );
-            const { login_count } = userResponse.data;
-            if (login_count === 1) {
-              console.log("First login, showing SNS subscription popup");
-              setShowPopup(true);
-              setPopupMessage(
-                "Please check your inbox (including spam) for an AWS SNS subscription confirmation email to activate login notifications."
-              );
-            } else {
-              console.log("Not first login, no popup shown");
-              setShowPopup(false);
-              setPopupMessage(null);
-            }
-          } catch (error) {
-            console.error("Error fetching user data:", error);
-            // setErrorMessage("Failed to fetch user data. Please try again.");
-          }
-        })
-        .catch((error) => {
-          console.error("Error processing login:", {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data,
-          });
-          // setErrorMessage(
-          // "Failed to connect to the server. Please ensure the backend is running and try again."
-          // );
-        });
-    }
-  }, [user]);
-
-  // Auto-dismiss error messages
-  useEffect(() => {
-    if (errorMessage) {
-      const timer = setTimeout(() => {
-        setErrorMessage(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorMessage]);
-
-  // Auto-dismiss popup after 5 seconds
-  useEffect(() => {
-    if (showPopup && popupMessage) {
-      const timer = setTimeout(() => {
-        setShowPopup(false);
-        setPopupMessage(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [showPopup, popupMessage]);
+  if (!showPopup) return null;
 
   return (
-    <>
-      {errorMessage && (
-        <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50">
-          {errorMessage}
-        </div>
-      )}
-      {showPopup && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+      <div className="bg-white p-6 rounded shadow-lg">
+        <h2 className="text-xl font-bold mb-2">Welcome!</h2>
+        <p>This is your first login. 🎉</p>
+        <button
+          className="mt-4 px-4 py-2 bg-teal-500 text-white rounded"
           onClick={() => setShowPopup(false)}
         >
-          <div
-            className="bg-white p-6 rounded-lg max-w-sm w-full text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-bold mb-4">
-              SNS Subscription Required
-            </h3>
-            {popupMessage && <p className="mb-4 text-black">{popupMessage}</p>}
-            <div className="flex justify-center">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+          Close
+        </button>
+      </div>
+    </div>
   );
-}
+};

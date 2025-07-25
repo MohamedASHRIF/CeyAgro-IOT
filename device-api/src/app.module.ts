@@ -6,7 +6,7 @@ import { DeviceModule } from './device/device.module';
 import { DeviceUserModule } from './device-user/device-user.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
-
+import { ActivityLogModule } from './activity-log/act-log.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,7 +18,7 @@ import { UsersModule } from './users/users.module';
         uri: process.env.MONGO_URI,
       }),
     }),
-    MongooseModule.forRootAsync({
+   MongooseModule.forRootAsync({
       connectionName: 'users_db',
       useFactory: () => ({
         uri: process.env.USERS_MONGO_URI,
@@ -28,6 +28,7 @@ import { UsersModule } from './users/users.module';
     DeviceUserModule,
     NotificationsModule,
     UsersModule, // Import UsersModule
+    ActivityLogModule
   ],
 })
 export class AppModule {}
