@@ -105,14 +105,14 @@ export class User {
   picture: string | null;
 
   // SNS subscription fields
-  @Prop({
-    default: 'unsubscribed',
-    enum: ['unsubscribed', 'pending', 'subscribed'],
-  })
-  sns_subscription_status: string;
+  // @Prop({
+  //   default: 'unsubscribed',
+  //   enum: ['unsubscribed', 'pending', 'subscribed'],
+  // })
+  // sns_subscription_status: string;
 
-  @Prop()
-  last_sns_subscription_attempt: Date;
+  // @Prop()
+  // last_sns_subscription_attempt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
