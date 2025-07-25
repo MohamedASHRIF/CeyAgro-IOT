@@ -25,6 +25,7 @@ import { Notification as NotificationInterface } from '../notifications/interfac
 import { Logger } from '@nestjs/common';
 import mongoose from 'mongoose';
 import { ActivityLogService } from 'src/activity-log/act-log.service';
+import { DeviceType } from 'src/deviceTypes/deviceTypes.schema';
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
@@ -51,6 +52,8 @@ export class DeviceUserService {
   private deviceUserModel: Model<DeviceUserDocument>,
   @InjectModel(DeviceData.name)
   private deviceDataModel: Model<DeviceDataDocument>,
+   @InjectModel(DeviceType.name)
+    private readonly deviceTypeModel: Model<DeviceType>,
   private notificationsService: NotificationsService,
  private readonly activityLogService: ActivityLogService,
 ) {}
@@ -536,6 +539,14 @@ async updateDeviceUser(
       this.logger.error('Error updating device location:', error);
       throw error;
     }
+  }
+
+  async getDeviceTypeNames(): Promise<string[]> {
+    const types = await this.deviceTypeModel
+      .find({}, { name: 1, _id: 0 })
+      .lean();
+
+    return types.map((type) => type.name);
   }
 }
 

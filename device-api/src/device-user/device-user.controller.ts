@@ -291,6 +291,13 @@ async registerDevice(
       );
     }
   }
+  @Get('device-types')
+async getDeviceTypeNames() {
+  const names = await this.deviceUserService.getDeviceTypeNames();
+  return names;
+}
+
+
 }
 
 

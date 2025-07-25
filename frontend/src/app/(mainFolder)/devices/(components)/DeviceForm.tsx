@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
-import { useState } from "react";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -33,6 +32,11 @@ import {
     AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+
+// Inside your component
+
+
 
 const formSchema = z.object({
     deviceId: z.string().min(1, { message: "Device ID is required." }),
@@ -55,6 +59,26 @@ type AddDeviceFormProps = {
 };
 //const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export function AddDeviceForm({ email }: AddDeviceFormProps) {
+
+    const [deviceTypesList, setDeviceTypesList] = useState<string[]>([]);
+const [loadingTypes, setLoadingTypes] = useState(true);
+
+useEffect(() => {
+  async function fetchDeviceTypes() {
+    try {
+const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/device-types`);
+      const data = await res.json(); // This will be just an array
+
+      setDeviceTypesList(data); // directly assign
+    } catch (error) {
+      console.error("Failed to fetch device types:", error);
+    } finally {
+      setLoadingTypes(false);
+    }
+  }
+
+  fetchDeviceTypes();
+}, []);
   //  const [imageFile, setImageFile] = useState<File | null>(null);
     //const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [showAlert, setShowAlert] = useState(false);
@@ -279,37 +303,35 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
                                             key={field.id}
                                             className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end mb-4"
                                         >
-                                            <FormField
-                                                control={form.control}
-                                                name={`deviceTypes.${index}.type`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Type</FormLabel>
-                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select type" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                <SelectItem value="Temperature">Temperature</SelectItem>
-                                                                <SelectItem value="Pressure">Pressure</SelectItem>
-                                                                <SelectItem value="Proximity">Proximity</SelectItem>
-                                                                <SelectItem value="Motion">Motion</SelectItem>
-                                                                <SelectItem value="Light">Light</SelectItem>
-                                                                <SelectItem value="Sound">Sound</SelectItem>
-                                                                <SelectItem value="Gas">Gas</SelectItem>
-                                                                <SelectItem value="Humidity">Humidity</SelectItem>
-                                                                <SelectItem value="Touch">Touch</SelectItem>
-                                                                <SelectItem value="Magnetic">Magnetic</SelectItem>
-                                                                <SelectItem value="Image">Image</SelectItem>
-                                                                <SelectItem value="Other">Other</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                           <FormField
+    control={form.control}
+    name={`deviceTypes.${index}.type`}
+    render={({ field }) => (
+        <FormItem>
+            <FormLabel>Type</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                </FormControl>
+                {loadingTypes ? (
+                    <p className="p-2 text-sm">Loading types...</p>
+                ) : (
+                    <SelectContent>
+                        {deviceTypesList.map((type) => (
+                            <SelectItem key={type} value={type}>
+                                {type}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                )}
+            </Select>
+            <FormMessage />
+        </FormItem>
+    )}
+/>
+
 
                                             <FormField
                                                 control={form.control}
