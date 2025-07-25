@@ -63,20 +63,6 @@ type DevicePageProps = {
     userEmail: string;
 };
 
-const DEVICE_TYPE_OPTIONS = [
-    "Temperature",
-    "Pressure",
-    "Proximity",
-    "Motion",
-    "Light",
-    "Sound",
-    "Gas",
-    "Humidity",
-    "Touch",
-    "Magnetic",
-    "Image",
-    "Other",
-];
 
 const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const email = userEmail;
@@ -88,6 +74,26 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
     const [alertSuccess, setAlertSuccess] = useState(true);
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    const [deviceTypeOptions, setDeviceTypeOptions] = useState<string[]>([]);
+
+useEffect(() => {
+    const fetchDeviceTypes = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/device-types`);
+            const data = await res.json();
+            if (res.ok) {
+                setDeviceTypeOptions(data); // assuming the API returns string[]
+            } else {
+                console.error("Failed to fetch device types:", data.message);
+            }
+        } catch (err) {
+            console.error("Error fetching device types:", err);
+        }
+    };
+
+    fetchDeviceTypes();
+}, []);
 
     const form = useForm<CombinedDevice>({ defaultValues: {} });
     const { control, reset, handleSubmit, setError, clearErrors } = form;
@@ -238,7 +244,7 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                 <p className="text-gray-600">Your device has been deleted or not available.</p>
             </div>
         );
-
+  
     return (
         <div className="container mx-auto p-4">
             <Card className="max-w-3xl mx-auto bg-teal-400">
@@ -275,10 +281,10 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                             <div className="bg-white p-6 rounded-lg shadow-md">
                                 <Form {...form}>
                                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                                    <h2 className="text-xl font-bold mb-8 text-gray-800 border-b border-gray-300 pb-4">General Details</h2>
+                                        <h2 className="text-xl font-bold mb-8 text-gray-800 border-b border-gray-300 pb-4">General Details</h2>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            
+
                                             <FormField name="deviceId" control={control} render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Device ID</FormLabel>
@@ -333,9 +339,10 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
                                                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                                                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                                                                                 <SelectContent>
-                                                                                    {DEVICE_TYPE_OPTIONS.map((option) => (
+                                                                                    {deviceTypeOptions.map((option) => (
                                                                                         <SelectItem key={option} value={option}>{option}</SelectItem>
                                                                                     ))}
+
                                                                                 </SelectContent>
                                                                             </Select>
                                                                         ) : (
