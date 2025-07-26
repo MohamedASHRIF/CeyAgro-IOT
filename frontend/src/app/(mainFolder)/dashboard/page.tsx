@@ -182,7 +182,7 @@ export default function DashboardPage() {
         <span className="text-xl text-black font-bold">
           Here we go, now add your device{" "}
           <a
-            href="/devices/#add-new-device-tab"
+            href="/devices/#add-device"
             className="text-teal-600 underline hover:text-teal-700 font-bold cursor-pointer transition-colors duration-200"
           >
             here
