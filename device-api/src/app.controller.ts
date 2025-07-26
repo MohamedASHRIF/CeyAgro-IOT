@@ -7,6 +7,8 @@ export class AppController {
 
   @Get()
   getHello(): string {
+    console.log('KAFKA_BROKER > ', process.env.KAFKA_BROKER);
+    console.log('KAFKA_USER > ', process.env.KAFKA_USER);
     return this.appService.getHello();
   }
 }

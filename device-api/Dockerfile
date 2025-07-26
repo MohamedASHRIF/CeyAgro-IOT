@@ -38,11 +38,13 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 # Create uploads directory
 RUN mkdir -p uploads && chown -R nestjs:nodejs uploads
 
+RUN apk update && apk add --no-cache curl
+
 # Switch to non-root user
 USER nestjs
 
 # Expose port
-EXPOSE 3001
+EXPOSE 3002
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

@@ -19,10 +19,10 @@ async function bootstrap() {
 
   // Set up global validation pipe
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-
+  app.setGlobalPrefix('analytics-api');
   // Connect Kafka microservice
-  // app.connectMicroservice(kafkaConfig)
-  // await app.startAllMicroservices();
+    // app.connectMicroservice(kafkaConfig);
+   await app.startAllMicroservices();
   
   const port = process.env.PORT|| 3003;
   await app.listen(port);

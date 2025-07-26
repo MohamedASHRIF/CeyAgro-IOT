@@ -176,6 +176,7 @@ import {
   Monitor,
   Settings,
   User,
+  Logs,
   MapPinCheckIcon,
   LetterText,
 } from "lucide-react";
@@ -211,6 +212,11 @@ const items = [
         title: "Profile Management",
         url: "/Settings/profileManagement",
         icon: User,
+      },
+      {
+        title: "Activity Log",
+        url: "/Settings/activity-log",
+        icon: Logs,
       },
     ],
   },

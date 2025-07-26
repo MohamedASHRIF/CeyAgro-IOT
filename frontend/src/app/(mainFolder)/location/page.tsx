@@ -23,7 +23,7 @@ export default function Home() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:3002/device-user/locations?email=${encodeURIComponent(user.email)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/locations?email=${encodeURIComponent(user.email)}`);
       if (response.ok) {
         const { data } = await response.json();
         if (!Array.isArray(data)) {
@@ -65,7 +65,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `http://localhost:3002/device-user/${editingDevice._id}/location?email=${encodeURIComponent(user.email)}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/${editingDevice._id}/location?email=${encodeURIComponent(user.email)}`,
         {
           method: "PUT",
           headers: {

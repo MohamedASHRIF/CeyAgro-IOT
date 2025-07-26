@@ -32,14 +32,14 @@ export class CreateDeviceUserDto {
   @IsOptional()
   @IsString()
   description?: string;
-
+/*
   @IsOptional()
   @IsString()
   deviceImage?: string;
 
   @IsOptional()
   @IsString()
-  removedeviceImage?: string;
+  removedeviceImage?: string;*/
 
   @IsOptional()
   @IsString()

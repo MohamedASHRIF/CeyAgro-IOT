@@ -17,9 +17,9 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export function AnomalyChart({ device, deviceName, metric, startDate, endDate }: {
-  device: string | null;
-  deviceName: string | null;
-  metric: "temperature" | "humidity";
+  device: string | undefined;
+  deviceName: string | undefined;
+  metric: string | undefined;
   startDate: string;
   endDate: string;
 }) {
@@ -64,6 +64,7 @@ export function AnomalyChart({ device, deviceName, metric, startDate, endDate }:
         // Prepare {x, y} for anomalies only
         const anomalyXY = apiData.anomalies.map((a: any) => ({ x: new Date(a.timestamp), y: a.value }));
         setChartData({
+          labels: [],
           datasets: [
             {
               label: "Anomalies",
@@ -72,8 +73,6 @@ export function AnomalyChart({ device, deviceName, metric, startDate, endDate }:
               backgroundColor: "red",
               pointRadius: 10,
               showLine: false,
-              type: 'scatter',
-              parsing: true,
             },
           ],
         });
@@ -88,7 +87,7 @@ export function AnomalyChart({ device, deviceName, metric, startDate, endDate }:
   }, [device, metric, startDate, endDate, user]);
 
   if (error || noData) {
-    return <div><h2>Anomaly Detection for {deviceName || device || "Device"}</h2><p className="text-red-500">{error || "No anomaly data available"}</p></div>;
+    return <div><h2>Anomaly Detection for {deviceName ?? device ?? "Device"}</h2><p className="text-red-500">{error || "No anomaly data available"}</p></div>;
   }
 
   return (
@@ -100,7 +99,7 @@ export function AnomalyChart({ device, deviceName, metric, startDate, endDate }:
           plugins: { legend: { display: true } },
           scales: {
             x: { type: 'time', time: { unit: 'hour' }, title: { display: true, text: 'Time' } },
-            y: { beginAtZero: false, min: 0, max: 100, title: { display: true, text: metric.charAt(0).toUpperCase() + metric.slice(1) } },
+            y: { beginAtZero: false, min: 0, max: 100, title: { display: true, text: metric ? metric.charAt(0).toUpperCase() + metric.slice(1) : '' } },
           },
         }}
       />
