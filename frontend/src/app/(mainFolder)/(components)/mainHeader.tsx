@@ -1,4 +1,3 @@
-
 // "use client";
 // import { useEffect, useState, useRef, useCallback } from "react";
 // import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -10,9 +9,9 @@
 // import { useRouter } from "next/navigation";
 // import io, { Socket } from "socket.io-client";
 
-// //const API_BASE = "http://localhost:3001/user";
+// const API_BASE = "http://localhost:3001";
 // const BACKEND_URL =
-//   process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3001";
+//   process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3002/device-api";
 
 // interface Notification {
 //   id: string;
@@ -191,7 +190,7 @@
 //   useEffect(() => {
 //     if (!isAuthLoading && user?.email) {
 //       axios
-//         .get(`${BACKEND_URL}/user/profile-short/${encodeURIComponent(user.email)}`)
+//         .get(`${API_BASE}/user/profile-short/${encodeURIComponent(user.email)}`)
 //         .then(({ data }) => {
 //           console.log("Fetched profile data:", data);
 //           setProfileData(data);
@@ -228,7 +227,7 @@
 //         <SidebarTrigger className="mr-2" />
 //       </div>
 
-//       <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden sm:block">
+// <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
 //         {profileData && profileData.name ? (
 //           <span className="text-lg text-foreground font-semibold flex items-center gap-1">
 //             <Icon
@@ -258,7 +257,7 @@
 
 //         <Link href="/Settings/profileManagement" passHref>
 //           <Avatar
-//             className="h-15 w-15 ml-2 cursor-pointer"
+//             className="h-10 w-10 ml-2 cursor-pointer"
 //             onClick={(e) => {
 //               e.preventDefault();
 //               if (window.location.pathname === "/Settings/profileManagement") {
@@ -268,15 +267,19 @@
 //               }
 //             }}
 //           >
-//             <AvatarImage
-//               src={
-//                 profileData?.picture?.startsWith("/uploads")
-//                   ? `${BACKEND_URL}${profileData.picture}`
-//                   : "/default.png"
-//               }
-//               className="border border-muted-foreground rounded-full"
-//               alt="User Profile"
-//             />
+//          <AvatarImage
+//   src={
+//     profileData?.picture
+//       ? profileData.picture.startsWith("/uploads")
+//         ? `${API_BASE}${profileData.picture}`
+//         : profileData.picture.startsWith("http")
+//           ? profileData.picture
+//           : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+//       : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+//   }
+//   className="border border-muted-foreground rounded-full"
+//   alt="User Profile"
+// />
 //           </Avatar>
 //         </Link>
 
@@ -294,10 +297,8 @@
 //   );
 // };
 
-
-
-
 "use client";
+
 import { useEffect, useState, useRef, useCallback } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -305,8 +306,9 @@ import { SunIcon, MoonIcon, BellRing } from "lucide-react";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation"; // Add usePathname
 import io, { Socket } from "socket.io-client";
+import { isUserAdmin } from "../../../../actions/isUserAdmin";
 
 const API_BASE = "http://localhost:3001";
 const BACKEND_URL =
@@ -327,8 +329,10 @@ export const DashboardHeader = () => {
   const [selectedRole, setSelectedRole] = useState("User");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const router = useRouter();
+  const pathname = usePathname(); // Get current URL path
 
   const { user, isLoading: isAuthLoading } = useUser();
 
@@ -337,6 +341,27 @@ export const DashboardHeader = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+
+  // Fetch admin status and set initial role based on pathname
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!isAuthLoading && user?.email) {
+        try {
+          const adminStatus = await isUserAdmin();
+          setIsAdmin(adminStatus);
+          // Set selectedRole based on current pathname for admins
+          if (adminStatus) {
+            setSelectedRole(pathname === "/dashboard" ? "User" : "Admin");
+          } else {
+            setSelectedRole("User"); // Non-admins are always User
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+        }
+      }
+    };
+    checkAdminStatus();
+  }, [isAuthLoading, user, pathname]);
 
   const fetchNotifications = useCallback(async (userId: string) => {
     if (!isValidEmail(userId)) {
@@ -526,7 +551,7 @@ export const DashboardHeader = () => {
         <SidebarTrigger className="mr-2" />
       </div>
 
-<div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
+      <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
         {profileData && profileData.name ? (
           <span className="text-lg text-foreground font-semibold flex items-center gap-1">
             <Icon
@@ -566,31 +591,34 @@ export const DashboardHeader = () => {
               }
             }}
           >
-         <AvatarImage
-  src={
-    profileData?.picture
-      ? profileData.picture.startsWith("/uploads")
-        ? `${API_BASE}${profileData.picture}`
-        : profileData.picture.startsWith("http")
-          ? profileData.picture
-          : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
-      : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
-  }
-  className="border border-muted-foreground rounded-full"
-  alt="User Profile"
-/>
+            <AvatarImage
+              src={
+                profileData?.picture
+                  ? profileData.picture.startsWith("/uploads")
+                    ? `${API_BASE}${profileData.picture}`
+                    : profileData.picture.startsWith("http")
+                    ? profileData.picture
+                    : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+                  : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+              }
+              className="border border-muted-foreground rounded-full"
+              alt="User Profile"
+            />
           </Avatar>
         </Link>
 
-        <select
-          value={selectedRole}
-          onChange={handleRoleChange}
-          className="ml-2 p-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-colors duration-200"
-          aria-label="Select Role"
-        >
-          <option value="User">User</option>
-          <option value="Admin">Admin</option>
-        </select>
+        {/* Show dropdown only for admins */}
+        {isAdmin && (
+          <select
+            value={selectedRole}
+            onChange={handleRoleChange}
+            className="ml-2 p-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-colors duration-200"
+            aria-label="Select Role"
+          >
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+          </select>
+        )}
       </div>
     </header>
   );
