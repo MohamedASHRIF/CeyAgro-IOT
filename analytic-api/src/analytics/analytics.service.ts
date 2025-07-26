@@ -1730,6 +1730,64 @@ export class AnalyticsService {
     }
   }
 
+  async saveDownloadHistory(
+    userEmail: string,
+    filename: string,
+    downloadUrl: string,
+    recordCount: number,
+    s3Key: string,
+  ): Promise<any> {
+    const historyKey = `analytics/history/${userEmail}.json`;
+    const history = await this.s3Service.readJsonFile(historyKey);
+
+    const newEntry = {
+      id: Date.now().toString(),
+      filename,
+      downloadUrl,
+      createdAt: new Date().toISOString(),
+      recordCount,
+      s3Key,
+    };
+
+    const updatedHistory = [newEntry, ...history].slice(0, 10);
+    await this.s3Service.writeJsonFile(historyKey, updatedHistory);
+    return newEntry;
+  }
+
+  async getDownloadHistory(userEmail: string): Promise<any[]> {
+    const historyKey = `analytics/history/${userEmail}.json`;
+    return this.s3Service.readJsonFile(historyKey);
+  }
+
+  async deleteDownloadHistory(id: string, userEmail: string): Promise<void> {
+    const historyKey = `analytics/history/${userEmail}.json`;
+    const history = await this.s3Service.readJsonFile(historyKey);
+
+    const entry = history.find((item: any) => item.id === id);
+    if (!entry) {
+      throw new NotFoundException('Download history entry not found');
+    }
+
+    await this.s3Service.deleteFile(entry.s3Key);
+    const updatedHistory = history.filter((item: any) => item.id !== id);
+    await this.s3Service.writeJsonFile(historyKey, updatedHistory);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   async getRealtimeStats(deviceId: string, metric: string) {
     console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
     try {
@@ -1748,6 +1806,32 @@ export class AnalyticsService {
           timestamp: new Date().toISOString(),
         };
       }
+      return {
+        deviceId: latest.deviceId,
+        metric,
+        value: latest.readings[metric],
+        timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
+      };
+    } catch (err) {
+      console.error('SERVICE ERROR: getRealtimeStats', err);
+      throw err;
+    }
+  }
+
+
+
+  // Visualization Methods
+// Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
+async getRealtimeStats(deviceId: string, metric: string) {
+  console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
+  try {
+    const latest = await this.deviceModel
+      .findOne({ deviceId })
+      .sort({ date: -1, _id: -1 })
+      .select('-__v');
+    console.log('SERVICE DEBUG: getRealtimeStats latest', latest);
+    if (!latest) {
+      console.log('SERVICE DEBUG: No data found for device');
       return {
         deviceId: latest.deviceId,
         metric,
