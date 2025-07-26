@@ -79,8 +79,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/devi
 
   fetchDeviceTypes();
 }, []);
-  //  const [imageFile, setImageFile] = useState<File | null>(null);
-    //const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSuccess, setAlertSuccess] = useState(false);
@@ -102,20 +101,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/devi
         name: "deviceTypes",
     });
 
-   /* const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            setImageFile(null);
-            setImagePreview(null);
-        }
-    };*/
+ 
 
     async function onSubmit(values: DeviceFormValues) {
         // --- Min/Max validation ---
@@ -172,8 +158,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/devi
             setShowAlert(true);
 
             form.reset();
-           // setImageFile(null);
-           // setImagePreview(null);
+         
         } catch (error: any) {
             setAlertSuccess(false);
             setAlertMessage(`${error.message}`);
@@ -259,19 +244,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/device-user/devi
                                         />
                                     </div>
 
-                                  {/*  <FormItem className="mb-6">
-                                        <FormLabel>Upload Image</FormLabel>
-                                        <FormControl>
-                                            <Input type="file" accept="image/*" onChange={handleImageChange} />
-                                        </FormControl>
-                                        {imagePreview && (
-                                            <img
-                                                src={imagePreview}
-                                                alt="Device Preview"
-                                                className="mt-4 max-h-48 object-contain rounded-md border"
-                                            />
-                                        )}
-                                    </FormItem>*/}
+                              
 
                                     <FormField
                                         control={form.control}

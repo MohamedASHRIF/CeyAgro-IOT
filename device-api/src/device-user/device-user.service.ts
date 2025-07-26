@@ -26,19 +26,7 @@ import { Logger } from '@nestjs/common';
 import mongoose from 'mongoose';
 import { ActivityLogService } from 'src/activity-log/act-log.service';
 import { DeviceType } from 'src/deviceTypes/deviceTypes.schema';
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
-function getCloudinaryPublicId(url: string): string | null {
-  if (!url) return null;
-  const parts = url.split('/');
-  const lastPart = parts[parts.length - 1];
-  const [publicId] = lastPart.split('.');
-  return parts.slice(parts.length - 2, parts.length - 1)[0] + '/' + publicId;
-}
 
 @Injectable()
 export class DeviceUserService {
@@ -352,8 +340,8 @@ async updateDeviceUser(
   email: string,
   deviceId: string,
   updateData: Partial<CreateDeviceUserDto>,
-  deviceImage?: Express.Multer.File,
-  removedeviceImage?: string,
+ // deviceImage?: Express.Multer.File,
+ // removedeviceImage?: string,
 ) {
   const deviceExists = await this.deviceDataModel.exists({ deviceId });
   if (!deviceExists)
@@ -363,10 +351,10 @@ async updateDeviceUser(
   if (!deviceUser)
     throw new NotFoundException('Device not registered for this user');
 
-  const oldImage = deviceUser.deviceImage;
+  //const oldImage = deviceUser.deviceImage;
   const changes: Record<string, { oldValue: any; newValue: any }> = {};
 
-  // ✅ Remove existing image
+  /*// ✅ Remove existing image
   if (removedeviceImage === 'true') {
     if (deviceUser.deviceImage?.startsWith('http')) {
       const publicId = getCloudinaryPublicId(deviceUser.deviceImage);
@@ -410,7 +398,7 @@ async updateDeviceUser(
       oldValue: oldImage,
       newValue: deviceUser.deviceImage,
     };
-  }
+  }*/
 
   // ✅ Track and apply other changes
   for (const key in updateData) {

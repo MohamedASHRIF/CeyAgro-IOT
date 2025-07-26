@@ -1,5 +1,5 @@
 //device-user.controller.ts
-
+/*
 import {
   Controller,
   Post,
@@ -157,8 +157,7 @@ async registerDevice(
       email,
       deviceId,
       rest,
-      deviceImage,
-      removedeviceImage,
+      
     );
 
     return {
@@ -301,10 +300,8 @@ async getDeviceTypeNames() {
 }
 
 
+*/
 
-
-/*
-// src/device-user/device-user.controller.ts
 import {
   Controller,
   Post,
@@ -313,64 +310,31 @@ import {
   Query,
   Delete,
   Patch,
-  UploadedFile,
-  UseInterceptors,
   BadRequestException,
   HttpException,
   HttpStatus,
   Param,
   Put,
-  Req,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { DeviceUserService } from './device-user.service';
 import { CreateDeviceUserDto } from './dto/create-device-user.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { Express } from 'express';
-import { diskStorage } from 'multer';
-import { LogMetadata } from 'src/activity-log/act-log.service';
-import * as path from 'path';
+import { UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express'; // also import this if you haven't
 
 @Controller('device-user')
 export class DeviceUserController {
   constructor(private readonly deviceUserService: DeviceUserService) {}
 
-  private extractMetadata(req: Request): LogMetadata {
-    return {
-      ipAddress: req.ip || req.connection.remoteAddress,
-      userAgent: req.get('User-Agent'),
-      // You can add location if you have geolocation service
-    };
-  }
-
   @Post('register')
-  @UseInterceptors(
-    FileInterceptor('deviceImage', {
-      storage: diskStorage({
-        destination: './uploads/devices',
-        filename: (req, file, cb) => {
-          const ext = path.extname(file.originalname);
-          const fileName = `${Date.now()}-${file.originalname}`;
-          cb(null, fileName);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('deviceImage')) 
   async registerDevice(
-    @UploadedFile() file: Express.Multer.File,
     @Body() createDto: CreateDeviceUserDto,
-    @Req() req: Request,
   ) {
     try {
-      if (file) {
-        createDto.deviceImage = `/uploads/devices/${file.filename}`;
-      }
       console.log('Received email:', createDto.email);
       console.log('Full DTO:', createDto);
 
-      const metadata = this.extractMetadata(req);
-      const result = await this.deviceUserService.registerDevice(createDto, metadata);
-      
+      const result = await this.deviceUserService.registerDevice(createDto);
       return {
         success: true,
         message: 'Device registered successfully',
@@ -445,15 +409,12 @@ export class DeviceUserController {
   async unregisterDevice(
     @Query('email') email: string,
     @Query('deviceId') deviceId: string,
-    @Req() req: Request,
   ) {
     if (!email || !deviceId) {
       throw new BadRequestException('email and deviceId are required');
     }
 
-    const metadata = this.extractMetadata(req);
-    await this.deviceUserService.unregisterDevice(email, deviceId, metadata);
-    
+    await this.deviceUserService.unregisterDevice(email, deviceId);
     return {
       success: true,
       message: 'Device unregistered successfully',
@@ -461,29 +422,22 @@ export class DeviceUserController {
   }
 
   @Patch('update')
-  @UseInterceptors(FileInterceptor('deviceImage'))
   async updateDeviceUser(
     @Query('email') email: string,
     @Query('deviceId') deviceId: string,
     @Body()
     updateData: Partial<CreateDeviceUserDto> & { removedeviceImage?: string },
-    @UploadedFile() deviceImage?: Express.Multer.File,
-    @Req() req: Request,
   ) {
     if (!email || !deviceId) {
       throw new BadRequestException('email and deviceId are required');
     }
 
     const { removedeviceImage, ...rest } = updateData;
-    const metadata = this.extractMetadata(req);
 
     const updated = await this.deviceUserService.updateDeviceUser(
       email,
       deviceId,
       rest,
-      deviceImage,
-      removedeviceImage,
-      metadata,
     );
 
     return {
@@ -493,69 +447,8 @@ export class DeviceUserController {
     };
   }
 
-  // Update device location with activity logging
-  @Put(':id/location')
-  async updateDeviceLocation(
-    @Param('id') deviceId: string,
-    @Body() updateData: { location: string },
-    @Query('email') email: string,
-    @Req() req: Request,
-  ) {
-    try {
-      if (!email) {
-        throw new BadRequestException('email is required');
-      }
-
-      const metadata = this.extractMetadata(req);
-      const updatedDevice = await this.deviceUserService.updateDeviceLocation(
-        deviceId,
-        updateData,
-        email,
-        metadata,
-      );
-
-      return {
-        success: true,
-        message: 'Device location updated successfully',
-        data: updatedDevice,
-      };
-    } catch (error) {
-      if (
-        error instanceof HttpException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-      throw new HttpException(
-        'Failed to update device location',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  // Get locations for user
-  @Get('locations')
-  async findDeviceLocationsForUser(@Query('email') email: string) {
-    try {
-      if (!email) {
-        throw new BadRequestException('userId is required');
-      }
-
-      const locations =
-        await this.deviceUserService.findDeviceLocationsForUser(email);
-      return locations;
-    } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new HttpException(
-        'Failed to fetch device locations',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   // === Test Routes ===
+
   @Get('test')
   testRoute() {
     return { message: 'Controller is working!' };
@@ -617,4 +510,71 @@ export class DeviceUserController {
       };
     }
   }
-}*/
+
+  // ==Location==
+
+  // Get locations for  user
+  @Get('locations')
+  async findDeviceLocationsForUser(@Query('email') email: string) {
+    try {
+      if (!email) {
+        throw new BadRequestException('userId is required');
+      }
+
+      const locations =
+        await this.deviceUserService.findDeviceLocationsForUser(email);
+      return locations;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new HttpException(
+        'Failed to fetch device locations',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  //  Update device location
+  @Put(':id/location')
+  async updateDeviceLocation(
+    @Param('id') deviceId: string,
+    @Body() updateData: { location: string },
+    @Query('email') email: string,
+  ) {
+    try {
+      if (!email) {
+        throw new BadRequestException('email is required');
+      }
+
+      const updatedDevice = await this.deviceUserService.updateDeviceLocation(
+        deviceId,
+        updateData,
+        email,
+      );
+
+      return {
+        success: true,
+        message: 'Device location updated successfully',
+        data: updatedDevice,
+      };
+    } catch (error) {
+      if (
+        error instanceof HttpException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new HttpException(
+        'Failed to update device location',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('device-types')
+  async getDeviceTypeNames() {
+    const names = await this.deviceUserService.getDeviceTypeNames();
+    return names;
+  }
+}

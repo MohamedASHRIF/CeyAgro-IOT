@@ -29,8 +29,8 @@ export class DeviceUser {
   @Prop({ required: true })
   email: string;
 
-  @Prop()
-  deviceImage: string;
+  /*@Prop()
+  deviceImage: string;*/
 
   @Prop([{
     type: {
@@ -52,11 +52,7 @@ export class DeviceUser {
     maxValue: number;
   }>;
   
-/*  @Prop([{ 
-    email: { type: String, required: true }, 
-    permission: { type: String, enum: ['view', 'edit'], default: 'view' } 
-  }])
-  sharedWith: Array<{ email: string; permission: 'view' | 'edit' }>;*/
+
 }
 
 
