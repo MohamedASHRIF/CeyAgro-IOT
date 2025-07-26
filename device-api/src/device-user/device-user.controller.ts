@@ -422,6 +422,7 @@ export class DeviceUserController {
   }
 
   @Patch('update')
+ @UseInterceptors(FileInterceptor('deviceImage'))
   async updateDeviceUser(
     @Query('email') email: string,
     @Query('deviceId') deviceId: string,

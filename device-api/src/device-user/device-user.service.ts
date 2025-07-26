@@ -8,11 +8,11 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as fs from 'fs';
+//import * as fs from 'fs';
 import * as path from 'path';
-import * as uuid from 'uuid';
-import { v2 as cloudinary } from 'cloudinary';
-import * as streamifier from 'streamifier';
+//import * as uuid from 'uuid';
+//import { v2 as cloudinary } from 'cloudinary';
+//import * as streamifier from 'streamifier';
 
 import { DeviceUser, DeviceUserDocument } from './schemas/device-user.schema';
 import {

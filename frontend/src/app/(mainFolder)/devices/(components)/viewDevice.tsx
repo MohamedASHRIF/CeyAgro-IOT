@@ -145,30 +145,45 @@ useEffect(() => {
             setError("deviceTypes", { type: "manual", message: "At least one device type is required." });
         }
     };
-
-    const onSubmit = (values: CombinedDevice) => {
-        if (!values.deviceTypes || values.deviceTypes.length === 0) {
-            setError("deviceTypes", { type: "manual", message: "At least one device type is required." });
+const onSubmit = (values: CombinedDevice) => {
+    if (!values.deviceTypes || values.deviceTypes.length === 0) {
+        setError("deviceTypes", { type: "manual", message: "At least one device type is required." });
+        return;
+    }
+    
+    for (let i = 0; i < values.deviceTypes.length; i++) {
+        const { minValue, maxValue } = values.deviceTypes[i];
+        
+        // Convert to numbers for proper comparison
+        const minNum = Number(minValue);
+        const maxNum = Number(maxValue);
+        
+        // Check if the values are valid numbers
+        if (isNaN(minNum) || isNaN(maxNum)) {
+            setAlertSuccess(false);
+            setAlertMessage(`Type #${i + 1}: Please enter valid numbers for Min and Max values.`);
+            setShowAlert(true);
             return;
         }
-        for (let i = 0; i < values.deviceTypes.length; i++) {
-            const { minValue, maxValue } = values.deviceTypes[i];
-            if (minValue === maxValue) {
-                setAlertSuccess(false);
-                setAlertMessage(`Type #${i + 1}: Min and Max values cannot be equal.`);
-                setShowAlert(true);
-                return;
-            }
-            if (minValue > maxValue) {
-                setAlertSuccess(false);
-                setAlertMessage(`Type #${i + 1}: Min value cannot be greater than Max value.`);
-                setShowAlert(true);
-                return;
-            }
+        
+        if (minNum === maxNum) {
+            setAlertSuccess(false);
+            setAlertMessage(`Type #${i + 1}: Min and Max values cannot be equal.`);
+            setShowAlert(true);
+            return;
         }
-        clearErrors("deviceTypes");
-        handleSave(values);
-    };
+        
+        if (minNum > maxNum) {
+            setAlertSuccess(false);
+            setAlertMessage(`Type #${i + 1}: Min value cannot be greater than Max value.`);
+            setShowAlert(true);
+            return;
+        }
+    }
+    
+    clearErrors("deviceTypes");
+    handleSave(values);
+};
 
     const handleSave = async (values: CombinedDevice) => {
         try {
