@@ -129,6 +129,55 @@ export class AnalyticsController {
 
 
 
+  @Post('download-history')
+  async saveDownloadHistory(
+    @Body() body: { userEmail: string; filename: string; downloadUrl: string; recordCount: number; s3Key: string },
+  ) {
+    try {
+      const history = await this.analyticsService.saveDownloadHistory(
+        body.userEmail,
+        body.filename,
+        body.downloadUrl,
+        body.recordCount,
+        body.s3Key,
+      );
+      return { success: true, message: 'Download history saved', data: history };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to save download history');
+    }
+  }
+
+  @Get('download-history')
+  async getDownloadHistory(@Query('email') email: string) {
+    if (!email) {
+      return { success: false, message: 'User email is required', data: [] };
+    }
+    try {
+      const history = await this.analyticsService.getDownloadHistory(email);
+      return { success: true, data: history };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message, data: [] };
+      }
+      throw new InternalServerErrorException('Failed to fetch download history');
+    }
+  }
+
+  @Delete('download-history/:id')
+  async deleteDownloadHistory(@Param('id') id: string, @Query('email') email: string) {
+    if (!email) {
+      return { success: false, message: 'User email is required', data: null };
+    }
+    try {
+      await this.analyticsService.deleteDownloadHistory(id, email);
+      return { success: true, message: 'Download history entry deleted' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message };
+      }
+      throw new InternalServerErrorException('Failed to delete download history');
+    }
+  }
 
 
 
