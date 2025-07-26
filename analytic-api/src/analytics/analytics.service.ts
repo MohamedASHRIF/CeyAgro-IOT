@@ -1775,19 +1775,8 @@ export class AnalyticsService {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // Visualization Methods
+// Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
   async getRealtimeStats(deviceId: string, metric: string) {
     console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
     try {
@@ -1818,31 +1807,6 @@ export class AnalyticsService {
     }
   }
 
-
-
-  // Visualization Methods
-// Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
-async getRealtimeStats(deviceId: string, metric: string) {
-  console.log('SERVICE DEBUG: getRealtimeStats called', { deviceId, metric });
-  try {
-    const latest = await this.deviceModel
-      .findOne({ deviceId })
-      .sort({ date: -1, _id: -1 })
-      .select('-__v');
-    console.log('SERVICE DEBUG: getRealtimeStats latest', latest);
-    if (!latest) {
-      console.log('SERVICE DEBUG: No data found for device');
-      return {
-        deviceId: latest.deviceId,
-        metric,
-        value: latest.readings[metric],
-        timestamp: latest.date ? latest.date.toISOString() : new Date().toISOString(),
-      };
-    } catch (err) {
-      console.error('SERVICE ERROR: getRealtimeStats', err);
-      throw err;
-    }
-  }
 
   async getHistoricalStats(
     deviceId: string,
