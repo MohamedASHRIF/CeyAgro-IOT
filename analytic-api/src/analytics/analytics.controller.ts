@@ -761,7 +761,7 @@ async getUserDevices(@Query('email') email: string) {
 @UsePipes(new ValidationPipe({ transform: true }))
 async getAnomalies(
   @Param('deviceId') deviceId: string,
-  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('metric') metric: string,
   @Query('startDate') startDate: string,
   @Query('endDate') endDate: string,
   @Query('email') email: string
@@ -785,7 +785,7 @@ async getAnomalies(
 async compareDevicesOrPeriods(
   @Query('deviceA') deviceA: string,
   @Query('deviceB') deviceB: string,
-  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('metric') metric: string,
   @Query('startDateA') startDateA: string,
   @Query('endDateA') endDateA: string,
   @Query('startDateB') startDateB: string,
@@ -834,7 +834,7 @@ async getCorrelation(
 @UsePipes(new ValidationPipe({ transform: true }))
 async getPrediction(
   @Param('deviceId') deviceId: string,
-  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('metric') metric: string,
   @Query('futureWindow') futureWindow: string, // in hours
   @Query('email') email: string
 ) {
@@ -842,7 +842,7 @@ async getPrediction(
   const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
   if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
-    return await this.analyticsService.getPrediction(deviceId, metric, Number(futureWindow) || 24);
+    return await this.analyticsService.getPrediction(deviceId, metric, parseInt(futureWindow));
   } catch (error) {
     return {
       success: false,
@@ -851,12 +851,13 @@ async getPrediction(
     };
   }
 }
-// Forecast endpoint: returns forecasted values for a device/metric
+
+// Forecast endpoint: returns forecasted values with confidence intervals
 @Get('forecast/:deviceId')
 @UsePipes(new ValidationPipe({ transform: true }))
 async getForecast(
   @Param('deviceId') deviceId: string,
-  @Query('metric') metric: 'temperature' | 'humidity',
+  @Query('metric') metric: string,
   @Query('futureWindow') futureWindow: string, // in hours
   @Query('email') email: string
 ) {
@@ -864,7 +865,7 @@ async getForecast(
   const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
   if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
-    return await this.analyticsService.getForecast(deviceId, metric, Number(futureWindow) || 24);
+    return await this.analyticsService.getForecast(deviceId, metric, parseInt(futureWindow));
   } catch (error) {
     return {
       success: false,
