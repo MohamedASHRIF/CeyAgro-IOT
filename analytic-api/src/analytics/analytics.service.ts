@@ -1774,7 +1774,6 @@ export class AnalyticsService {
   }
 
 
-
   // Visualization Methods
 // Retrieves the latest real-time stats for a device by name and metric (temperature or humidity)
   async getRealtimeStats(deviceId: string, metric: string) {
