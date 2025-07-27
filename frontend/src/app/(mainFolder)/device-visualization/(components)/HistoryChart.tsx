@@ -13,6 +13,7 @@ import {
 } from "chart.js";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { formatColomboDate } from "@/lib/timezone";
 
 // Register Chart.js components for rendering line charts
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -28,7 +29,7 @@ export function HistoryChart({
   device: string | null;
   deviceName: string | null;
   metric: string;
-  timeRange: "lastHour" | "lastDay";
+  timeRange: "lastHour" | "lastDay" | "lastWeek";
   min?: number;
   max?: number;
 }) {
@@ -61,42 +62,174 @@ export function HistoryChart({
       return;
     }
 
-    // Calculate date range based on timeRange (last hour or last day)
+    // Calculate date range and bucket info based on timeRange
     const now = new Date();
-    const startDate = new Date(
-      now.getTime() - (timeRange === "lastHour" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)
-    ).toISOString();
-    const endDate = now.toISOString();
+    let startDate: Date;
+    let interval: number;
+    let bucketCount: number;
+    if (timeRange === "lastHour") {
+      startDate = new Date(now.getTime() - 60 * 60 * 1000);
+      interval = 5 * 60 * 1000; // 5 minutes
+      bucketCount = 12;
+    } else if (timeRange === "lastDay") {
+      startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      interval = 60 * 60 * 1000; // 1 hour
+      bucketCount = 24;
+    } else {
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      interval = 24 * 60 * 60 * 1000; // 1 day
+      bucketCount = 7;
+    }
+    const endDate = now;
 
     // Fetch historical data from the API
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/history/${device}?metric=${metric}&startDate=${startDate}&endDate=${endDate}&email=${encodeURIComponent(user?.email || "")}`
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/history/${device}?metric=${metric}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&email=${encodeURIComponent(user?.email || "")}`
         );
         const apiResponse = response.data;
-        const points = Array.isArray(apiResponse) ? apiResponse : apiResponse.data;
-        console.log("HistoryChart API response:", points);
+        const points = Array.isArray(apiResponse.data) ? apiResponse.data : apiResponse;
+        
+        console.log('HistoryChart timeRange:', timeRange);
+        console.log('HistoryChart API response:', points);
 
-        // Validate response as an array; empty array indicates no data
-        if (!Array.isArray(points) || points.length === 0) {
-          setNoData(true);
+        // Get current time in Sri Lanka for consistent bucketing
+        const nowColombo = new Date(formatColomboDate(new Date().toISOString(), "YYYY-MM-DDTHH:mm:ss"));
+        
+        if (timeRange === "lastHour") {
+          // Generate 12 consecutive 5-min intervals ending now (Sri Lanka time)
+          const timeLabels: string[] = [];
+          const bucketData: number[] = [];
+          
+          for (let i = 11; i >= 0; i--) {
+            const bucketTime = new Date(nowColombo.getTime() - i * 5 * 60 * 1000);
+            const label = formatColomboDate(bucketTime.toISOString(), "HH:mm");
+            timeLabels.push(label);
+            
+            // Find points that fall within this 5-minute bucket
+            const bucketStart = new Date(bucketTime.getTime());
+            const bucketEnd = new Date(bucketTime.getTime() + 5 * 60 * 1000);
+            
+            const bucketPoints = points.filter((p: any) => {
+              const pointTime = new Date(p.timestamp || p.date || p.label);
+              return pointTime >= bucketStart && pointTime < bucketEnd;
+            });
+            
+            if (bucketPoints.length > 0) {
+              const avg = bucketPoints.reduce((sum: any, item: any) => sum + (item.value ?? 0), 0) / bucketPoints.length;
+              bucketData.push(avg);
+            } else {
+              bucketData.push(0);
+            }
+          }
+          
           setChartData({
-            labels: [],
-            datasets: [{ ...chartData.datasets[0], data: [] }],
+            labels: timeLabels,
+            datasets: [
+              {
+                ...chartData.datasets[0],
+                data: bucketData,
+                label: `Historical ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
+              },
+            ],
           });
+          setError(null);
+          setNoData(false);
+          return;
+        }
+        
+        if (timeRange === "lastDay") {
+          // Generate 24 consecutive hours ending now (Sri Lanka time)
+          const hourLabels: string[] = [];
+          const bucketData: number[] = [];
+          
+          for (let i = 23; i >= 0; i--) {
+            const bucketTime = new Date(nowColombo.getTime() - i * 60 * 60 * 1000);
+            const label = formatColomboDate(bucketTime.toISOString(), "HH:00");
+            hourLabels.push(label);
+            
+            // Find points that fall within this hour bucket
+            const bucketStart = new Date(bucketTime.getTime());
+            const bucketEnd = new Date(bucketTime.getTime() + 60 * 60 * 1000);
+            
+            const bucketPoints = points.filter((p: any) => {
+              const pointTime = new Date(p.timestamp || p.date || p.label);
+              return pointTime >= bucketStart && pointTime < bucketEnd;
+            });
+            
+            if (bucketPoints.length > 0) {
+              const avg = bucketPoints.reduce((sum: any, item: any) => sum + (item.value ?? 0), 0) / bucketPoints.length;
+              bucketData.push(avg);
+            } else {
+              bucketData.push(0);
+            }
+          }
+          
+          setChartData({
+            labels: hourLabels,
+            datasets: [
+              {
+                ...chartData.datasets[0],
+                data: bucketData,
+                label: `Historical ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
+              },
+            ],
+          });
+          setError(null);
+          setNoData(false);
+          return;
+        }
+        
+        if (timeRange === "lastWeek") {
+          // Generate 7 consecutive days ending today (Sri Lanka time)
+          const dayLabels: string[] = [];
+          const bucketData: number[] = [];
+          
+          for (let i = 6; i >= 0; i--) {
+            const bucketTime = new Date(nowColombo.getTime() - i * 24 * 60 * 60 * 1000);
+            const label = formatColomboDate(bucketTime.toISOString(), "YYYY-MM-DD");
+            dayLabels.push(label);
+            
+            // Find points that fall within this day bucket
+            const bucketStart = new Date(bucketTime.getTime());
+            const bucketEnd = new Date(bucketTime.getTime() + 24 * 60 * 60 * 1000);
+            
+            const bucketPoints = points.filter((p: any) => {
+              const pointTime = new Date(p.timestamp || p.date || p.label);
+              return pointTime >= bucketStart && pointTime < bucketEnd;
+            });
+            
+            if (bucketPoints.length > 0) {
+              const avg = bucketPoints.reduce((sum: any, item: any) => sum + (item.value ?? 0), 0) / bucketPoints.length;
+              bucketData.push(avg);
+            } else {
+              bucketData.push(0);
+            }
+          }
+          
+          setChartData({
+            labels: dayLabels,
+            datasets: [
+              {
+                ...chartData.datasets[0],
+                data: bucketData,
+                label: `Historical ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
+              },
+            ],
+          });
+          setError(null);
+          setNoData(false);
           return;
         }
 
-        // Update chart with fetched data
+        // Fallback for any other case
         setChartData({
-          labels: points.map(item =>
-            item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown"
-          ),
+          labels: points.map((p: any) => formatColomboDate(p.timestamp || p.date || p.label, "HH:mm")),
           datasets: [
             {
               ...chartData.datasets[0],
-              data: points.map(item => item.value ?? 0),
+              data: points.map((p: any) => p.value),
               label: `Historical ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
             },
           ],
