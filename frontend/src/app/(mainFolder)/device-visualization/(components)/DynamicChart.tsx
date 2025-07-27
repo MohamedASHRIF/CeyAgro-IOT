@@ -26,9 +26,26 @@ export function DynamicChart({
   device: string | null;
   deviceName: string | null;
   metric: string;
-  timeRange: "lastHour" | "lastDay";
+  timeRange: "lastHour" | "lastDay" | "lastWeek";
 }) {
   const { user } = useUser();
+  
+  // Define colors for min, max, avg (avoiding red)
+  const colors = {
+    min: {
+      backgroundColor: "rgba(54, 162, 235, 0.8)", // Blue
+      borderColor: "rgba(54, 162, 235, 1)",
+    },
+    max: {
+      backgroundColor: "rgba(75, 192, 192, 0.8)", // Green
+      borderColor: "rgba(75, 192, 192, 1)",
+    },
+    avg: {
+      backgroundColor: "rgba(255, 159, 64, 0.8)", // Orange
+      borderColor: "rgba(255, 159, 64, 1)",
+    },
+  };
+
   // State for chart data (labels and dataset for the bar chart, showing min, max, avg)
   const [chartData, setChartData] = useState({
     labels: ["Min", "Max", "Avg"],
@@ -36,9 +53,9 @@ export function DynamicChart({
       {
         label: `Statistics for ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
         data: [] as number[],
-        backgroundColor: metric === "temperature" ? "rgba(255, 99, 132, 0.2)" : "rgba(75, 192, 192, 0.2)",
-        borderColor: metric === "temperature" ? "rgba(255, 99, 132, 1)" : "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
+        backgroundColor: [colors.min.backgroundColor, colors.max.backgroundColor, colors.avg.backgroundColor],
+        borderColor: [colors.min.borderColor, colors.max.borderColor, colors.avg.borderColor],
+        borderWidth: 2,
       },
     ],
   });
@@ -74,6 +91,8 @@ export function DynamicChart({
               {
                 ...chartData.datasets[0],
                 data: [0, 0, 0],
+                backgroundColor: [colors.min.backgroundColor, colors.max.backgroundColor, colors.avg.backgroundColor],
+                borderColor: [colors.min.borderColor, colors.max.borderColor, colors.avg.borderColor],
               },
             ],
           });
@@ -88,6 +107,8 @@ export function DynamicChart({
               ...chartData.datasets[0],
               data: [data.min ?? 0, data.max ?? 0, data.avg ?? 0],
               label: `Statistics for ${metric.charAt(0).toUpperCase() + metric.slice(1)}`,
+              backgroundColor: [colors.min.backgroundColor, colors.max.backgroundColor, colors.avg.backgroundColor],
+              borderColor: [colors.min.borderColor, colors.max.borderColor, colors.avg.borderColor],
             },
           ],
         });
