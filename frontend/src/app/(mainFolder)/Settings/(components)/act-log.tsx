@@ -327,7 +327,7 @@ export default function ActivityLogCard() {
     </DialogHeader>
 
     {selectedChanges && (
-      <ul className="ml-4 mt-2 list-disc text-sm text-gray-700">
+      <ul className="ml-4 mt-2 list-disc text-md text-gray-700">
         {Object.entries(selectedChanges)
           .filter(([key, { oldValue, newValue }]) => {
             if (key === "deviceTypes") {
@@ -344,8 +344,8 @@ export default function ActivityLogCard() {
              <strong>{FIELD_LABELS[key] || key}:</strong>{" "}
               {key === "deviceTypes" ? (
                 <div className="mt-1 ml-2 space-y-1">
-                  <div className="text-sm text-gray-500">Old Value:</div>
-                  <ul className="list-disc ml-4 text-sm text-red-500">
+                  <div className="text-md text-gray-500">Old Value:</div>
+                  <ul className="list-disc ml-4 text-md text-red-500">
                     {(Array.isArray(oldValue) ? oldValue : []).map(
                       (item, index) => (
                         <li key={`old-${index}`}>
@@ -354,8 +354,8 @@ export default function ActivityLogCard() {
                       )
                     )}
                   </ul>
-                  <div className="text-sm text-gray-500 mt-1">New Value:</div>
-                  <ul className="list-disc ml-4 text-sm text-green-600">
+                  <div className="text-md text-gray-500 mt-1">New Value:</div>
+                  <ul className="list-disc ml-4 text-md text-green-600">
                     {(Array.isArray(newValue) ? newValue : []).map(
                       (item, index) => (
                         <li key={`new-${index}`}>
