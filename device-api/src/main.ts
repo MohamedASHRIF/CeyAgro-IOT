@@ -10,7 +10,7 @@ async function bootstrap() {
 
    app.setGlobalPrefix('device-api');
   //  Connect Kafka microservice
-   //  app.connectMicroservice(kafkaConfig);
+     app.connectMicroservice(kafkaConfig);
 
 
   //image handling
@@ -28,7 +28,7 @@ app.use(
 );
 
 app.enableCors({
-  origin: ['*'],// Your Next.js frontend
+  origin: ['http://localhost:3000'],// Your Next.js frontend
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
 });
