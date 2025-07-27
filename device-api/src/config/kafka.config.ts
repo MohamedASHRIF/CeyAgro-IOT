@@ -6,7 +6,7 @@ export const kafkaConfig: KafkaOptions = {
     client: {
       clientId: 'device-api-v2',
       brokers: [
-        'b-1.uomproject.wr3wd9.c2.kafka.eu-north-1.amazonaws.com:9096', 
+        'b-1.uomproject.2wooab.c2.kafka.eu-north-1.amazonaws.com:9096', 
         'b-2.uomproject.wr3wd9.c2.kafka.eu-north-1.amazonaws.com:9096'
       ], // Use container name instead of localhost
       ssl: true,
