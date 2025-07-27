@@ -720,13 +720,13 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
 
   if (!userDeviceData)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+      <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-4xl">
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">No device to display</h2>
             <p className="text-gray-600 mb-6">Your device has been deleted or is not available.</p>
             <Link href="/dashboard">
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button className="bg-white/40 text-black border-gray-300 hover:bg-white/30">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
@@ -742,13 +742,13 @@ const DevicePage = ({ deviceId, userEmail }: DevicePageProps) => {
         {/* Header */}
       
 
-        <Card className="shadow-xl border-0 overflow-hidden">
+        <Card className="shadow-xl border-0 overflow-hidden !pt-0">
           {/* Header Section */}
-          <div className="bg-gradient-to-br from-gray-200 via-gray-600 to-gray-200 px-8 py-8">
+          <div className="bg-gradient-to-br from-gray-200 via-gray-600 to-gray-200 px-8 py-8 ">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex flex-col items-center md:items-start gap-4 text-center md:text-left">
                 <div className="bg-white/20 p-3 rounded-full">
-                  <Monitor className="w-8 h-8 text-white" />
+                  <Monitor className="w-10 h-10 text-white" />
                 </div>
                 <div className="text-white">
                   <h2 className="text-3xl font-bold mb-2">{userDeviceData.deviceName}</h2>

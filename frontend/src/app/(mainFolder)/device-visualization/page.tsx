@@ -510,7 +510,7 @@ export default function VisualizationPage() {
   }
 
   return (
-    <div className="dashboard-container p-6">
+    <div className="dashboard-container p-6 mt-20">
       {/* Top controls */}
       <div className="flex gap-4 mb-6">
         <Select value={selectedDevice ?? undefined} onValueChange={handleDeviceChange} disabled={devices.length === 0}>

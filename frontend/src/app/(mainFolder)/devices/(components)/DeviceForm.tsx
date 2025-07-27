@@ -543,7 +543,7 @@ export function AddDeviceForm({ email }: AddDeviceFormProps) {
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
        
-        <Card className="shadow-xl border-0 overflow-hidden">
+        <Card className="shadow-xl border-0 overflow-hidden !pt-0">
 {/* Header Section */}
 <div className="bg-gradient-to-br from-gray-200 via-gray-600 to-gray-200 px-8 py-8">
   <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-6">

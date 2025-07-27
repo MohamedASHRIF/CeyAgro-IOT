@@ -551,7 +551,7 @@ export const DashboardHeader = () => {
         <SidebarTrigger className="mr-2" />
       </div>
 
-      <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
+      <div className="absolute left-1/2 transform -translate-x-[20%] text-center hidden 2xl:block">
         {profileData && profileData.name ? (
           <span className="text-lg text-foreground font-semibold flex items-center gap-1">
             <Icon

@@ -1223,7 +1223,7 @@ export default function ProfilePage() {
 
   if (!profileData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+      <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-4xl">
           <div className="flex justify-center items-center min-h-[60vh]">
             <Card className="w-full max-w-2xl">
@@ -1254,7 +1254,7 @@ export default function ProfilePage() {
       <div className="container mx-auto max-w-4xl">
        
 
-        <Card className="shadow-xl border-0 overflow-hidden">
+        <Card className="shadow-xl border-0 overflow-hidden !pt-0">
           {/* Profile Header Section */}
           <div className="bg-gradient-to-br from-gray-200 via-gray-600 to-gray-200 px-8 py-8">
             <div className="flex flex-col md:flex-row items-center gap-8">

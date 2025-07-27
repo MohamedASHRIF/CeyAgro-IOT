@@ -5,7 +5,7 @@ import ProfilePage from "../(components)/profilePage";
 
 export default function ProfileManagementPage() {
   return (
-    <div className="profile-management-page">
+    <div className="profile-management-page mt-20">
       {/*  activeTab prop to "Personal Information" */}
       <ProfileHeader activeTab="Personal Information" />
 
