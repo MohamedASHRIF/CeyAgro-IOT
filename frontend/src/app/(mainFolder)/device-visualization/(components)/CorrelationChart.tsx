@@ -30,26 +30,35 @@ export function CorrelationChart({ device, deviceName, startDate, endDate, xType
   const [noData, setNoData] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!device || !startDate || !endDate || !xType || !yType) return;
+    if (!device || !startDate || !endDate || !xType || !yType) {
+      console.log('DEBUG: CorrelationChart missing required props:', { device, startDate, endDate, xType, yType });
+      return;
+    }
+    
+    console.log('DEBUG: CorrelationChart fetching data with:', { device, startDate, endDate, xType, yType });
+    
     const fetchData = async () => {
       try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/analytics/correlation/${device}?startDate=${startDate}&endDate=${endDate}&xType=${xType}&yType=${yType}&email=${encodeURIComponent(user?.email || "")}`
         );
         const apiData = response.data;
-        if (!apiData || typeof apiData.correlation !== "number") {
+        console.log('DEBUG: CorrelationChart API response:', apiData);
+        
+        // Check if we have points data, correlation can be null but still have points
+        if (!apiData || !Array.isArray(apiData.points)) {
+          console.log('DEBUG: CorrelationChart no points data available');
           setNoData(true);
           return;
         }
+        
         setCorrelation(apiData.correlation);
-        if (Array.isArray(apiData.points)) {
-          setScatterData(apiData.points);
-        } else {
-          setScatterData([]);
-        }
+        setScatterData(apiData.points);
         setError(null);
         setNoData(false);
+        console.log('DEBUG: CorrelationChart set data:', { correlation: apiData.correlation, pointsCount: apiData.points.length });
       } catch (err) {
+        console.error('DEBUG: CorrelationChart error:', err);
         setError("Failed to fetch correlation data");
         setNoData(true);
       }
@@ -58,7 +67,13 @@ export function CorrelationChart({ device, deviceName, startDate, endDate, xType
   }, [device, startDate, endDate, xType, yType, user]);
 
   if (error || noData) {
-    return <div><h2>Correlation for {deviceName ?? device ?? "Device"}</h2><p className="text-red-500">{error || "No correlation data available"}</p></div>;
+    return (
+      <div>
+        <h2>Correlation for {deviceName ?? device ?? "Device"}</h2>
+        <p className="text-red-500">{error || "No correlation data available"}</p>
+        <p className="text-sm text-gray-500">Debug: {xType} vs {yType}</p>
+      </div>
+    );
   }
 
   return (
@@ -86,7 +101,11 @@ export function CorrelationChart({ device, deviceName, startDate, endDate, xType
           }}
         />
       ) : (
-        <div className="text-gray-400 text-center">No scatter data available</div>
+        <div className="text-gray-400 text-center">
+          No scatter data available
+          <br />
+          <span className="text-xs">Points found: {scatterData.length}</span>
+        </div>
       )}
     </div>
   );
