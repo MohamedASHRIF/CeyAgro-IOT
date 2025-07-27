@@ -452,7 +452,7 @@ export const NotificationList: React.FC = () => {
 
     return (
       <div className={`text-xs ${statusColor[connectionStatus]} mb-2`}>
-        WebSocket: {connectionStatus}
+        {/* WebSocket: {connectionStatus} */}
       </div>
     );
   };
