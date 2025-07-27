@@ -112,13 +112,13 @@ export function useDeviceReports(userEmail: string | undefined) {
       if (response.data.success) {
         setDownloadHistory(response.data.data);
       } else {
-        setError(response.data.message || 'Failed to fetch download history');
-        toast.error('Error', { description: response.data.message || 'Failed to fetch download history' });
+        setError(response.data.message || '');
+        toast.error('Error', { description: response.data.message || '' });
       }
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? error.response?.data?.message || error.message
-        : 'Failed to fetch download history';
+        : '';
       setError(message);
       toast.error('Error', { description: message });
     } finally {
