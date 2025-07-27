@@ -1,6 +1,6 @@
 // "use client";
 
-// import { usePathname } from "next/navigation";
+// import { usePathname, useRouter } from "next/navigation";
 // import {
 //   ChartAreaIcon,
 //   LayoutDashboard,
@@ -8,12 +8,15 @@
 //   Monitor,
 //   Settings,
 //   User,
+//   Logs,
 //   MapPinCheckIcon,
 //   LetterText,
 // } from "lucide-react";
 // import Image from "next/image";
 // import Link from "next/link";
 // import { useState, useEffect } from "react";
+// import { useUser } from "@auth0/nextjs-auth0/client"; // Import useUser for client-side auth
+// import { logout } from "../../../../actions/auth"; // Only import logout since login is not used
 
 // import {
 //   Sidebar,
@@ -42,12 +45,20 @@
 //         url: "/Settings/profileManagement",
 //         icon: User,
 //       },
+//       {
+//         title: "Activity Log",
+//         url: "/Settings/activity-log",
+//         icon: Logs,
+//       },
 //     ],
 //   },
 // ];
 
 // export function DashboardSidebar() {
 //   const pathname = usePathname();
+//   const router = useRouter();
+//   const { user, isLoading } = useUser(); // Get user and loading state from Auth0
+//   const isAuthenticated = !!user; // Determine authentication status
 
 //   // Determine if any settings children match the current route
 //   const isAnySettingsChildActive = items
@@ -64,11 +75,22 @@
 //     }
 //   }, [pathname, isAnySettingsChildActive]);
 
+//   const handleLogout = async () => {
+//     await logout(); // Call server action
+//     router.refresh(); // Refresh UI to reflect logout
+//   };
+
 //   return (
 //     <Sidebar>
-//       <SidebarHeader className="h-14 border-b">
+//       <SidebarHeader className="h-20 border-b">
 //         <div className="flex items-center space-x-2">
-//           <Image src="/4.png" alt="Logo" width={160} height={12} />
+//           <Image
+//             src="/image.png"
+//             alt="Logo"
+//             width={70}
+//             height={50}
+//             className="mx-auto"
+//           />
 //         </div>
 //       </SidebarHeader>
 
@@ -77,7 +99,11 @@
 //           <SidebarGroupContent>
 //             <SidebarMenu>
 //               {items.map((item) => {
-//                 const isActive = pathname === item.url;
+//                 const isActive =
+//                   item.title === "Device Management"
+//                     ? pathname.startsWith("/devices")
+//                     : pathname === item.url;
+
 //                 const isSettingsActive =
 //                   item.title === "Settings" &&
 //                   (pathname === item.url ||
@@ -150,14 +176,18 @@
 //         <SidebarFooter className="mt-auto">
 //           <SidebarMenuItem>
 //             <SidebarMenuButton asChild>
-//               <Link
-//                 href="/api/auth/login"
-//                 className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
-//                 onClick={() => setSettingsOpen(false)}
-//               >
-//                 <LogOutIcon />
-//                 <span className="text-base">Logout</span>
-//               </Link>
+//               {isAuthenticated && (
+//                 <form action={logout}>
+//                   <button
+//                     onClick={handleLogout}
+//                     type="submit"
+//                     className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
+//                   >
+//                     <LogOutIcon />
+//                     <span className="text-base">Logout</span>
+//                   </button>
+//                 </form>
+//               )}
 //             </SidebarMenuButton>
 //           </SidebarMenuItem>
 //         </SidebarFooter>
@@ -165,7 +195,6 @@
 //     </Sidebar>
 //   );
 // }
-
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -176,14 +205,15 @@ import {
   Monitor,
   Settings,
   User,
+  Logs,
   MapPinCheckIcon,
   LetterText,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useUser } from "@auth0/nextjs-auth0/client"; // Import useUser for client-side auth
-import { logout } from "../../../../actions/auth"; // Only import logout since login is not used
+import { useUser } from "@auth0/nextjs-auth0/client";
+import { logout } from "../../../../actions/auth";
 
 import {
   Sidebar,
@@ -212,6 +242,11 @@ const items = [
         url: "/Settings/profileManagement",
         icon: User,
       },
+      {
+        title: "Activity Log",
+        url: "/Settings/activity-log",
+        icon: Logs,
+      },
     ],
   },
 ];
@@ -219,10 +254,9 @@ const items = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading } = useUser(); // Get user and loading state from Auth0
-  const isAuthenticated = !!user; // Determine authentication status
+  const { user, isLoading } = useUser();
+  const isAuthenticated = !!user;
 
-  // Determine if any settings children match the current route
   const isAnySettingsChildActive = items
     .find((item) => item.title === "Settings")
     ?.children?.some((child) => pathname === child.url);
@@ -238,8 +272,8 @@ export function DashboardSidebar() {
   }, [pathname, isAnySettingsChildActive]);
 
   const handleLogout = async () => {
-    await logout(); // Call server action
-    router.refresh(); // Refresh UI to reflect logout
+    await logout();
+    router.refresh();
   };
 
   return (
@@ -273,62 +307,68 @@ export function DashboardSidebar() {
 
                 if (item.children) {
                   return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        onClick={() => setSettingsOpen((prev) => !prev)}
-                        className={`flex w-full items-center space-x-2 px-4 py-2 cursor-pointer ${
-                          isSettingsActive
-                            ? "font-bold text-black"
-                            : "text-gray-800"
-                        }`}
-                      >
-                        <item.icon />
-                        <span className="text-base">{item.title}</span>
-                      </SidebarMenuButton>
+                    <div className="mb-4" key={item.title}>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          onClick={() => setSettingsOpen((prev) => !prev)}
+                          className={`flex w-full items-center space-x-2 px-4 py-2 cursor-pointer ${
+                            isSettingsActive
+                              ? "font-bold text-black"
+                              : "text-gray-800"
+                          }`}
+                        >
+                          <item.icon />
+                          <span className="text-[17px]">{item.title}</span>
+                        </SidebarMenuButton>
 
-                      {settingsOpen && (
-                        <div className="pl-10 mt-1 space-y-1">
-                          {item.children.map((child) => {
-                            const isChildActive = pathname === child.url;
-                            return (
-                              <Link
-                                key={child.title}
-                                href={child.url}
-                                className={`flex items-center space-x-2 px-2 py-1 rounded hover:text-teal-400 ${
-                                  isChildActive
-                                    ? "font-semibold text-gray-700"
-                                    : "text-gray-700"
-                                }`}
-                                onClick={() => setSettingsOpen(true)}
-                              >
-                                <child.icon className="h-4 w-4" />
-                                <span className="text-base">{child.title}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </SidebarMenuItem>
+                        {settingsOpen && (
+                          <div className="pl-10 mt-1 space-y-1">
+                            {item.children.map((child) => {
+                              const isChildActive = pathname === child.url;
+                              return (
+                                <Link
+                                  key={child.title}
+                                  href={child.url}
+                                  className={`flex items-center space-x-2 px-2 py-1 rounded hover:text-teal-400 ${
+                                    isChildActive
+                                      ? "font-semibold text-gray-700"
+                                      : "text-gray-700"
+                                  }`}
+                                  onClick={() => setSettingsOpen(true)}
+                                >
+                                  <child.icon className="h-4 w-4" />
+                                  <span className="text-[16px]">
+                                    {child.title}
+                                  </span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </SidebarMenuItem>
+                    </div>
                   );
                 }
 
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link
-                        href={item.url}
-                        className={`flex items-center space-x-2 px-4 py-2 cursor-pointer ${
-                          isActive
-                            ? "font-bold text-black hover:text-inherit hover:bg-transparent"
-                            : "text-gray-800"
-                        }`}
-                        onClick={() => setSettingsOpen(false)}
-                      >
-                        <item.icon />
-                        <span className="text-base">{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <div className="mb-4" key={item.title}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          href={item.url}
+                          className={`flex items-center space-x-2 px-4 py-2 cursor-pointer ${
+                            isActive
+                              ? "font-bold text-black hover:text-inherit hover:bg-transparent"
+                              : "text-gray-800"
+                          }`}
+                          onClick={() => setSettingsOpen(false)}
+                        >
+                          <item.icon />
+                          <span className="text-[17px]">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </div>
                 );
               })}
             </SidebarMenu>
@@ -346,7 +386,7 @@ export function DashboardSidebar() {
                     className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-800 hover:text-black"
                   >
                     <LogOutIcon />
-                    <span className="text-base">Logout</span>
+                    <span className="text-[17px]">Logout</span>
                   </button>
                 </form>
               )}

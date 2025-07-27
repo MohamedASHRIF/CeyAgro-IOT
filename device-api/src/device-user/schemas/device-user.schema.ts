@@ -1,47 +1,66 @@
-//device-user.schema.ts
+// In your device-user.schema.ts file, make sure you have unique indexes
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
-@Schema()
-export class DeviceType {
-  @Prop({ required: true })
-  type: string;
-
-  @Prop({ required: true, type: Number })
-  minValue: number;
-
-  @Prop({ required: true, type: Number })
-  maxValue: number;
-}
-
-export const DeviceTypeSchema = SchemaFactory.createForClass(DeviceType);
+export type DeviceUserDocument = DeviceUser & Document;
 
 @Schema({ timestamps: true })
 export class DeviceUser {
-  @Prop({ required: true })
-  email: string;
-
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true }) // Make deviceId unique at schema level
   deviceId: string;
 
   @Prop({ required: true })
   deviceName: string;
 
-  @Prop()
-  description: string;
+  @Prop({ 
+    required: false, 
+    sparse: true, // This allows multiple documents with null/undefined serialNumber
+    unique: true  // But ensures uniqueness when serialNumber is provided
+  })
+  serialNumber: string;
 
-  @Prop()
-  deviceImage: string;
-
-  @Prop()
+  @Prop({ required: true })
   location: string;
 
   @Prop()
-  serialNumber: string;
+  description: string;
 
-  @Prop({ type: [DeviceTypeSchema], default: [] })
-  deviceTypes: DeviceType[];
+  @Prop({ required: true })
+  email: string;
+
+  /*@Prop()
+  deviceImage: string;*/
+
+  @Prop([{
+    type: {
+      type: String,
+      required: true
+    },
+    minValue: {
+      type: Number,
+      required: true
+    },
+    maxValue: {
+      type: Number,
+      required: true
+    }
+  }])
+  deviceTypes: Array<{
+    type: string;
+    minValue: number;
+    maxValue: number;
+  }>;
+  
+
 }
 
-export type DeviceUserDocument = DeviceUser & Document;
+
+
+
 export const DeviceUserSchema = SchemaFactory.createForClass(DeviceUser);
+
+// Add compound indexes for better query performance
+DeviceUserSchema.index({ deviceId: 1 }, { unique: true });
+DeviceUserSchema.index({ serialNumber: 1 }, { unique: true, sparse: true });
+DeviceUserSchema.index({ email: 1 });

@@ -12,6 +12,7 @@ async function bootstrap() {
   //  Connect Kafka microservice
      app.connectMicroservice(kafkaConfig);
 
+
   //image handling
 app.use(
   '/uploads',
