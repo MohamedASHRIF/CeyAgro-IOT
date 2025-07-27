@@ -27,22 +27,23 @@ export function DeviceHeader({ onTabChange, activeTab }: DeviceHeaderProps) {
 }, [onTabChange]);
 
   return (
-   <GreenHeader
-  title="Device Management"
-  menuItems={[
-    {
-      name: "All Devices",
-      onClick: () => handleTabChange("All Devices", "all-devices"),
-      isActive: activeTab === "All Devices",
-    },
-    {
-      name: "Add New Device",
-      onClick: () => handleTabChange("Add New Device", "add-device"),
-      isActive: activeTab === "Add New Device",
-    },
-   
-  ]}
-/>
+  <div className="mt-20">
+  <GreenHeader
+    title="Device Management"
+    menuItems={[
+      {
+        name: "All Devices",
+        onClick: () => handleTabChange("All Devices", "all-devices"),
+        isActive: activeTab === "All Devices",
+      },
+      {
+        name: "Add New Device",
+        onClick: () => handleTabChange("Add New Device", "add-device"),
+        isActive: activeTab === "Add New Device",
+      },
+    ]}
+  />
+</div>
 
   );
 }

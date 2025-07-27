@@ -39,7 +39,7 @@ export default function CommonLayout({
         <DashboardSidebar />
         <SidebarInset>
           <DashboardHeader />
-          <main className="flex-1 bg-gradient-to-br from-gray-400 via-gray-100 to-gray-400 ">{children}</main>
+          <main className="flex-1 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100">{children}</main>
           <Footer />
         </SidebarInset>
       </SidebarProvider>

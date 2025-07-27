@@ -312,7 +312,7 @@ import { isUserAdmin } from "../../../../actions/isUserAdmin";
 
 const API_BASE = "http://localhost:3001";
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3002/device-api";
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002/device-api";
 
 interface Notification {
   id: string;
@@ -546,12 +546,12 @@ export const DashboardHeader = () => {
   };
 
   return (
-    <header className="relative flex h-20 items-center justify-between border-b px-4">
+    <header className="fixed top-0 left-0 right-0 h-20 flex items-center justify-between border-b px-4 bg-white z-50">
       <div className="flex items-center z-10">
         <SidebarTrigger className="mr-2" />
       </div>
 
-      <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
+      <div className="absolute left-1/2 transform -translate-x-[20%] text-center hidden 2xl:block">
         {profileData && profileData.name ? (
           <span className="text-lg text-foreground font-semibold flex items-center gap-1">
             <Icon

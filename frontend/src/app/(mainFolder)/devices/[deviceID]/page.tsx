@@ -95,7 +95,7 @@ export default function DeviceManagementPage() {
   }
 
   return (
-    <div className="device-management-page">
+    <div className="device-management-page mt-20" >
       <DeviceHeader
         activeTab={activeTab}
         onTabChange={setActiveTab}

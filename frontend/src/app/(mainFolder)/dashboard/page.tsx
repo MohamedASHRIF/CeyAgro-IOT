@@ -155,7 +155,7 @@ export default function DashboardPage() {
       </div> */}
 
       {/* Hero Section */}
-      <div className="relative z-10 space-y-4 max-w-6xl mx-auto text-center">
+      <div className="relative z-10 space-y-4 max-w-6xl mx-auto text-center mt-20">
         <h1 className="text-5xl md:text-6xl font-bold drop-shadow-xl bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900 bg-clip-text text-transparent">
           Power up your dashboard!
         </h1>

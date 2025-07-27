@@ -1807,8 +1807,6 @@ export class AnalyticsService {
   }
 
 
-
-
   async getHistoricalStats(
     deviceId: string,
     metric: string,

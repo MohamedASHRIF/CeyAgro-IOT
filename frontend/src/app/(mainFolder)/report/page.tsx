@@ -255,7 +255,7 @@ export default function DeviceReports() {
   }
 
   return (
-    <div className="p-5 container py-8 mx-auto">
+    <div className="p-5 container py-8 mx-auto mt-20">
       <h1 className="mb-6 text-3xl font-bold text-center">Device Report</h1>
 
       <Card className="mb-8">

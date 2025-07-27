@@ -4,7 +4,7 @@ import { ActLogHeader } from "../(components)/act-log-header";
 
 export default function ActivityLogPage() {
   return (
-    <div className="Activity-Log-Page">
+    <div className="Activity-Log-Page mt-20">
       {/*  activeTab prop to Act Log */}
       <ActLogHeader activeTab="Activity Log" />
       {/*  show the Acts */}
