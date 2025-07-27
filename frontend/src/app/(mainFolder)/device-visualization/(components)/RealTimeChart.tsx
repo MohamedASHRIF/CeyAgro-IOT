@@ -58,8 +58,8 @@ export function RealTimeGaugeChart({
   const percent = ((clampedValue - min) / (max - min)) * 100;
 
   const outOfRange = value < min || value > max;
-  const fillColor = outOfRange ? "#EF4444" : "#3B82F6"; // red or blue
-  const backgroundColor = "#E5E7EB"; // light gray
+  const fillColor = outOfRange ? "#EF4444" : "#10B981"; // red or emerald green
+  const backgroundColor = "#D1FAE5"; // light emerald green
 
   const chartData = {
     datasets: [
@@ -98,7 +98,7 @@ export function RealTimeGaugeChart({
                 bottom: "-25px",
                 fontSize: "0.875rem",
                 fontWeight: "bold",
-                color: "#EF4444",
+                color: "#059669",
               }}
             >
               {min}
@@ -111,7 +111,7 @@ export function RealTimeGaugeChart({
                 bottom: "-25px",
                 fontSize: "0.875rem",
                 fontWeight: "bold",
-                color: "#EF4444",
+                color: "#059669",
               }}
             >
               {max}
@@ -125,7 +125,7 @@ export function RealTimeGaugeChart({
                 transform: "translate(-50%, -50%)",
                 fontSize: "1.5rem",
                 fontWeight: "bold",
-                color: "#1F2937",
+                color: "#065F46",
               }}
             >
               {value.toFixed(1)}
