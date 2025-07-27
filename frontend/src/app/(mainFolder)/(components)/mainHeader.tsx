@@ -1,4 +1,5 @@
 // "use client";
+
 // import { useEffect, useState, useRef, useCallback } from "react";
 // import { SidebarTrigger } from "@/components/ui/sidebar";
 // import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -6,12 +7,13 @@
 // import axios from "axios";
 // import { useUser } from "@auth0/nextjs-auth0/client";
 // import Link from "next/link";
-// import { useRouter } from "next/navigation";
+// import { useRouter, usePathname } from "next/navigation"; // Add usePathname
 // import io, { Socket } from "socket.io-client";
+// import { isUserAdmin } from "../../../../actions/isUserAdmin";
 
 // const API_BASE = "http://localhost:3001";
 // const BACKEND_URL =
-//   process.env.NEXT_PUBLIC_BACKEND_URL1 || "http://localhost:3002/device-api";
+//   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3002/device-api";
 
 // interface Notification {
 //   id: string;
@@ -28,8 +30,10 @@
 //   const [selectedRole, setSelectedRole] = useState("User");
 //   const [notifications, setNotifications] = useState<Notification[]>([]);
 //   const [isConnected, setIsConnected] = useState(false);
+//   const [isAdmin, setIsAdmin] = useState(false);
 //   const socketRef = useRef<Socket | null>(null);
 //   const router = useRouter();
+//   const pathname = usePathname(); // Get current URL path
 
 //   const { user, isLoading: isAuthLoading } = useUser();
 
@@ -38,6 +42,27 @@
 //     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 //     return emailRegex.test(email);
 //   };
+
+//   // Fetch admin status and set initial role based on pathname
+//   useEffect(() => {
+//     const checkAdminStatus = async () => {
+//       if (!isAuthLoading && user?.email) {
+//         try {
+//           const adminStatus = await isUserAdmin();
+//           setIsAdmin(adminStatus);
+//           // Set selectedRole based on current pathname for admins
+//           if (adminStatus) {
+//             setSelectedRole(pathname === "/dashboard" ? "User" : "Admin");
+//           } else {
+//             setSelectedRole("User"); // Non-admins are always User
+//           }
+//         } catch (error) {
+//           console.error("Error checking admin status:", error);
+//         }
+//       }
+//     };
+//     checkAdminStatus();
+//   }, [isAuthLoading, user, pathname]);
 
 //   const fetchNotifications = useCallback(async (userId: string) => {
 //     if (!isValidEmail(userId)) {
@@ -222,12 +247,12 @@
 //   };
 
 //   return (
-//     <header className="relative flex h-20 items-center justify-between border-b px-4">
+//     <header className="fixed top-0 left-0 right-0 h-20 flex items-center justify-between border-b px-4 bg-white z-50">
 //       <div className="flex items-center z-10">
 //         <SidebarTrigger className="mr-2" />
 //       </div>
 
-// <div className="absolute left-1/2 transform -translate-x-1/2 text-center hidden 2xl:block">
+//       <div className="absolute left-1/2 transform -translate-x-[20%] text-center hidden 2xl:block">
 //         {profileData && profileData.name ? (
 //           <span className="text-lg text-foreground font-semibold flex items-center gap-1">
 //             <Icon
@@ -267,31 +292,34 @@
 //               }
 //             }}
 //           >
-//          <AvatarImage
-//   src={
-//     profileData?.picture
-//       ? profileData.picture.startsWith("/uploads")
-//         ? `${API_BASE}${profileData.picture}`
-//         : profileData.picture.startsWith("http")
-//           ? profileData.picture
-//           : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
-//       : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
-//   }
-//   className="border border-muted-foreground rounded-full"
-//   alt="User Profile"
-// />
+//             <AvatarImage
+//               src={
+//                 profileData?.picture
+//                   ? profileData.picture.startsWith("/uploads")
+//                     ? `${API_BASE}${profileData.picture}`
+//                     : profileData.picture.startsWith("http")
+//                     ? profileData.picture
+//                     : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+//                   : "https://res.cloudinary.com/dj5086rhp/image/upload/v1753210736/default_ska3wz.png"
+//               }
+//               className="border border-muted-foreground rounded-full"
+//               alt="User Profile"
+//             />
 //           </Avatar>
 //         </Link>
 
-//         <select
-//           value={selectedRole}
-//           onChange={handleRoleChange}
-//           className="ml-2 p-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-colors duration-200"
-//           aria-label="Select Role"
-//         >
-//           <option value="User">User</option>
-//           <option value="Admin">Admin</option>
-//         </select>
+//         {/* Show dropdown only for admins */}
+//         {isAdmin && (
+//           <select
+//             value={selectedRole}
+//             onChange={handleRoleChange}
+//             className="ml-2 p-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-colors duration-200"
+//             aria-label="Select Role"
+//           >
+//             <option value="User">User</option>
+//             <option value="Admin">Admin</option>
+//           </select>
+//         )}
 //       </div>
 //     </header>
 //   );
@@ -380,7 +408,15 @@ export const DashboardHeader = () => {
       }
       const data = await response.json();
       console.log("Notifications fetched:", data);
-      setNotifications(data);
+      setNotifications((prev) => {
+        const newNotifications = data.filter(
+          (newNotif: Notification) => !prev.some((n) => n.id === newNotif.id)
+        );
+        return [...newNotifications, ...prev].sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+      });
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
@@ -481,16 +517,26 @@ export const DashboardHeader = () => {
     const userId = user.email;
     console.log("Authenticated user:", userId);
 
+    // Initial fetch
     fetchNotifications(userId);
+
+    // Start polling every 10 seconds
+    const pollingInterval = setInterval(() => {
+      console.log("Polling for new notifications...");
+      fetchNotifications(userId);
+    }, 1000); // 10 seconds
+
+    // Initialize WebSocket
     const socket = initializeWebSocket(userId);
 
     return () => {
-      console.log("Cleaning up WebSocket connection");
+      console.log("Cleaning up WebSocket connection and polling");
       if (socketRef.current) {
         socketRef.current.emit("leave", userId);
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      clearInterval(pollingInterval); // Clean up polling
       setIsConnected(false);
     };
   }, [user, isAuthLoading, fetchNotifications, initializeWebSocket]);
