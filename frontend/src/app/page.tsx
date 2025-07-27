@@ -89,7 +89,7 @@ export default async function Home() {
       {/* Client-side Three.js background */}
       <ThreeJsBackground />
 
-      <div className="bg-white rounded-2xl shadow-xl p-10 sm:p-16 max-w-3xl w-full text-center transform transition-all hover:shadow-2xl relative z-10">
+      <div className="bg-white rounded-2xl shadow-xl p-10 sm:p-10 max-w-2xl w-full text-center transform transition-all hover:shadow-2xl relative z-10">
         {/* Company Logo */}
         <img
           src="/image.png"
@@ -111,7 +111,7 @@ export default async function Home() {
           <form action={login}>
             <button
               type="submit"
-              className="w-full sm:w-auto px-10 py-4 bg-teal-500 text-white rounded-lg font-semibold text-xl shadow-md hover:bg-teal-600 transition-all duration-300 transform hover:-translate-y-1"
+              className="w-full sm:w-auto px-6 py-2 bg-teal-500 text-white rounded-lg font-semibold text-2xl shadow-md hover:bg-teal-600 transition-all duration-300 transform hover:-translate-y-1"
             >
               Sign In
             </button>
