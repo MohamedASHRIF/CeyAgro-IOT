@@ -516,7 +516,7 @@ export class AnalyticsService {
     return this.deviceModel.find(query).lean();
   }
 
-  async getAnomalies(deviceId: string, metric: string, startDate: string, endDate: string) {
+  async getAnomalies(deviceId: string, metric: string, startDate: string, endDate: string, sensitivity: number = 3) {
     const query = {
       deviceId,
       date: { $gte: new Date(startDate), $lte: new Date(endDate) },
@@ -525,16 +525,103 @@ export class AnalyticsService {
     console.log('DEBUG: getAnomalies query:', JSON.stringify(query));
     const data = await this.deviceModel.find(query).select('date readings').lean();
     console.log('DEBUG: getAnomalies results:', data.length);
+    
     const values = data.map(item => item.readings[metric])
       .filter(v => typeof v === 'number' && !isNaN(v));
-    if (values.length === 0) return [];
+    
+    if (values.length === 0) return { anomalies: [], mean: 0, std: 0 };
+    
+    // Calculate basic statistics
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     const std = Math.sqrt(values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length);
-    const anomalies = data.filter((item, idx) => Math.abs(values[idx] - mean) > 2 * std).map(item => ({
+    
+    // Improved anomaly detection with multiple criteria:
+    // 1. Statistical outlier detection with configurable sensitivity (default: 3 std devs)
+    // 2. Local window analysis for sudden spikes/drops
+    // 3. Range validation based on metric type (temperature: -50 to 100°C, humidity: 0-100%)
+    // 4. Detection of sensor malfunctions (repeated identical values)
+    const anomalies = [];
+    
+    for (let i = 0; i < data.length; i++) {
+      const value = values[i];
+      const item = data[i];
+      
+      // Skip if value is not a valid number
+      if (typeof value !== 'number' || isNaN(value)) continue;
+      
+      let isAnomaly = false;
+      
+      // Criterion 1: Statistical outlier (configurable sensitivity)
+      const zScore = Math.abs(value - mean) / std;
+      if (zScore > sensitivity) {
+        isAnomaly = true;
+      }
+      
+      // Criterion 2: Check for sudden spikes or drops (if we have enough data)
+      if (values.length > 10) {
+        const windowSize = Math.min(5, Math.floor(values.length / 4));
+        const startIdx = Math.max(0, i - windowSize);
+        const endIdx = Math.min(values.length, i + windowSize + 1);
+        
+        const windowValues = values.slice(startIdx, endIdx);
+        const windowMean = windowValues.reduce((a, b) => a + b, 0) / windowValues.length;
+        const windowStd = Math.sqrt(windowValues.reduce((a, b) => a + Math.pow(b - windowMean, 2), 0) / windowValues.length);
+        
+        // If the value is significantly different from its local window
+        if (windowStd > 0 && Math.abs(value - windowMean) > 2.5 * windowStd) {
+          isAnomaly = true;
+        }
+      }
+      
+      // Criterion 3: Check for values outside reasonable ranges based on metric type
+      if (metric.toLowerCase() === 'temperature') {
+        // Temperature should typically be between -50 and 100 degrees Celsius
+        if (value < -50 || value > 100) {
+          isAnomaly = true;
+        }
+      } else if (metric.toLowerCase() === 'humidity') {
+        // Humidity should be between 0 and 100 percent
+        if (value < 0 || value > 100) {
+          isAnomaly = true;
+        }
+      }
+      
+      // Criterion 4: Check for repeated identical values (potential sensor malfunction)
+      if (i > 0 && i < values.length - 1) {
+        const prevValue = values[i - 1];
+        const nextValue = values[i + 1];
+        if (value === prevValue && value === nextValue && Math.abs(value - mean) < std) {
+          // If we have 3 consecutive identical values and they're close to the mean, 
+          // it's likely not an anomaly but normal stable readings
+          isAnomaly = false;
+        }
+      }
+      
+      if (isAnomaly) {
+        anomalies.push({
+          timestamp: item.date,
+          value: value,
+        });
+      }
+    }
+    
+    console.log('DEBUG: Anomaly detection stats:', {
+      totalValues: values.length,
+      mean: mean.toFixed(2),
+      std: std.toFixed(2),
+      anomaliesFound: anomalies.length,
+      anomalyPercentage: (anomalies.length / values.length * 100).toFixed(2) + '%',
+      sampleValues: values.slice(0, 5).map(v => v.toFixed(2)),
+      sampleAnomalies: anomalies.slice(0, 3).map(a => ({ timestamp: a.timestamp, value: a.value.toFixed(2) }))
+    });
+    
+    // Prepare all data points for frontend visualization
+    const allData = data.map(item => ({
       timestamp: item.date,
       value: item.readings[metric],
     }));
-    return { anomalies, mean, std };
+    
+    return { anomalies, mean, std, allData };
   }
 
   async compareDevicesOrPeriods(deviceA: string, deviceB: string, metric: string, startDateA: string, endDateA: string, startDateB: string, endDateB: string) {

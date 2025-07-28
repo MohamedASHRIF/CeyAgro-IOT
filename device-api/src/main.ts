@@ -10,7 +10,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('device-api');
   //  Connect Kafka microservice
-  app.connectMicroservice(kafkaConfig);
+  //app.connectMicroservice(kafkaConfig);
 
   //image handling
   app.use(

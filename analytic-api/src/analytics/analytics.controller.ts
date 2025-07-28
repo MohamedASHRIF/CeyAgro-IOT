@@ -764,13 +764,15 @@ async getAnomalies(
   @Query('metric') metric: string,
   @Query('startDate') startDate: string,
   @Query('endDate') endDate: string,
-  @Query('email') email: string
+  @Query('email') email: string,
+  @Query('sensitivity') sensitivity: string = '3'
 ) {
   if (!email) throw new ForbiddenException('User email is required');
   const userDeviceIds = await this.analyticsService.getDeviceIdsForUser(email);
   if (!userDeviceIds.includes(deviceId)) throw new ForbiddenException('Access to this device is forbidden');
   try {
-    return await this.analyticsService.getAnomalies(deviceId, metric, startDate, endDate);
+    const sensitivityNum = parseFloat(sensitivity) || 3;
+    return await this.analyticsService.getAnomalies(deviceId, metric, startDate, endDate, sensitivityNum);
   } catch (error) {
     return {
       success: false,
