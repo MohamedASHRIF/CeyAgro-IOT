@@ -1,0 +1,46 @@
+// //notifications.module.ts
+// import { Module } from '@nestjs/common';
+// import { MongooseModule } from '@nestjs/mongoose';
+// import { NotificationsService } from './notifications.service';
+// import { NotificationsController } from './notifications.controller';
+// import { NotificationsGateway } from './notifications.gateway';
+// import {
+//   Notification,
+//   NotificationSchema,
+// } from './schemas/notification.schema';
+
+// @Module({
+//   imports: [
+//     MongooseModule.forFeature([
+//       { name: Notification.name, schema: NotificationSchema },
+//     ]),
+//   ],
+//   controllers: [NotificationsController],
+//   providers: [NotificationsService, NotificationsGateway],
+//   exports: [NotificationsService],
+// })
+// export class NotificationsModule {}
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { NotificationsService } from './notifications.service';
+import { NotificationsController } from './notifications.controller';
+import { NotificationsGateway } from './notifications.gateway';
+import {
+  Notification,
+  NotificationSchema,
+} from './schemas/notification.schema';
+import { UsersModule } from '../users/users.module';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
+    UsersModule, // Import UsersModule to provide User model
+  ],
+  controllers: [NotificationsController],
+  providers: [NotificationsService, NotificationsGateway],
+  exports: [NotificationsService],
+})
+export class NotificationsModule {}
